@@ -253,7 +253,7 @@ export default function AboutSection() {
                   }}
                 >
                   <Image
-                    src="/photographer-working-in-professional-studio-with-c.jpg"
+                    src="/screenshots/photographer.jpg"
                     alt="G-Limit Studio photographer"
                     fill
                     sizes="w-full h-full"
