@@ -497,7 +497,7 @@ export function HeroSection() {
                     className="w-10 h-10 rounded-full border-3 border-amber-500 bg-neutral-800 overflow-hidden shadow-lg"
                     whileHover={{ scale: 1.2, zIndex: 10 }}
                   >
-                    <Image src={`/happy-client-portrait-face-.jpg`} alt={`Client ${i}`} width={40} height={40} className="object-cover" />
+                    <Image src={`/screenshots/happy-client-portrait-face-.jpg`} alt={`Client ${i}`} width={40} height={40} className="object-cover" />
                   </motion.div>
                 ))}
               </div>
