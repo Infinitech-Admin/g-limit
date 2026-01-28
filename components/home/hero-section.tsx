@@ -501,10 +501,10 @@ export function HeroSection() {
                   </motion.div>
                 ))}
               </div>
-              <div className="text-sm">
+              {/* <div className="text-sm">
                 <p className="font-bold text-white">Trusted by 300+ clients</p>
                 <p className="text-amber-400 text-xs font-medium">Join our exclusive family</p>
-              </div>
+              </div> */}
             </motion.div>
           </div>
         </div>
