@@ -9,7 +9,7 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    const response = await fetch(`${API_URL}/api/film-strip/${id}`, {
+    const response = await fetch(`${API_URL}/film-strip/${id}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {
