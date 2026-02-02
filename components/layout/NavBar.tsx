@@ -184,7 +184,7 @@ export function Navigation() {
               { href: "/services", label: "Services" },
               { href: "/about", label: "About" },
               { href: "/news", label: "News" },
-              // { href: "/contact", label: "Contact Us" },
+              { href: "/blog", label: "Blog" },
             ].map((link, i) => (
               <motion.div
                 key={link.href}
@@ -276,7 +276,7 @@ export function Navigation() {
               { href: "/services", label: "Services" },
               { href: "/about", label: "About" },
               { href: "/news", label: "News" },
-              { href: "/contact", label: "Contact Us" },
+              { href: "/blog", label: "Blog" },
             ].map((link) => (
               <motion.div
                 key={link.href}
