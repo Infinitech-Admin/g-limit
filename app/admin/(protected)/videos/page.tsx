@@ -63,18 +63,6 @@ export default function BlogVideosPage() {
     return `${IMG_URL}/${cleanPath}`
   }
 
-  // Helper function to get token from cookies
-  const getTokenFromCookie = () => {
-    const cookies = document.cookie.split(';')
-    const tokenCookie = cookies.find(c => c.trim().startsWith('admin_token='))
-    const token = tokenCookie ? tokenCookie.split('=')[1].trim() : null
-    
-    console.log('All cookies:', document.cookie)
-    console.log('Token found:', token ? 'Yes' : 'No')
-    
-    return token
-  }
-
   const fetchVideos = useCallback(async () => {
     setLoading(true)
     try {
@@ -176,21 +164,11 @@ export default function BlogVideosPage() {
       formData.append('description', description)
       formData.append('video', selectedFile)
 
-      // Get token from cookie
-      const token = getTokenFromCookie()
-
-      if (!token) {
-        throw new Error('No authentication token found. Please login again.')
-      }
-
-      // Upload directly to Laravel backend (bypasses Next.js size limits)
-      const response = await fetch(`${API_URL}/api/blog-videos`, {
+      // Use the Next.js API route which handles the token from cookies
+      const response = await fetch('/api/blog-videos', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
+        credentials: 'include', // Important: this sends cookies with the request
       })
 
       if (!response.ok) {
@@ -230,25 +208,18 @@ export default function BlogVideosPage() {
     try {
       setLoading(true)
 
-      // Get token from cookie
-      const token = getTokenFromCookie()
-
-      if (!token) {
-        throw new Error('No authentication token found. Please login again.')
-      }
-
-      // Delete directly from Laravel backend
-      const response = await fetch(`${API_URL}/api/blog-videos/${selectedItem.id}`, {
+      // Use the Next.js API route for delete (you'll need to create this)
+      const response = await fetch(`/api/blog-videos/${selectedItem.id}`, {
         method: 'DELETE',
+        credentials: 'include', // Important: this sends cookies with the request
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }))
-        throw new Error(errorData.message || 'Delete failed')
+        const errorData = await response.json().catch(() => ({ error: 'Delete failed' }))
+        throw new Error(errorData.error || 'Delete failed')
       }
 
       setData(data.filter((item) => item.id !== selectedItem.id))
