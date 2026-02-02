@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable SWC minification for smaller bundles
-  swcMinify: true,
-  
   images: {
     // Custom loader to bypass Next.js optimization
     loader: 'custom',
