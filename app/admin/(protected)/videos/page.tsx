@@ -33,7 +33,7 @@ interface BlogVideo {
   updated_at: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export default function BlogVideosPage() {
   const [data, setData] = useState<BlogVideo[]>([])
@@ -45,6 +45,7 @@ export default function BlogVideosPage() {
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [pageCount, setPageCount] = useState(1)
@@ -69,14 +70,10 @@ export default function BlogVideosPage() {
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-
-      const response = await fetch(`/api/blog-videos?${query.toString()}`, {
-        credentials: 'include',
+      // Fetch directly from Laravel backend
+      const response = await fetch(`${API_URL}/blog-videos?${query.toString()}`, {
         headers: {
           'Accept': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
 
@@ -123,6 +120,13 @@ export default function BlogVideosPage() {
         return
       }
 
+      // Validate file size (100MB limit)
+      const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 100MB')
+        return
+      }
+
       setSelectedFile(file)
       
       // Create preview URL
@@ -140,6 +144,7 @@ export default function BlogVideosPage() {
     }
     setSelectedFile(null)
     setPreviewUrl('')
+    setUploadProgress(0)
   }
 
   const handleUpload = async () => {
@@ -154,6 +159,8 @@ export default function BlogVideosPage() {
     }
 
     setUploading(true)
+    setUploadProgress(0)
+
     try {
       const formData = new FormData()
       formData.append('title', title)
@@ -163,19 +170,49 @@ export default function BlogVideosPage() {
       // Get token from localStorage
       const token = localStorage.getItem('token')
 
-      const response = await fetch('/api/blog-videos', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
-      })
+      // Upload directly to Laravel backend using XMLHttpRequest for progress tracking
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Upload failed' }))
-        throw new Error(errorData.error || 'Upload failed')
-      }
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100)
+            setUploadProgress(percentComplete)
+          }
+        })
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText)
+              reject(new Error(errorData.error || 'Upload failed'))
+            } catch {
+              reject(new Error('Upload failed'))
+            }
+          }
+        })
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'))
+        })
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'))
+        })
+
+        // Open connection and send
+        xhr.open('POST', `${API_URL}/blog-videos`)
+        xhr.setRequestHeader('Accept', 'application/json')
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        }
+        xhr.send(formData)
+      })
 
       toast.success('Success', {
         description: 'Video uploaded successfully',
@@ -190,6 +227,7 @@ export default function BlogVideosPage() {
       setPreviewUrl('')
       setTitle('')
       setDescription('')
+      setUploadProgress(0)
       setIsAddOpen(false)
       await fetchVideos()
     } catch (error) {
@@ -212,10 +250,11 @@ export default function BlogVideosPage() {
       // Get token from localStorage
       const token = localStorage.getItem('token')
 
-      const response = await fetch(`/api/blog-videos/${selectedItem.id}`, {
+      // Delete directly from Laravel backend
+      const response = await fetch(`${API_URL}/blog-videos/${selectedItem.id}`, {
         method: 'DELETE',
-        credentials: 'include',
         headers: {
+          'Accept': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
@@ -373,7 +412,7 @@ export default function BlogVideosPage() {
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl text-[#D4AF37]">Upload Video</DialogTitle>
             <DialogDescription className="text-sm text-[#D4AF37]/80">
-              Add a new video to your blog content
+              Add a new video to your blog content (Max 100MB)
             </DialogDescription>
           </DialogHeader>
 
@@ -409,7 +448,7 @@ export default function BlogVideosPage() {
 
             <div className="space-y-2">
               <Label htmlFor="video" className="text-sm font-medium text-[#D4AF37]">
-                Video *
+                Video * (Max 100MB)
               </Label>
               <div className="flex items-center justify-center w-full">
                 <label
@@ -460,6 +499,22 @@ export default function BlogVideosPage() {
                 </div>
               </div>
             )}
+
+            {/* Upload Progress Bar */}
+            {uploading && uploadProgress > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-[#D4AF37]">
+                  <span>Uploading...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-[#D4AF37]/20">
@@ -474,6 +529,7 @@ export default function BlogVideosPage() {
                 setPreviewUrl('')
                 setTitle('')
                 setDescription('')
+                setUploadProgress(0)
               }}
               disabled={uploading}
               className="bg-white border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37]/10 w-full sm:w-auto"
@@ -486,7 +542,7 @@ export default function BlogVideosPage() {
               className="bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-white w-full sm:w-auto"
             >
               <Upload className="mr-2 h-4 w-4" />
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? `Uploading... ${uploadProgress}%` : 'Upload'}
             </Button>
           </div>
         </DialogContent>
