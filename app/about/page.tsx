@@ -296,9 +296,9 @@ export default function About() {
 
             <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               {[
-                { number: 10, suffix: "+", label: "Years", desc: "Creative excellence", icon: Award },
-                { number: 500, suffix: "+", label: "Clients", desc: "Trusted partnerships", icon: Users },
-                { number: 50, suffix: "K+", label: "Photos", desc: "Moments preserved", icon: Camera },
+                { number: 110, suffix: "+", label: "Years", desc: "Creative excellence", icon: Award },
+                { number: 50, suffix: "+", label: "Clients", desc: "Trusted partnerships", icon: Users },
+                { number: 5, suffix: "K+", label: "Photos", desc: "Moments preserved", icon: Camera },
               ].map((stat, index) => (
                 <motion.div
                   key={index}
@@ -439,7 +439,7 @@ export default function About() {
                     transition={{ duration: 0.6, type: "spring", stiffness: 120 }}
                   >
                     <Image
-                      src={member.image || "/placeholder.png"}
+                      src={member.image || "/placeholder.svg"}
                       alt={member.name}
                       fill
                       sizes="w-full h-full"
