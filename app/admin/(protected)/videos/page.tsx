@@ -67,7 +67,12 @@ export default function BlogVideosPage() {
   const getTokenFromCookie = () => {
     const cookies = document.cookie.split(';')
     const tokenCookie = cookies.find(c => c.trim().startsWith('admin_token='))
-    return tokenCookie ? tokenCookie.split('=')[1] : null
+    const token = tokenCookie ? tokenCookie.split('=')[1].trim() : null
+    
+    console.log('All cookies:', document.cookie)
+    console.log('Token found:', token ? 'Yes' : 'No')
+    
+    return token
   }
 
   const fetchVideos = useCallback(async () => {
