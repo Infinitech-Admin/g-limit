@@ -33,7 +33,8 @@ interface BlogVideo {
   updated_at: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const IMG_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
 
 export default function BlogVideosPage() {
   const [data, setData] = useState<BlogVideo[]>([])
@@ -59,7 +60,14 @@ export default function BlogVideosPage() {
       return path
     }
     const cleanPath = path.startsWith('/') ? path.slice(1) : path
-    return `${API_URL}/${cleanPath}`
+    return `${IMG_URL}/${cleanPath}`
+  }
+
+  // Helper function to get token from cookies
+  const getTokenFromCookie = () => {
+    const cookies = document.cookie.split(';')
+    const tokenCookie = cookies.find(c => c.trim().startsWith('admin_token='))
+    return tokenCookie ? tokenCookie.split('=')[1] : null
   }
 
   const fetchVideos = useCallback(async () => {
@@ -69,14 +77,10 @@ export default function BlogVideosPage() {
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-
       const response = await fetch(`/api/blog-videos?${query.toString()}`, {
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       })
 
@@ -123,6 +127,13 @@ export default function BlogVideosPage() {
         return
       }
 
+      // Check file size (max 100MB)
+      const maxSize = 100 * 1024 * 1024 // 100MB in bytes
+      if (file.size > maxSize) {
+        toast.error('Video file is too large. Maximum size is 100MB.')
+        return
+      }
+
       setSelectedFile(file)
       
       // Create preview URL
@@ -160,21 +171,26 @@ export default function BlogVideosPage() {
       formData.append('description', description)
       formData.append('video', selectedFile)
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
+      // Get token from cookie
+      const token = getTokenFromCookie()
 
-      const response = await fetch('/api/blog-videos', {
+      if (!token) {
+        throw new Error('No authentication token found. Please login again.')
+      }
+
+      // Upload directly to Laravel backend (bypasses Next.js size limits)
+      const response = await fetch(`${API_URL}/api/blog-videos`, {
         method: 'POST',
         body: formData,
-        credentials: 'include',
         headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Upload failed' }))
-        throw new Error(errorData.error || 'Upload failed')
+        throw new Error(errorData.error || errorData.message || 'Upload failed')
       }
 
       toast.success('Success', {
@@ -209,14 +225,19 @@ export default function BlogVideosPage() {
     try {
       setLoading(true)
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
+      // Get token from cookie
+      const token = getTokenFromCookie()
 
-      const response = await fetch(`/api/blog-videos/${selectedItem.id}`, {
+      if (!token) {
+        throw new Error('No authentication token found. Please login again.')
+      }
+
+      // Delete directly from Laravel backend
+      const response = await fetch(`${API_URL}/api/blog-videos/${selectedItem.id}`, {
         method: 'DELETE',
-        credentials: 'include',
         headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       })
 
@@ -373,7 +394,7 @@ export default function BlogVideosPage() {
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl text-[#D4AF37]">Upload Video</DialogTitle>
             <DialogDescription className="text-sm text-[#D4AF37]/80">
-              Add a new video to your blog content
+              Add a new video to your blog content (Max 100MB)
             </DialogDescription>
           </DialogHeader>
 
@@ -409,7 +430,7 @@ export default function BlogVideosPage() {
 
             <div className="space-y-2">
               <Label htmlFor="video" className="text-sm font-medium text-[#D4AF37]">
-                Video *
+                Video * (Max 100MB)
               </Label>
               <div className="flex items-center justify-center w-full">
                 <label
@@ -421,7 +442,7 @@ export default function BlogVideosPage() {
                     <p className="mb-2 text-xs sm:text-sm text-[#D4AF37] text-center">
                       <span className="font-semibold">Click to select video</span>
                     </p>
-                    <p className="text-xs text-[#D4AF37]/70 text-center">MP4, MOV, AVI, etc.</p>
+                    <p className="text-xs text-[#D4AF37]/70 text-center">MP4, MOV, AVI, etc. (Max 100MB)</p>
                   </div>
                   <input
                     id="video"
