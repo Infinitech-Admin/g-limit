@@ -34,6 +34,7 @@ interface BlogVideo {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_IMG_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
 
 export default function BlogVideosPage() {
   const [data, setData] = useState<BlogVideo[]>([])
@@ -60,7 +61,7 @@ export default function BlogVideosPage() {
       return path
     }
     const cleanPath = path.startsWith('/') ? path.slice(1) : path
-    return `${API_URL}/${cleanPath}`
+    return `${API_IMG_URL}/${cleanPath}`
   }
 
   const fetchVideos = useCallback(async () => {
@@ -70,8 +71,14 @@ export default function BlogVideosPage() {
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
 
-      // Fetch directly from Laravel backend
-      const response = await fetch(`${API_URL}/blog-videos?${query.toString()}`, {
+      // Debug: Log the URL being called
+      const url = `${API_URL}/blog-videos?${query.toString()}`
+      console.log('🔍 Fetching from URL:', url)
+      console.log('🔍 API_URL value:', API_URL)
+      console.log('🔍 API_IMG_URL value:', API_IMG_URL)
+
+      // Fetch directly from Laravel backend using API_URL (includes /api prefix)
+      const response = await fetch(url, {
         headers: {
           'Accept': 'application/json',
         },
@@ -250,7 +257,7 @@ export default function BlogVideosPage() {
       // Get token from localStorage
       const token = localStorage.getItem('token')
 
-      // Delete directly from Laravel backend
+      // Delete directly from Laravel backend using API_URL for mutations
       const response = await fetch(`${API_URL}/blog-videos/${selectedItem.id}`, {
         method: 'DELETE',
         headers: {
