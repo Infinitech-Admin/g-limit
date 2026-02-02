@@ -17,7 +17,7 @@ const sidebarItems = [
   { name: "Photo Category", href: "/admin/categories", icon: Folder },
   { name: "Portfolio", href: "/admin/portfolio", icon: Folder },
    { name: "News", href: "/admin/news", icon: Newspaper },
-  { name: "Blog Posts", href: "/admin/posts", icon: FileText },
+  { name: "Videos", href: "/admin/videos", icon: FileText },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
