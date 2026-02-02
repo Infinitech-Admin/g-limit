@@ -34,13 +34,14 @@ const studioInfo = {
     { title: "Client Commitment", description: "Your satisfaction is priority. Expectations exceeded." }
   ],
   experience: {
-    years: "10+ Years of Creative excellence",
-    clients: "500+ Trusted partnerships",
-    photos: "50K+ Moments preserved"
+    years: "1+ Year of Creative excellence",
+    clients: "50+ Trusted partnerships",
+    photos: "5K+ Moments preserved"
   },
   studio: {
     name: "The G-Limit Studio",
     description: "A thoughtfully designed environment that empowers creativity, precision, and artistic freedom.",
+    location: "Unit 303, Campos Rueda Building, Urban Avenue, Makati City",
     features: [
       "Professional Equipment: Industry-leading cameras and lighting",
       "Production Capabilities: High-end editing and workflows",
@@ -53,7 +54,7 @@ const getBotResponse = (userMessage: string): string => {
   const message = userMessage.toLowerCase()
   
   if (message.includes('service') || message.includes('offer')) {
-    return "We offer a wide range of professional photography services including portraits, events, weddings, commercial photography, and creative shoots. Each service is tailored to capture your unique story with artistic excellence. With 10+ years of experience and 500+ satisfied clients, we ensure the highest standards of professional quality."
+    return "We offer a wide range of professional photography services including portraits, events, weddings, commercial photography, and creative shoots. Each service is tailored to capture your unique story with artistic excellence. With 1+ year of experience and 50+ satisfied clients, we ensure the highest standards of professional quality."
   }
   
   if (message.includes('book') || message.includes('appointment') || message.includes('schedule') || message.includes('session')) {
@@ -65,7 +66,7 @@ const getBotResponse = (userMessage: string): string => {
   }
   
   if (message.includes('portfolio') || message.includes('work') || message.includes('examples') || message.includes('photos')) {
-    return "We've preserved over 50,000 moments for 500+ clients! Our portfolio showcases diverse photography styles across portraits, events, weddings, and commercial work. Each image reflects our artistic vision and professional quality. We'd love to show you examples relevant to your needs!"
+    return "We've preserved over 5,000+ moments for 50+ clients! Our portfolio showcases diverse photography styles across portraits, events, weddings, and commercial work. Check out our full portfolio here: https://www.g-limitstudio.com/portfolio"
   }
   
   if (message.includes('contact') || message.includes('reach') || message.includes('phone') || message.includes('email')) {
@@ -73,7 +74,7 @@ const getBotResponse = (userMessage: string): string => {
   }
   
   if (message.includes('location') || message.includes('where') || message.includes('address') || message.includes('studio')) {
-    return "The G-Limit Studio is our thoughtfully designed creative space that empowers creativity, precision, and artistic freedom. Visit us to experience our professional equipment, production capabilities, and inspiring creative environment with natural light and versatile backdrops."
+    return `The G-Limit Studio is located at ${studioInfo.studio.location}. Our thoughtfully designed creative space empowers creativity, precision, and artistic freedom. Visit us to experience our professional equipment, production capabilities, and inspiring creative environment with natural light and versatile backdrops.`
   }
   
   if (message.includes('about') || message.includes('who') || message.includes('values')) {
@@ -219,7 +220,28 @@ export default function Chatbot() {
                       : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-200'
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{message.text}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {message.text.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
+                      if (part.match(/^https?:\/\//)) {
+                        return (
+                          <a
+                            key={index}
+                            href={part}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`underline ${
+                              message.sender === 'user' 
+                                ? 'text-white hover:text-orange-100' 
+                                : 'text-orange-600 hover:text-orange-700'
+                            }`}
+                          >
+                            {part}
+                          </a>
+                        )
+                      }
+                      return part
+                    })}
+                  </p>
                   <span
                     className={`text-xs mt-1 block ${
                       message.sender === 'user' ? 'text-orange-100' : 'text-gray-400'
