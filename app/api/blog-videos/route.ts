@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -45,16 +44,17 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
 
-    // Get token from cookies
-    const cookieStore = await cookies()
-    const token = cookieStore.get('admin_token')?.value
-
-    if (!token) {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization')
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Unauthorized - No token found' },
         { status: 401 }
       )
     }
+
+    const token = authHeader.substring(7)
 
     const response = await fetch(`${API_URL}/blog-videos`, {
       method: 'POST',
