@@ -1,106 +1,92 @@
-"use client"
-import { Card } from "@/components/ui/card"
-import { Calendar, User, Camera, Aperture, CameraIcon, Focus, ZoomIn, Film, Sparkles } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import FloatingParticles from "@/components/animated-golden-particles"
-import { Post } from "@/lib/types/types"
-import ScrollZoomCard from "@/components/blog/scroll-zoom-card"
+"use client";
 
-type Category = "all" | "wedding" | "portrait" | "event" | "product" | "studio"
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { Video, Calendar, Clock, Sparkles, AlertCircle, Play, X } from "lucide-react";
+import FloatingParticles from "@/components/animated-golden-particles";
+import useSWR from "swr";
 
-const categories: { value: Category; label: string; icon: React.ReactNode }[] = [
-  { value: "all", label: "All Posts", icon: <Camera className="w-4 h-4" /> },
-  {
-    value: "wedding",
-    label: "Weddings",
-    icon: <Aperture className="w-4 h-4" />,
-  },
-  {
-    value: "portrait",
-    label: "Portraits",
-    icon: <Focus className="w-4 h-4" />,
-  },
-  { value: "event", label: "Events", icon: <ZoomIn className="w-4 h-4" /> },
-  { value: "product", label: "Products", icon: <Film className="w-4 h-4" /> },
-  {
-    value: "studio",
-    label: "Studio",
-    icon: <CameraIcon className="w-4 h-4" />,
-  },
-]
-
-const getImageSrc = (image: string | File | null): string | undefined => {
-  if (!image) return undefined
-
-  if (image instanceof File) {
-    return URL.createObjectURL(image)
-  }
-
-  if (image.startsWith("http") || image.startsWith(process.env.NEXT_PUBLIC_API_IMG || "")) {
-    return image
-  }
-
-  return `${process.env.NEXT_PUBLIC_API_IMG}${image}`
+interface BlogVideo {
+  id: number;
+  title: string;
+  description?: string;
+  video_path: string;
+  created_at: string;
+  updated_at: string;
 }
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-  },
-}
+const API_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000';
 
-export default function Blog() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [selectedPost, setSelectedPost] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<Category>("all")
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-  const filteredPosts = selectedCategory === "all" ? posts : posts.filter((post) => post.category === selectedCategory)
-  const post = selectedPost ? posts.find((p) => p.id === selectedPost) : null
+export default function BlogVideos() {
+  const [selectedVideo, setSelectedVideo] = useState<BlogVideo | null>(null);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  const featuredPosts = posts.filter((p) => p.featured === true)
+  // Fetch blog videos
+  const { data, error, isLoading } = useSWR<{
+    data: BlogVideo[];
+    pagination?: {
+      current_page: number;
+      per_page: number;
+      total: number;
+      last_page: number;
+    };
+  }>("/api/blog-videos?page=1&perPage=100", fetcher);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const res = await fetch("/api/posts")
-        const data = await res.json()
-        if (Array.isArray(data.posts)) {
-          setPosts(data.posts)
-        } else {
-          setPosts([])
-        }
-      } catch (err) {
-        console.error("Failed to fetch posts:", err)
-      }
+  const videoItems = data?.data || [];
+
+  const getVideoUrl = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
     }
-    fetchPosts()
-  }, [])
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${API_URL}/${cleanPath}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
 
   return (
-    <div className="min-h-screen pt-20 bg-linear-to-br from-[#1a0f0a] via-[#2d1810] to-[#4a2818] relative overflow-hidden">
-      <FloatingParticles count={20} />
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Animated gold particles background */}
+      <FloatingParticles count={40} />
 
       {/* Hero Section with Film Strip Effect */}
       <section className="pt-32 pb-16 px-6 relative overflow-hidden">
         {/* Animated film perforations - gold */}
         <div className="absolute top-0 left-0 right-0 h-16 bg-black border-b-2 border-amber-500 flex items-center overflow-hidden">
-          <motion.div className="flex" animate={{ x: [0, -200] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}>
+          <motion.div
+            className="flex"
+            animate={{ x: [0, -200] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          >
             {[...Array(50)].map((_, i) => (
-              <div key={i} className="w-10 h-7 bg-gradient-to-b from-amber-500 to-amber-600 mx-3 rounded-sm shadow-lg shadow-amber-500/30" />
+              <div
+                key={i}
+                className="w-10 h-7 bg-gradient-to-b from-amber-500 to-amber-600 mx-3 rounded-sm shadow-lg shadow-amber-500/30"
+              />
             ))}
           </motion.div>
         </div>
 
         <div className="max-w-5xl mx-auto text-center pt-8 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
             {/* Camera viewfinder decoration */}
             <div className="inline-block relative mb-8">
               <motion.div
-                className="absolute -top-6 -left-6 w-12 h-12 border-l-3 border-t-3 border-amber-500"
+                className="absolute -top-6 -left-6 w-12 h-12 border-l-4 border-t-4 border-amber-500"
                 initial={{ opacity: 0, x: -10, y: -10 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ delay: 0.3, type: "spring" }}
@@ -108,7 +94,7 @@ export default function Blog() {
                 <div className="absolute top-0 left-0 w-3 h-3 bg-amber-500 rounded-full" />
               </motion.div>
               <motion.div
-                className="absolute -top-6 -right-6 w-12 h-12 border-r-3 border-t-3 border-amber-500"
+                className="absolute -top-6 -right-6 w-12 h-12 border-r-4 border-t-4 border-amber-500"
                 initial={{ opacity: 0, x: 10, y: -10 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ delay: 0.4, type: "spring" }}
@@ -116,7 +102,7 @@ export default function Blog() {
                 <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full" />
               </motion.div>
               <motion.div
-                className="absolute -bottom-6 -left-6 w-12 h-12 border-l-3 border-b-3 border-amber-500"
+                className="absolute -bottom-6 -left-6 w-12 h-12 border-l-4 border-b-4 border-amber-500"
                 initial={{ opacity: 0, x: -10, y: 10 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ delay: 0.5, type: "spring" }}
@@ -124,7 +110,7 @@ export default function Blog() {
                 <div className="absolute bottom-0 left-0 w-3 h-3 bg-amber-500 rounded-full" />
               </motion.div>
               <motion.div
-                className="absolute -bottom-6 -right-6 w-12 h-12 border-r-3 border-b-3 border-amber-500"
+                className="absolute -bottom-6 -right-6 w-12 h-12 border-r-4 border-b-4 border-amber-500"
                 initial={{ opacity: 0, x: 10, y: 10 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ delay: 0.6, type: "spring" }}
@@ -133,7 +119,9 @@ export default function Blog() {
               </motion.div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-light text-white px-12 py-6">
-                Our <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 bg-clip-text text-transparent font-bold">Blog</span>
+                <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 bg-clip-text text-transparent font-bold">
+                  Blog
+                </span>
               </h1>
             </div>
 
@@ -144,13 +132,21 @@ export default function Blog() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
-              <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              >
                 <Sparkles className="w-6 h-6 text-amber-500" />
               </motion.div>
               <p className="text-lg text-gray-300 max-w-2xl">
-                Discover how visual narratives can transform your photography and engage your audience.
+                {isLoading
+                  ? "Loading videos..."
+                  : `Explore our latest video content and updates.`}
               </p>
-              <motion.div animate={{ rotate: [360, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
+              <motion.div
+                animate={{ rotate: [360, 0] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              >
                 <Sparkles className="w-6 h-6 text-amber-500" />
               </motion.div>
             </motion.div>
@@ -166,174 +162,236 @@ export default function Blog() {
         </div>
       </section>
 
-      {/* Featured Posts */}
-      <div className="my-4">
-        {/* <Marquee> */}
-        {featuredPosts.map((featuredPost) => (
-          <motion.section
-            key={featuredPost.id}
-            className="px-6 pb-4"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            <div className="max-w-6xl mx-auto">
-              <Card
-                className="overflow-hidden group bg-linear-to-br from-[#2d1810]/80 to-[#1a0f0a]/80 border-[#d4a574]/30 hover:border-[#d4a574] transition-all duration-500 shadow-2xl hover:shadow-[#d4a574]/20 relative backdrop-blur-sm"
-                onClick={() => setSelectedPost(featuredPost.id)}
-              >
-                <div className="grid md:grid-cols-2 gap-0">
-                  <div className="relative h-64 md:h-auto overflow-hidden">
-                    <motion.div
-                      initial={{ scale: 1.25, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 1.2, ease: "easeOut" }}
-                      viewport={{ once: true }}
-                    >
-                      <img
-                        src={getImageSrc(featuredPost.image) || "/placeholder.png"}
-                        alt={featuredPost.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    </motion.div>
-                    <div className="absolute inset-0 bg-linear-to-r from-black/60 via-amber-900/20 to-transparent" />
-                  </div>
-
-                  <motion.div
-                    className="p-8 md:p-12 flex flex-col justify-center relative"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={{
-                      hidden: {},
-                      visible: { transition: { staggerChildren: 0.15 } },
-                    }}
-                  >
-                    <motion.span
-                      variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      transition={{ duration: 0.6 }}
-                      className="inline-block px-3 py-1 bg-linear-to-tr from-[#FFD700] via-[#FFA500] to-[#FF8C00] text-xs font-semibold rounded-full w-fit mb-4 border border-[#d4a574]/30"
-                    >
-                      {featuredPost.label}
-                    </motion.span>
-
-                    <motion.h2
-                      variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      transition={{ duration: 0.6 }}
-                      className="text-2xl md:text-3xl font-bold mb-4"
-                    >
-                      {featuredPost.title}
-                    </motion.h2>
-
-                    <motion.p
-                      variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      transition={{ duration: 0.6 }}
-                      className="text-gray-300 mb-6 leading-relaxed"
-                    >
-                      {featuredPost.excerpt}
-                    </motion.p>
-
-                    <motion.div
-                      variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      transition={{ duration: 0.6 }}
-                      className="flex items-center gap-4 text-sm text-gray-400"
-                    >
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4 text-[#d4a574]" />
-                        {featuredPost.date}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <User className="w-4 h-4 text-[#d4a574]" />
-                        {featuredPost.author}
-                      </span>
-                    </motion.div>
-                  </motion.div>
-                </div>
-              </Card>
+      {/* Error State */}
+      {error && (
+        <section className="px-6 py-8">
+          <div className="max-w-6xl mx-auto bg-red-500/10 border border-red-500/30 rounded-lg p-6 flex items-center gap-4">
+            <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-red-500 mb-1">Failed to load videos</h3>
+              <p className="text-sm text-red-400">Please check your connection and try again</p>
             </div>
-          </motion.section>
-        ))}
-        {/* </Marquee> */}
-      </div>
-
-      {/* Posts Grid */}
-      <motion.section
-        className="px-6 pb-20"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap gap-3 mb-12 justify-center">
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold ${
-                  selectedCategory === cat.value ? "bg-amber-500 text-black" : "bg-black text-amber-500"
-                }`}
-              >
-                {cat.icon} {cat.label}
-              </button>
-            ))}
           </div>
+        </section>
+      )}
 
-          <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <AnimatePresence>
-              {filteredPosts.map((post, index) => (
-                <ScrollZoomCard key={post.id} post={post} index={index} onClick={() => setSelectedPost(post.id)} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-        <DialogContent className="max-w-4xl h-[90vh] bg-linear-to-br from-[#2d1810] to-[#1a0f0a] border-[#d4a574]/50 overflow-y-auto scrollbar-hide">
-          {post && (
-            <>
-              <DialogHeader>
-                <span className="inline-block px-3 py-1 bg-linear-to-r from-[#d4a574]/20 to-[#c9944a]/20 text-[#d4a574] text-xs font-semibold rounded-full w-fit mb-2 border border-[#d4a574]/30">
-                  {post.label}
-                </span>
-                <DialogTitle className="text-2xl font-serif bg-linear-to-r from-white to-[#d4a574] bg-clip-text text-transparent">
-                  {post.title}
-                </DialogTitle>
-                <DialogDescription className="flex items-center gap-4 text-sm text-gray-300">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4 text-[#d4a574]" />
-                    {post.date}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <User className="w-4 h-4 text-[#d4a574]" />
-                    {post.author}
-                  </span>
-                </DialogDescription>
-              </DialogHeader>
-              <div className="relative h-64 rounded-lg overflow-hidden my-4">
-                <img src={getImageSrc(post.image) || "/placeholder.png"} alt={post.title} className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-linear-to-r from-[#1a0f0a]/60 to-transparent" />
+      {/* Videos Grid with Enhanced Hover Effects */}
+      <section className="px-6 py-20 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <Video className="w-12 h-12 text-amber-500" />
+                </motion.div>
+                <p className="text-gray-400">Loading videos...</p>
               </div>
-              <span className="block mb-4 text-xl font-medium text-gold/90 italic border-l-4 border-gold pl-3 py-1">{post.excerpt}</span>
-              <p className="text-gray-300 leading-relaxed">{post.content}</p>
-            </>
+            </div>
+          ) : videoItems.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <Video className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">No videos available yet</p>
+                <p className="text-gray-500 text-sm mt-2">Check back soon for new content!</p>
+              </div>
+            </div>
+          ) : (
+            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <AnimatePresence mode="popLayout">
+                {videoItems.map((video, index) => (
+                  <motion.div
+                    key={video.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8, rotateY: -30 }}
+                    animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, rotateY: 30 }}
+                    transition={{ delay: index * 0.08, duration: 0.6, type: "spring" }}
+                    className="relative group cursor-pointer"
+                    onClick={() => setSelectedVideo(video)}
+                    onMouseEnter={() => setHoveredId(video.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    whileHover={{ y: -10 }}
+                  >
+                    {/* Gold frame with shadow */}
+                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 p-1 rounded-lg hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-500 border-2 border-amber-500/30">
+                      <div className="bg-black rounded-lg relative overflow-hidden h-full flex flex-col">
+                        {/* Video Thumbnail Section */}
+                        <div className="relative aspect-video overflow-hidden bg-black">
+                          <video
+                            src={getVideoUrl(video.video_path)}
+                            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
+                            muted
+                            playsInline
+                            onMouseEnter={(e) => e.currentTarget.play()}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.pause();
+                              e.currentTarget.currentTime = 0;
+                            }}
+                          />
+
+                          {/* Gold overlay gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+
+                          {/* Play button overlay */}
+                          <motion.div
+                            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            initial={{ scale: 0.8 }}
+                            whileHover={{ scale: 1 }}
+                          >
+                            <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center shadow-2xl shadow-amber-500/50">
+                              <Play className="w-10 h-10 text-black ml-1" fill="currentColor" />
+                            </div>
+                          </motion.div>
+
+                          {/* Date badge */}
+                          <motion.div
+                            className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-amber-600 text-black px-4 py-2 rounded-full text-sm font-bold shadow-xl flex items-center gap-2"
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(video.created_at)}
+                          </motion.div>
+
+                          {/* Video indicator */}
+                          <motion.div
+                            className="absolute bottom-4 left-4 bg-black/80 text-amber-500 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2"
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                          >
+                            <Video className="w-3 h-3" />
+                            Video
+                          </motion.div>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="p-6 flex-1 flex flex-col">
+                          <motion.h3
+                            className="font-serif text-2xl text-white mb-3 line-clamp-2"
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            {video.title}
+                          </motion.h3>
+                          
+                          {video.description && (
+                            <motion.p
+                              className="text-gray-400 text-sm mb-4 line-clamp-3 flex-1"
+                              initial={{ y: 10, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ delay: 0.3 }}
+                            >
+                              {video.description}
+                            </motion.p>
+                          )}
+
+                          {/* Watch now button */}
+                          <motion.div
+                            className="flex items-center gap-2 text-amber-500 font-bold text-sm group-hover:gap-3 transition-all duration-300"
+                            initial={{ y: 10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                          >
+                            <Play className="w-4 h-4" fill="currentColor" />
+                            Watch Now
+                          </motion.div>
+                        </div>
+
+                        {/* Corner glow effects */}
+                        <div className="absolute top-0 left-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </section>
+
+      {/* Video Detail Modal */}
+      <AnimatePresence>
+        {selectedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl"
+            onClick={() => setSelectedVideo(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 50 }}
+              className="bg-black border-2 border-amber-500/30 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="absolute top-4 right-4 z-10 w-10 h-10 bg-amber-500 hover:bg-amber-600 text-black rounded-full flex items-center justify-center transition-colors shadow-lg shadow-amber-500/50"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Video Player */}
+              <div className="relative aspect-video overflow-hidden rounded-t-2xl bg-black">
+                <video
+                  src={getVideoUrl(selectedVideo.video_path)}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="p-8">
+                <div className="flex items-center gap-4 text-sm text-amber-500 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(selectedVideo.created_at)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4" />
+                    Blog
+                  </div>
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+                  {selectedVideo.title}
+                </h2>
+
+                {selectedVideo.description && (
+                  <div className="prose prose-invert prose-amber max-w-none">
+                    <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
+                      {selectedVideo.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Meta info */}
+                <div className="mt-8 pt-8 border-t border-amber-500/30 flex items-center justify-between text-sm text-gray-500">
+                  <div>
+                    Published on {formatDate(selectedVideo.created_at)}
+                  </div>
+                  {selectedVideo.updated_at !== selectedVideo.created_at && (
+                    <div>
+                      Updated on {formatDate(selectedVideo.updated_at)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  )
+  );
 }
