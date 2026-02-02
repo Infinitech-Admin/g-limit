@@ -35,7 +35,10 @@ export async function GET() {
   } catch (error) {
     console.error("Admin dashboard API error:", error)
     return NextResponse.json(
-      { message: "Internal server error", error: error.message }, 
+      { 
+        message: "Internal server error", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      }, 
       { status: 500 }
     )
   }
