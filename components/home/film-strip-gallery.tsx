@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, memo, useCallback } from "react"
+import { useEffect, useState, memo, useCallback, useRef } from "react"
 import Image from "next/image"
 import Marquee from "react-fast-marquee"
 
@@ -15,7 +15,9 @@ interface FilmStripImage {
 
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000"
 
-// Precompute perforation slots
+// Tiny base64 blur placeholder (1x1 transparent pixel)
+const BLUR_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+
 const perforations = Array.from({ length: 5 }, (_, i) => i)
 
 const FilmStripImageItem = memo(({ image, rowIndex, isLast }: { image: FilmStripImage; rowIndex: number; isLast: boolean }) => {
@@ -35,9 +37,9 @@ const FilmStripImageItem = memo(({ image, rowIndex, isLast }: { image: FilmStrip
         height={256}
         style={{ objectFit: "cover" }}
         placeholder="blur"
-        blurDataURL="/placeholder.png"
-        priority={rowIndex === 0}
+        blurDataURL={BLUR_DATA_URL}
         loading={rowIndex === 0 ? "eager" : "lazy"}
+        quality={75} // Reduce quality for better performance
       />
       <div className="absolute top-2 left-2 text-yellow-500 font-mono text-xs font-bold">{String(image.id).padStart(3, "0")}</div>
     </div>
@@ -46,42 +48,67 @@ const FilmStripImageItem = memo(({ image, rowIndex, isLast }: { image: FilmStrip
 
 FilmStripImageItem.displayName = "FilmStripImageItem"
 
-// Film Strip Row
 const FilmStripRow = memo(
-  ({ images, reverse = false, speed = 10, rowIndex }: { images: FilmStripImage[]; reverse?: boolean; speed?: number; rowIndex: number }) => (
-    <div className={`relative ${reverse ? "-rotate-2" : "rotate-2"} my-8`}>
-      <div className="relative bg-black border-y-8 border-black py-4 overflow-hidden">
-        {/* Top perforations */}
-        <div className="absolute top-0 left-0 right-0 flex justify-around px-4 z-10">
-          {perforations.map((i) => (
-            <div key={i} className="w-4 h-6 bg-white rounded-sm" />
-          ))}
-        </div>
+  ({ images, reverse = false, speed = 10, rowIndex }: { images: FilmStripImage[]; reverse?: boolean; speed?: number; rowIndex: number }) => {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [isVisible, setIsVisible] = useState(false)
 
-        {/* Bottom perforations */}
-        <div className="absolute bottom-0 left-0 right-0 flex justify-around px-4 z-10">
-          {perforations.map((i) => (
-            <div key={i} className="w-4 h-6 bg-white rounded-sm" />
-          ))}
-        </div>
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            setIsVisible(entry.isIntersecting)
+          })
+        },
+        { threshold: 0.1 }
+      )
 
-        <div className="relative h-64">
-          <Marquee gradient={false} speed={speed} direction={reverse ? "right" : "left"}>
-            {images.map((img, index) => (
-              <FilmStripImageItem key={img.id} image={img} rowIndex={rowIndex} isLast={index === images.length - 1} />
+      if (containerRef.current) {
+        observer.observe(containerRef.current)
+      }
+
+      return () => observer.disconnect()
+    }, [])
+
+    return (
+      <div ref={containerRef} className={`relative ${reverse ? "-rotate-2" : "rotate-2"} my-8`}>
+        <div className="relative bg-black border-y-8 border-black py-4 overflow-hidden">
+          {/* Top perforations */}
+          <div className="absolute top-0 left-0 right-0 flex justify-around px-4 z-10">
+            {perforations.map((i) => (
+              <div key={i} className="w-4 h-6 bg-white rounded-sm" />
             ))}
-          </Marquee>
-        </div>
-      </div>
+          </div>
 
-      <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-yellow-500 text-black px-3 py-1 text-xs font-bold rotate-90 z-20">G-LIMIT</div>
-    </div>
-  ),
+          {/* Bottom perforations */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-around px-4 z-10">
+            {perforations.map((i) => (
+              <div key={i} className="w-4 h-6 bg-white rounded-sm" />
+            ))}
+          </div>
+
+          <div className="relative h-64">
+            <Marquee 
+              gradient={false} 
+              speed={speed} 
+              direction={reverse ? "right" : "left"}
+              play={isVisible} // Only animate when visible
+            >
+              {images.map((img, index) => (
+                <FilmStripImageItem key={img.id} image={img} rowIndex={rowIndex} isLast={index === images.length - 1} />
+              ))}
+            </Marquee>
+          </div>
+        </div>
+
+        <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-yellow-500 text-black px-3 py-1 text-xs font-bold rotate-90 z-20">G-LIMIT</div>
+      </div>
+    )
+  }
 )
 
 FilmStripRow.displayName = "FilmStripRow"
 
-//  Film Strip Gallery
 export function FilmStripGallery() {
   const [rowImages, setRowImages] = useState<FilmStripImage[][]>([[], [], []])
   const [loading, setLoading] = useState(true)
