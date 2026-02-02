@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import type React from "react";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState, useMemo } from "react";
 import { Camera, Aperture, Focus, ZoomIn, Sparkles, AlertCircle } from "lucide-react";
@@ -41,7 +41,6 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: categoriesData } = useSWR<{
@@ -108,12 +107,10 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Reduced particle count */}
       <FloatingParticles count={15} />
 
-      {/* Hero Section - SIMPLIFIED */}
+      {/* Hero Section */}
       <section className="pt-32 pb-16 px-6 relative overflow-hidden">
-        {/* SIMPLIFIED: Only 10 perforations instead of 50 */}
         <div className="absolute top-0 left-0 right-0 h-16 bg-black border-b-2 border-amber-500 flex items-center overflow-hidden">
           <motion.div
             className="flex gap-3"
@@ -135,7 +132,6 @@ export default function Portfolio() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {/* SIMPLIFIED: Static corners instead of animated */}
             <div className="inline-block relative mb-8">
               <div className="absolute -top-6 -left-6 w-12 h-12 border-l-3 border-t-3 border-amber-500">
                 <div className="absolute top-0 left-0 w-3 h-3 bg-amber-500 rounded-full" />
@@ -158,7 +154,6 @@ export default function Portfolio() {
               </h1>
             </div>
 
-            {/* SIMPLIFIED: Static sparkles */}
             <div className="flex items-center justify-center gap-4 mb-6">
               <Sparkles className="w-6 h-6 text-amber-500" />
               <p className="text-lg text-gray-300 max-w-2xl">
@@ -174,7 +169,6 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Error State */}
       {error && (
         <section className="px-6 py-8">
           <div className="max-w-6xl mx-auto bg-red-500/10 border border-red-500/30 rounded-lg p-6 flex items-center gap-4">
@@ -209,7 +203,7 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Gallery Grid - HEAVILY SIMPLIFIED */}
+      {/* Gallery Grid - CSS-ONLY HOVER */}
       <section className="px-6 py-20 relative z-10">
         <div className="max-w-7xl mx-auto">
           {isLoading ? (
@@ -228,13 +222,11 @@ export default function Portfolio() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.4 }}
-                  className="relative group cursor-pointer"
+                  className="gallery-card-wrapper cursor-pointer"
                   onClick={() => openLightbox(index)}
-                  onMouseEnter={() => setHoveredId(image.id)}
-                  onMouseLeave={() => setHoveredId(null)}
                 >
-                  {/* SIMPLIFIED: Basic frame with hover effect */}
-                  <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 p-1 rounded-lg hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-500 border-2 border-amber-500/30">
+                  {/* Pure CSS hover - no state updates! */}
+                  <div className="gallery-card bg-gradient-to-br from-amber-500/20 to-amber-600/20 p-1 rounded-lg border-2 border-amber-500/30">
                     <div className="bg-black p-4 pb-20 rounded-lg relative overflow-hidden">
                       <div className="relative aspect-[4/5] overflow-hidden rounded">
                         <Image
@@ -242,29 +234,26 @@ export default function Portfolio() {
                           alt={image.alt}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                          className="gallery-image object-cover"
                           loading={index < 8 ? "eager" : "lazy"}
                           quality={85}
                         />
 
                         {/* Simple overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                        <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
 
-                        {/* SIMPLIFIED: Only show focus corners on hover, no complex animations */}
-                        {hoveredId === image.id && (
-                          <div className="absolute inset-0 pointer-events-none transition-opacity duration-300">
-                            {/* Simple focus brackets */}
-                            <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-amber-500" />
-                            <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-amber-500" />
-                            <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-amber-500" />
-                            <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-amber-500" />
+                        {/* Focus corners - CSS-only visibility */}
+                        <div className="gallery-focus-overlay absolute inset-0 pointer-events-none opacity-0">
+                          <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-amber-500" />
+                          <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-amber-500" />
+                          <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-amber-500" />
+                          <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-amber-500" />
 
-                            {/* Simple zoom icon */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                              <ZoomIn className="w-12 h-12 text-amber-500" />
-                            </div>
+                          {/* Zoom icon */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <ZoomIn className="w-12 h-12 text-amber-500" />
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Caption */}
@@ -275,11 +264,60 @@ export default function Portfolio() {
                         </p>
                       </div>
 
-                      {/* Simple corner glows */}
-                      <div className="absolute top-0 left-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      {/* Corner glows */}
+                      <div className="gallery-glow-tl absolute top-0 left-0 w-20 h-20 bg-amber-500/20 blur-2xl" />
+                      <div className="gallery-glow-br absolute bottom-0 right-0 w-20 h-20 bg-amber-500/20 blur-2xl" />
                     </div>
                   </div>
+
+                  {/* CSS Styles for instant hover */}
+                  <style jsx>{`
+                    .gallery-card {
+                      transition: box-shadow 0.3s ease, transform 0.3s ease;
+                    }
+
+                    .gallery-card-wrapper:hover .gallery-card {
+                      box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.3);
+                      transform: translateY(-8px);
+                    }
+
+                    .gallery-image {
+                      transition: transform 0.7s ease, filter 0.5s ease;
+                    }
+
+                    .gallery-card-wrapper:hover .gallery-image {
+                      transform: scale(1.1);
+                      filter: brightness(0.75);
+                    }
+
+                    .gallery-overlay {
+                      opacity: 0.5;
+                      transition: opacity 0.5s ease;
+                    }
+
+                    .gallery-card-wrapper:hover .gallery-overlay {
+                      opacity: 0.7;
+                    }
+
+                    .gallery-focus-overlay {
+                      transition: opacity 0.3s ease;
+                    }
+
+                    .gallery-card-wrapper:hover .gallery-focus-overlay {
+                      opacity: 1;
+                    }
+
+                    .gallery-glow-tl,
+                    .gallery-glow-br {
+                      opacity: 0;
+                      transition: opacity 0.5s ease;
+                    }
+
+                    .gallery-card-wrapper:hover .gallery-glow-tl,
+                    .gallery-card-wrapper:hover .gallery-glow-br {
+                      opacity: 1;
+                    }
+                  `}</style>
                 </motion.div>
               ))}
             </div>
