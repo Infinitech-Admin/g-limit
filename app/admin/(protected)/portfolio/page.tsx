@@ -47,6 +47,7 @@ export default function AdminPortfolio() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState(""); // ✅ added search state
 
   const [formData, setFormData] = useState({
     title: "",
@@ -70,6 +71,10 @@ export default function AdminPortfolio() {
       const query = new URLSearchParams();
       query.append('page', (pageIndex + 1).toString());
       query.append('perPage', pageSize.toString());
+
+      if (search.trim()) {
+        query.append('search', search.trim()); // ✅ pass search to API
+      }
 
       const response = await fetch(`/api/portfolio?${query.toString()}`, {
         credentials: 'include',
@@ -97,7 +102,7 @@ export default function AdminPortfolio() {
     } finally {
       setLoading(false);
     }
-  }, [pageIndex, pageSize, toast]);
+  }, [pageIndex, pageSize, search, toast]); // ✅ added search to deps
 
   useEffect(() => {
     fetchPortfolio();
@@ -357,10 +362,10 @@ export default function AdminPortfolio() {
             setPageIndex(pi);
             setPageSize(ps);
           }}
-          searchFields={[]}
-          searchPlaceholder=""
-          search=""
-          onSearchChange={() => {}}
+          searchFields={['title', 'category', 'camera']} // ✅ actual fields
+          searchPlaceholder="Search portfolio..."          // ✅ placeholder text
+          search={search}                                  // ✅ controlled by state
+          onSearchChange={setSearch}                       // ✅ updates state on type
           onSortingChange={() => {}}
         />
       </div>
