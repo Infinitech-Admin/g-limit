@@ -1,10 +1,11 @@
-
 "use client"
 
-import { useEffect, useState, memo, useCallback } from "react"
+import { useEffect, useState, useRef, memo, useCallback } from "react"
 import Image from "next/image"
-import Marquee from "react-fast-marquee"
 
+// ---------------------------------------------------------------------------
+// Types & constants
+// ---------------------------------------------------------------------------
 interface FilmStripImage {
   id: number
   image_path: string
@@ -15,103 +16,204 @@ interface FilmStripImage {
 }
 
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000"
+const BATCH_SIZE = 10
+const SHUTTER_INTERVAL_MS = 5000
 
-// Precompute perforation slots
-const perforations = Array.from({ length: 5 }, (_, i) => i)
+function getImageUrl(path: string) {
+  if (!path) return "/placeholder.png"
+  if (path.startsWith("http")) return path
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path
+  return `${API_IMG}/${cleanPath}`
+}
 
-const FilmStripImageItem = memo(({ image, rowIndex, isLast }: { image: FilmStripImage; rowIndex: number; isLast: boolean }) => {
-  const getImageUrl = useCallback((path: string) => {
-    if (!path) return "/placeholder.png"
-    if (path.startsWith("http")) return path
-    const cleanPath = path.startsWith("/") ? path.slice(1) : path
-    return `${API_IMG}/${cleanPath}`
-  }, [])
+// ---------------------------------------------------------------------------
+// Sizes — max rowSpan 2, max colSpan 2. Mostly 1x1 so grid stays dense.
+// ---------------------------------------------------------------------------
+const SIZES: { rowSpan: number; colSpan: number }[] = [
+  { rowSpan: 1, colSpan: 1 }, // square
+  { rowSpan: 1, colSpan: 2 }, // wide
+  { rowSpan: 2, colSpan: 1 }, // tall
+  { rowSpan: 1, colSpan: 1 }, // square
+  { rowSpan: 1, colSpan: 1 }, // square
+  { rowSpan: 2, colSpan: 2 }, // feature (big) — rare
+  { rowSpan: 1, colSpan: 1 }, // square
+  { rowSpan: 1, colSpan: 1 }, // square
+  { rowSpan: 1, colSpan: 2 }, // wide
+  { rowSpan: 1, colSpan: 1 }, // square
+]
+
+function getSizeIndex(id: number): number {
+  return ((id * 2654435761) >>> 0) % SIZES.length
+}
+
+// ---------------------------------------------------------------------------
+// Single card
+// ---------------------------------------------------------------------------
+const GalleryCard = memo(({ image, index }: { image: FilmStripImage; index: number }) => {
+  const size = SIZES[getSizeIndex(image.id)]
+  const delayWithinBatch = (index % BATCH_SIZE) * 50
 
   return (
-    <div className={`relative flex-shrink-0 w-64 h-64 bg-gray-900 border-4 border-gray-800 overflow-hidden ${!isLast ? "mr-2" : ""}`}>
+    <div
+      className="gallery-card relative overflow-hidden rounded-md bg-gray-900 group cursor-pointer"
+      style={{
+        gridRow: `span ${size.rowSpan}`,
+        gridColumn: `span ${size.colSpan}`,
+        animationDelay: `${delayWithinBatch}ms`,
+      }}
+    >
       <Image
         src={getImageUrl(image.image_path)}
         alt={image.alt_text || ""}
-        width={256}
-        height={256}
+        fill
+        sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 20vw"
         style={{ objectFit: "cover" }}
+        className="transition-transform duration-700 ease-out group-hover:scale-105"
+        priority={index < 10}
         placeholder="blur"
         blurDataURL="/placeholder.png"
-        priority={rowIndex === 0}
-        loading={rowIndex === 0 ? "eager" : "lazy"}
       />
-      <div className="absolute top-2 left-2 text-yellow-500 font-mono text-xs font-bold">{String(image.id).padStart(3, "0")}</div>
+
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* ID badge */}
+      <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-yellow-400 font-mono text-xs font-bold px-1.5 py-0.5 rounded">
+        {String(image.id).padStart(3, "0")}
+      </div>
     </div>
   )
 })
+GalleryCard.displayName = "GalleryCard"
 
-FilmStripImageItem.displayName = "FilmStripImageItem"
-
-// Film Strip Row
-const FilmStripRow = memo(
-  ({ images, reverse = false, speed = 10, rowIndex }: { images: FilmStripImage[]; reverse?: boolean; speed?: number; rowIndex: number }) => (
-    <div className={`relative ${reverse ? "-rotate-2" : "rotate-2"} my-8`}>
-      <div className="relative bg-black border-y-8 border-black py-4 overflow-hidden">
-        {/* Top perforations */}
-        <div className="absolute top-0 left-0 right-0 flex justify-around px-4 z-10">
-          {perforations.map((i) => (
-            <div key={i} className="w-4 h-6 bg-white rounded-sm" />
-          ))}
-        </div>
-
-        {/* Bottom perforations */}
-        <div className="absolute bottom-0 left-0 right-0 flex justify-around px-4 z-10">
-          {perforations.map((i) => (
-            <div key={i} className="w-4 h-6 bg-white rounded-sm" />
-          ))}
-        </div>
-
-        <div className="relative h-64">
-          <Marquee gradient={false} speed={speed} direction={reverse ? "right" : "left"}>
-            {images.map((img, index) => (
-              <FilmStripImageItem key={img.id} image={img} rowIndex={rowIndex} isLast={index === images.length - 1} />
-            ))}
-          </Marquee>
-        </div>
-      </div>
-
-      <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-yellow-500 text-black px-3 py-1 text-xs font-bold rotate-90 z-20">G-LIMIT</div>
-    </div>
-  ),
-)
-
-FilmStripRow.displayName = "FilmStripRow"
-
-//  Film Strip Gallery
+// ---------------------------------------------------------------------------
+// Gallery
+// ---------------------------------------------------------------------------
 export function FilmStripGallery() {
-  const [rowImages, setRowImages] = useState<FilmStripImage[][]>([[], [], []])
-  const [loading, setLoading] = useState(true)
+  const [visibleImages, setVisibleImages] = useState<FilmStripImage[]>([])
+  const allImagesRef = useRef<FilmStripImage[]>([])
+  const revealedCountRef = useRef(0)
+  const prevIdsRef = useRef<Set<number>>(new Set())
+  const hasData = useRef(false)
 
+  const revealNextBatch = useCallback(() => {
+    const all = allImagesRef.current
+    const start = revealedCountRef.current
+    if (start >= all.length) return
+    const end = Math.min(start + BATCH_SIZE, all.length)
+    revealedCountRef.current = end
+    setVisibleImages(all.slice(0, end))
+  }, [])
+
+  // Polling
   useEffect(() => {
-    const fetchAll = async () => {
+    let cancelled = false
+
+    const poll = async () => {
+      if (cancelled) return
       try {
-        const res = await fetch("/api/film-strip?perPage=25")
+        const res = await fetch("/api/film-strip?perPage=66")
         const json = await res.json()
         const images: FilmStripImage[] = Array.isArray(json.data) ? json.data : []
 
-        setRowImages([images.slice(0, 8), images.slice(9, 17), images.slice(18, 25)])
+        const newIds = new Set(images.map((img) => img.id))
+        const changed =
+          newIds.size !== prevIdsRef.current.size ||
+          images.some((img) => !prevIdsRef.current.has(img.id))
+
+        if (changed) {
+          prevIdsRef.current = newIds
+          allImagesRef.current = images
+          if (!hasData.current && images.length > 0) {
+            hasData.current = true
+            revealedCountRef.current = 0
+            revealNextBatch()
+          }
+        }
       } catch (err) {
         console.error(err)
-      } finally {
-        setLoading(false)
       }
     }
 
-    fetchAll()
-  }, [])
+    poll()
+    const pollInterval = setInterval(poll, 3000)
+    return () => {
+      cancelled = true
+      clearInterval(pollInterval)
+    }
+  }, [revealNextBatch])
+
+  // Shutter timer
+  useEffect(() => {
+    const shutterInterval = setInterval(() => {
+      if (hasData.current) revealNextBatch()
+    }, SHUTTER_INTERVAL_MS)
+    return () => clearInterval(shutterInterval)
+  }, [revealNextBatch])
 
   return (
-    <section className="py-16 bg-gradient-to-b from-amber-900/40 via-amber-950/60 to-black overflow-hidden min-h-screen space-y-4">
-      {loading ? (
-        <div className="text-[#d4a574] text-center">Loading Gallery...</div>
-      ) : (
-        rowImages.map((images, i) => <FilmStripRow key={i} images={images} reverse={i % 2 === 1} speed={[20, 30, 15][i]} rowIndex={i} />)
-      )}
-    </section>
+    <>
+      <style>{`
+        /* 6 columns, small rows — fills width, stays short */
+        .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          grid-auto-rows: 140px;
+          gap: 10px;
+          padding: 0 24px;
+        }
+        @media (max-width: 1024px) {
+          .gallery-grid {
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: 120px;
+          }
+        }
+        @media (max-width: 768px) {
+          .gallery-grid {
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 100px;
+            gap: 8px;
+          }
+        }
+        @media (max-width: 500px) {
+          .gallery-grid {
+            grid-template-columns: repeat(3, 1fr);
+            grid-auto-rows: 90px;
+            gap: 6px;
+            padding: 0 12px;
+          }
+        }
+
+        .gallery-card {
+          animation: shutterDrop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes shutterDrop {
+          0% {
+            opacity: 0;
+            clip-path: inset(0 0 100% 0);
+            transform: translateY(-6px);
+          }
+          100% {
+            opacity: 1;
+            clip-path: inset(0 0 0% 0);
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
+      <section className="min-h-screen py-16 bg-gradient-to-b from-zinc-950 via-gray-950 to-black">
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-3/4 h-1/2 bg-amber-900/10 blur-3xl rounded-full" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="gallery-grid">
+            {visibleImages.map((img, i) => (
+              <GalleryCard key={img.id} image={img} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   )
 }
