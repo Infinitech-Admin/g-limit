@@ -1,7 +1,7 @@
 'use client'
 
 import React from "react"
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, X, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import useSWR from 'swr'
 import { DataTable } from '@/components/admin/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -31,16 +30,15 @@ interface NewsItem {
   updated_at: string
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
-
 export default function AdminNewsPage() {
   const { toast } = useToast()
+  const [data, setData] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState("")
-  
-  const { data, mutate } = useSWR(`/api/news?page=${pageIndex + 1}&limit=${pageSize}&search=${search}`, fetcher)
-  
+
   const [isCreating, setIsCreating] = useState(false)
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null)
   const [isViewOpen, setIsViewOpen] = useState(false)
@@ -54,6 +52,55 @@ export default function AdminNewsPage() {
     date: new Date().toISOString().split('T')[0],
   })
 
+  // ✅ Replaced useSWR with useCallback + useEffect to match the pattern
+  //    used across all your other admin pages (credentials, last_page, etc.)
+  const fetchNews = useCallback(async () => {
+    setLoading(true)
+    try {
+      const query = new URLSearchParams()
+      query.append('page', (pageIndex + 1).toString())
+      query.append('perPage', pageSize.toString())
+
+      if (search.trim()) {
+        query.append('search', search.trim())
+      }
+
+      const response = await fetch(`/api/news?${query.toString()}`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
+      const json = await response.json()
+      const newsItems = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : []
+      setData(newsItems)
+      setTotalPages(json.last_page ?? 1) // ✅ aligned with other pages
+    } catch (err) {
+      console.error('Fetch error:', err)
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to fetch news',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [pageIndex, pageSize, search, toast])
+
+  useEffect(() => {
+    fetchNews()
+  }, [fetchNews])
+
+  const getImageUrl = (imagePath: string) => {
+    return `${process.env.NEXT_PUBLIC_API_IMG}/${imagePath}`
+  }
+
   // Define columns for DataTable
   const columns: ColumnDef<NewsItem>[] = [
     {
@@ -61,12 +108,6 @@ export default function AdminNewsPage() {
       header: "Image",
       cell: ({ row }) => {
         const images = row.original.images
-        const getImageUrl = (imagePath: string) => {
-          // The image_path from API is like: images/news/filename.jpg
-          // Laravel serves files from public directory at root
-          return `${process.env.NEXT_PUBLIC_API_IMG}/${imagePath}`
-        }
-        
         return (
           <div className="w-16 h-16 flex-shrink-0">
             {images && images.length > 0 && images[0] && images[0].image_path ? (
@@ -77,8 +118,6 @@ export default function AdminNewsPage() {
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   console.error('Image failed to load:', target.src)
-                  console.error('Image path from API:', images[0].image_path)
-                  console.error('NEXT_PUBLIC_API_IMG:', process.env.NEXT_PUBLIC_API_IMG)
                 }}
               />
             ) : (
@@ -206,6 +245,7 @@ export default function AdminNewsPage() {
       const response = await fetch('/api/news', {
         method: 'POST',
         body: formDataToSend,
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -227,7 +267,7 @@ export default function AdminNewsPage() {
       setUploadedImages([])
       setImagePreviews([])
       setIsCreating(false)
-      mutate()
+      await fetchNews() // ✅ refetch after create
     } catch (error) {
       console.error('Error creating news:', error)
       toast({
@@ -245,6 +285,7 @@ export default function AdminNewsPage() {
       setIsDeleting(true)
       const response = await fetch(`/api/news/${selectedNews.id}`, {
         method: 'DELETE',
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -256,10 +297,10 @@ export default function AdminNewsPage() {
         description: 'News item deleted successfully',
       })
 
-      mutate()
       setSelectedNews(null)
       setIsDeleteOpen(false)
       setIsViewOpen(false)
+      await fetchNews() // ✅ refetch after delete
     } catch (error) {
       console.error('Error deleting news:', error)
       toast({
@@ -271,9 +312,6 @@ export default function AdminNewsPage() {
       setIsDeleting(false)
     }
   }
-
-  const news = data?.data || []
-  const pageCount = Math.ceil((data?.total || 0) / pageSize)
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -294,8 +332,8 @@ export default function AdminNewsPage() {
       {/* DataTable */}
       <DataTable
         columns={columns}
-        data={news}
-        pageCount={pageCount}
+        data={data}
+        pageCount={totalPages}                          // ✅ uses last_page like other pages
         pageIndex={pageIndex}
         pageSize={pageSize}
         onPageChange={(newPageIndex, newPageSize) => {
@@ -305,7 +343,7 @@ export default function AdminNewsPage() {
         searchFields={['title', 'description']}
         searchPlaceholder="Search news articles..."
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={setSearch}                      // ✅ already correct
       />
 
       {/* Create Dialog */}
@@ -462,22 +500,18 @@ export default function AdminNewsPage() {
                 <div>
                   <p className="text-gray-500 font-medium text-sm mb-2">Images ({selectedNews.images.length})</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {selectedNews.images.map(image => {
-                      const imageUrl = `${process.env.NEXT_PUBLIC_API_IMG}/${image.image_path}`
-                      return (
-                        <img
-                          key={image.id}
-                          src={imageUrl}
-                          alt="News"
-                          className="w-full h-24 object-cover rounded-md border border-gray-200"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            console.error('Image failed to load:', target.src)
-                            console.error('Image path from API:', image.image_path)
-                          }}
-                        />
-                      )
-                    })}
+                    {selectedNews.images.map(image => (
+                      <img
+                        key={image.id}
+                        src={getImageUrl(image.image_path)}
+                        alt="News"
+                        className="w-full h-24 object-cover rounded-md border border-gray-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          console.error('Image failed to load:', target.src)
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
               )}
