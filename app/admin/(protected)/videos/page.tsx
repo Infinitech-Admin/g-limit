@@ -50,6 +50,7 @@ export default function BlogVideosPage() {
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [pageCount, setPageCount] = useState(1)
+  const [search, setSearch] = useState("") // ✅ added search state
 
   // Form fields
   const [title, setTitle] = useState('')
@@ -71,13 +72,12 @@ export default function BlogVideosPage() {
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
 
-      // Debug: Log the URL being called
-      const url = `${API_URL}/blog-videos?${query.toString()}`
-      console.log('🔍 Fetching from URL:', url)
-      console.log('🔍 API_URL value:', API_URL)
-      console.log('🔍 API_IMG_URL value:', API_IMG_URL)
+      if (search.trim()) {
+        query.append('search', search.trim()) // ✅ pass search to API
+      }
 
-      // Fetch directly from Laravel backend using API_URL (includes /api prefix)
+      const url = `${API_URL}/blog-videos?${query.toString()}`
+
       const response = await fetch(url, {
         headers: {
           'Accept': 'application/json',
@@ -102,7 +102,7 @@ export default function BlogVideosPage() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize])
+  }, [pageIndex, pageSize, search]) // ✅ added search to deps
 
   useEffect(() => {
     fetchVideos()
@@ -406,10 +406,10 @@ export default function BlogVideosPage() {
           setPageIndex(pi)
           setPageSize(ps)
         }}
-        searchFields={['title' as keyof BlogVideo]}
-        searchPlaceholder="Search videos..."
-        search=""
-        onSearchChange={() => {}}
+        searchFields={['title', 'description']}  // ✅ actual fields
+        searchPlaceholder="Search videos..."      // ✅ placeholder text
+        search={search}                           // ✅ controlled by state
+        onSearchChange={setSearch}                // ✅ updates state on type
         onSortingChange={() => {}}
       />
 
