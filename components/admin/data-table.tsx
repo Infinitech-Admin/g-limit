@@ -45,6 +45,9 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState("")
 
+  // Internal fallback state in case the parent does not manage `search`
+  const [internalSearch, setInternalSearch] = useState(search ?? "")
+
   const table = useReactTable({
     data,
     columns,
@@ -69,15 +72,26 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   })
 
+  // Use the parent-controlled value if onSearchChange is provided,
+  // otherwise fall back to the internal state so typing always works.
+  const searchValue = onSearchChange ? (search ?? "") : internalSearch
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = event.target.value
+    setInternalSearch(val) // always update internal state
+    onSearchChange?.(val) // also notify parent if callback exists
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {searchFields && (
         <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {/* pointer-events-none prevents the icon from blocking clicks/focus on the input */}
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder={searchPlaceholder}
-            value={search ?? ""}
-            onChange={(event) => onSearchChange?.(event.target.value)}
+            value={searchValue}
+            onChange={handleSearchChange}
             className="pl-10 w-full"
           />
         </div>
