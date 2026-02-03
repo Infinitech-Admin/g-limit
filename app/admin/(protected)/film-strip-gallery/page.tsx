@@ -1,4 +1,3 @@
-
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import React from "react"
@@ -47,8 +46,11 @@ export default function FilmStripGalleryPage() {
   const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
 
+  // ✅ Added: proper search state
+  const [search, setSearch] = useState("")
+
   const getImageUrl = (path: string) => {
-    if (!path) return '/placeholder.png'
+    if (!path) return '/placeholder.svg'
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path
     }
@@ -62,6 +64,11 @@ export default function FilmStripGalleryPage() {
       const query = new URLSearchParams()
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
+
+      // ✅ Added: pass search to API if you support server-side search
+      if (search.trim()) {
+        query.append('search', search.trim())
+      }
 
       const response = await fetch(`/api/film-strip?${query.toString()}`, {
         credentials: 'include',
@@ -88,7 +95,7 @@ export default function FilmStripGalleryPage() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize])
+  }, [pageIndex, pageSize, search]) // ✅ Added: search as a dependency
 
   useEffect(() => {
     fetchImages()
@@ -214,12 +221,12 @@ export default function FilmStripGalleryPage() {
         return imagePath ? (
           <div className="relative w-20 h-20 rounded overflow-hidden">
             <img
-              src={getImageUrl(imagePath) || "/placeholder.png"}
+              src={getImageUrl(imagePath) || "/placeholder.svg"}
               alt="Film strip"
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement
-                target.src = '/placeholder.png'
+                target.src = '/placeholder.svg'
               }}
             />
           </div>
@@ -312,10 +319,11 @@ export default function FilmStripGalleryPage() {
             setPageIndex(pi)
             setPageSize(ps)
           }}
-          searchFields={[]}
-          searchPlaceholder=""
-          search=""
-          onSearchChange={() => {}}
+          // ✅ Fixed: pass actual searchFields, wire up state properly
+          searchFields={['image_path', 'alt_text']}
+          searchPlaceholder="Search images..."
+          search={search}
+          onSearchChange={setSearch}
           onSortingChange={() => {}}
         />
       </div>
@@ -413,7 +421,7 @@ export default function FilmStripGalleryPage() {
           {selectedItem && (
             <div className="space-y-4">
               <img
-                src={getImageUrl(selectedItem.image_path) || "/placeholder.png"}
+                src={getImageUrl(selectedItem.image_path) || "/placeholder.svg"}
                 alt="Film strip image"
                 className="w-full rounded-lg border border-gray-200"
               />
