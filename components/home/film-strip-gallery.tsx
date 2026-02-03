@@ -1,10 +1,11 @@
-
 "use client"
 
-import { useEffect, useState, memo, useCallback } from "react"
+import { useEffect, useState, useRef, memo, useCallback } from "react"
 import Image from "next/image"
-import Marquee from "react-fast-marquee"
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 interface FilmStripImage {
   id: number
   image_path: string
@@ -15,41 +16,60 @@ interface FilmStripImage {
 }
 
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000"
-
-// Precompute perforation slots
 const perforations = Array.from({ length: 5 }, (_, i) => i)
 
-const FilmStripImageItem = memo(({ image, rowIndex, isLast }: { image: FilmStripImage; rowIndex: number; isLast: boolean }) => {
-  const getImageUrl = useCallback((path: string) => {
-    if (!path) return "/placeholder.png"
-    if (path.startsWith("http")) return path
-    const cleanPath = path.startsWith("/") ? path.slice(1) : path
-    return `${API_IMG}/${cleanPath}`
-  }, [])
+function getImageUrl(path: string) {
+  if (!path) return "/placeholder.png"
+  if (path.startsWith("http")) return path
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path
+  return `${API_IMG}/${cleanPath}`
+}
 
-  return (
-    <div className={`relative flex-shrink-0 w-64 h-64 bg-gray-900 border-4 border-gray-800 overflow-hidden ${!isLast ? "mr-2" : ""}`}>
-      <Image
-        src={getImageUrl(image.image_path)}
-        alt={image.alt_text || ""}
-        width={256}
-        height={256}
-        style={{ objectFit: "cover" }}
-        placeholder="blur"
-        blurDataURL="/placeholder.png"
-        priority={rowIndex === 0}
-        loading={rowIndex === 0 ? "eager" : "lazy"}
-      />
-      <div className="absolute top-2 left-2 text-yellow-500 font-mono text-xs font-bold">{String(image.id).padStart(3, "0")}</div>
+// ---------------------------------------------------------------------------
+// Single image card
+// ---------------------------------------------------------------------------
+const FilmStripImageItem = memo(({ image, rowIndex }: { image: FilmStripImage; rowIndex: number }) => (
+  <div className="relative flex-shrink-0 w-64 h-64 bg-gray-900 border-4 border-gray-800 overflow-hidden mr-2">
+    <Image
+      src={getImageUrl(image.image_path)}
+      alt={image.alt_text || ""}
+      width={256}
+      height={256}
+      style={{ objectFit: "cover" }}
+      placeholder="blur"
+      blurDataURL="/placeholder.png"
+      priority={rowIndex === 0}
+      loading={rowIndex === 0 ? "eager" : "lazy"}
+    />
+    <div className="absolute top-2 left-2 text-yellow-500 font-mono text-xs font-bold">
+      {String(image.id).padStart(3, "0")}
     </div>
-  )
-})
-
+  </div>
+))
 FilmStripImageItem.displayName = "FilmStripImageItem"
 
-// Film Strip Row
-const FilmStripRow = memo(
-  ({ images, reverse = false, speed = 10, rowIndex }: { images: FilmStripImage[]; reverse?: boolean; speed?: number; rowIndex: number }) => (
+// ---------------------------------------------------------------------------
+// CSS-only scrolling row
+// Duplicates the image list once so the loop is seamless.
+// translate3d keeps it on the GPU compositing layer — no layout/paint per frame.
+// ---------------------------------------------------------------------------
+function FilmStripRow({
+  images,
+  reverse = false,
+  speed = 40,
+  rowIndex,
+}: {
+  images: FilmStripImage[]
+  reverse?: boolean
+  speed?: number // seconds for one full loop
+  rowIndex: number
+}) {
+  // Unique animation name per row so each can have its own duration / direction
+  const animName = `scroll-row-${rowIndex}`
+
+  if (images.length === 0) return null
+
+  return (
     <div className={`relative ${reverse ? "-rotate-2" : "rotate-2"} my-8`}>
       <div className="relative bg-black border-y-8 border-black py-4 overflow-hidden">
         {/* Top perforations */}
@@ -66,52 +86,98 @@ const FilmStripRow = memo(
           ))}
         </div>
 
-        <div className="relative h-64">
-          <Marquee gradient={false} speed={speed} direction={reverse ? "right" : "left"}>
-            {images.map((img, index) => (
-              <FilmStripImageItem key={img.id} image={img} rowIndex={rowIndex} isLast={index === images.length - 1} />
+        {/* Scrolling track */}
+        <div className="relative h-64 overflow-hidden">
+          <style>{`
+            @keyframes ${animName} {
+              0%   { transform: translate3d(0, 0, 0); }
+              100% { transform: translate3d(-50%, 0, 0); }
+            }
+          `}</style>
+
+          <div
+            className="flex will-change-transform"
+            style={{
+              animation: `${animName} ${speed}s linear infinite`,
+              animationDirection: reverse ? "reverse" : "normal",
+            }}
+          >
+            {/* Original set */}
+            {images.map((img) => (
+              <FilmStripImageItem key={img.id} image={img} rowIndex={rowIndex} />
             ))}
-          </Marquee>
+            {/* Duplicate set — makes the loop seamless */}
+            {images.map((img) => (
+              <FilmStripImageItem key={`dup-${img.id}`} image={img} rowIndex={rowIndex} />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-yellow-500 text-black px-3 py-1 text-xs font-bold rotate-90 z-20">G-LIMIT</div>
+      {/* G-LIMIT badge */}
+      <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-yellow-500 text-black px-3 py-1 text-xs font-bold rotate-90 z-20">
+        G-LIMIT
+      </div>
     </div>
-  ),
-)
+  )
+}
 
-FilmStripRow.displayName = "FilmStripRow"
-
-//  Film Strip Gallery
+// ---------------------------------------------------------------------------
+// Gallery — polling, no loading screen
+// ---------------------------------------------------------------------------
 export function FilmStripGallery() {
   const [rowImages, setRowImages] = useState<FilmStripImage[][]>([[], [], []])
-  const [loading, setLoading] = useState(true)
+  const prevIdsRef = useRef<Set<number>>(new Set())
 
   useEffect(() => {
-    const fetchAll = async () => {
+    let cancelled = false
+
+    const poll = async () => {
+      if (cancelled) return
       try {
-        const res = await fetch("/api/film-strip?perPage=25")
+        const res = await fetch("/api/film-strip?perPage=66")
         const json = await res.json()
         const images: FilmStripImage[] = Array.isArray(json.data) ? json.data : []
 
-        setRowImages([images.slice(0, 8), images.slice(9, 17), images.slice(18, 25)])
+        // Skip setState if nothing changed
+        const newIds = new Set(images.map((img) => img.id))
+        const changed =
+          newIds.size !== prevIdsRef.current.size ||
+          images.some((img) => !prevIdsRef.current.has(img.id))
+
+        if (changed) {
+          prevIdsRef.current = newIds
+          setRowImages([
+            images.slice(0, 22),
+            images.slice(22, 44),
+            images.slice(44, 66),
+          ])
+        }
       } catch (err) {
         console.error(err)
-      } finally {
-        setLoading(false)
       }
     }
 
-    fetchAll()
+    poll() // immediate first hit
+    const interval = setInterval(poll, 3000)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [])
 
   return (
     <section className="py-16 bg-gradient-to-b from-amber-900/40 via-amber-950/60 to-black overflow-hidden min-h-screen space-y-4">
-      {loading ? (
-        <div className="text-[#d4a574] text-center">Loading Gallery...</div>
-      ) : (
-        rowImages.map((images, i) => <FilmStripRow key={i} images={images} reverse={i % 2 === 1} speed={[20, 30, 15][i]} rowIndex={i} />)
-      )}
+      {rowImages.map((images, i) => (
+        <FilmStripRow
+          key={i}
+          images={images}
+          reverse={i % 2 === 1}
+          speed={[40, 50, 35][i]}
+          rowIndex={i}
+        />
+      ))}
     </section>
   )
 }
