@@ -55,6 +55,7 @@ export default function CategoriesPage() {
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState("") // ✅ added search state
 
   // Form state
   const [categoryName, setCategoryName] = useState('')
@@ -75,6 +76,10 @@ export default function CategoriesPage() {
       const query = new URLSearchParams()
       query.append('page', (pageIndex + 1).toString())
       query.append('perPage', pageSize.toString())
+
+      if (search.trim()) {
+        query.append('search', search.trim()) // ✅ pass search to API
+      }
 
       const response = await fetch(`/api/categories?${query.toString()}`, {
         credentials: 'include',
@@ -101,7 +106,7 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize])
+  }, [pageIndex, pageSize, search]) // ✅ added search to deps
 
   useEffect(() => {
     fetchCategories()
@@ -324,10 +329,10 @@ export default function CategoriesPage() {
             setPageIndex(pi)
             setPageSize(ps)
           }}
-          searchFields={[]}
-          searchPlaceholder=""
-          search=""
-          onSearchChange={() => {}}
+          searchFields={['name', 'description']}   // ✅ actual fields
+          searchPlaceholder="Search categories..."   // ✅ placeholder text
+          search={search}                            // ✅ controlled by state
+          onSearchChange={setSearch}                 // ✅ updates state on type
           onSortingChange={() => {}}
         />
       </div>
