@@ -160,7 +160,7 @@ export function SpotlightGallery() {
             {currentBatch.map((image, index) => (
               <div
                 key={`${batchIndex}-${image.id}`}
-                className="group relative aspect-[3/4] cursor-pointer"
+                className="group relative cursor-pointer"
                 style={{
                   animation: `spotlightIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s backwards`
                 }}
@@ -169,17 +169,17 @@ export function SpotlightGallery() {
                 {/* Spotlight glow effect */}
                 <div className="absolute -inset-4 bg-gradient-to-br from-rose-500/20 via-amber-400/20 to-cyan-400/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
-                {/* Card container */}
-                <div className="relative h-full bg-zinc-900/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-700 transition-all duration-500">
-                  {/* Image */}
-                  <div className="absolute inset-0 p-3">
-                    <div className="relative w-full h-full bg-zinc-950 rounded-lg overflow-hidden">
+                {/* Card container - flexible height */}
+                <div className="relative bg-zinc-900/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-700 transition-all duration-500">
+                  {/* Image with natural aspect ratio */}
+                  <div className="relative p-3">
+                    <div className="relative w-full bg-zinc-950 rounded-lg overflow-hidden">
                       <Image
                         src={getImageUrl(image.image_path)}
                         alt={image.alt_text || `Image ${image.id}`}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                        className="object-contain transition-transform duration-700 group-hover:scale-105"
+                        width={400}
+                        height={400}
+                        className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105"
                         priority
                       />
                     </div>
