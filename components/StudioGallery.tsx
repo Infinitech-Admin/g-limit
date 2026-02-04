@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 
 interface StudioImage {
@@ -14,18 +14,15 @@ interface StudioImage {
 
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000"
 
-export function StudioShowcase() {
+export function SpotlightGallery() {
   const [allImages, setAllImages] = useState<StudioImage[]>([])
   const [currentBatch, setCurrentBatch] = useState<StudioImage[]>([])
   const [batchIndex, setBatchIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState<StudioImage | null>(null)
-  const [isPaused, setIsPaused] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const BATCH_SIZE = 10
-  const ROTATION_INTERVAL = 4500 // 4.5 seconds
+  const ROTATION_INTERVAL = 5000
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -45,16 +42,13 @@ export function StudioShowcase() {
     fetchImages()
   }, [])
 
-  // Auto-rotate batches
   useEffect(() => {
-    if (allImages.length === 0 || isPaused) return
+    if (allImages.length === 0) return
 
     const interval = setInterval(() => {
       setBatchIndex((prevIndex) => {
         const nextIndex = prevIndex + 1
         const totalBatches = Math.ceil(allImages.length / BATCH_SIZE)
-        
-        // Loop back to start after showing all images
         const newIndex = nextIndex >= totalBatches ? 0 : nextIndex
         
         const startIdx = newIndex * BATCH_SIZE
@@ -66,21 +60,7 @@ export function StudioShowcase() {
     }, ROTATION_INTERVAL)
 
     return () => clearInterval(interval)
-  }, [allImages, isPaused])
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        const x = (e.clientX - rect.left - rect.width / 2) / rect.width
-        const y = (e.clientY - rect.top - rect.height / 2) / rect.height
-        setMousePosition({ x, y })
-      }
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
+  }, [allImages])
 
   const getImageUrl = (path: string) => {
     if (!path) return "/placeholder.png"
@@ -89,39 +69,18 @@ export function StudioShowcase() {
     return `${API_IMG}/${cleanPath}`
   }
 
-  const getBentoClass = (index: number) => {
-    const patterns = [
-      "md:col-span-2 md:row-span-2", // Large square
-      "md:col-span-1 md:row-span-2", // Tall
-      "md:col-span-2 md:row-span-1", // Wide
-      "md:col-span-1 md:row-span-1", // Small
-      "md:col-span-1 md:row-span-1", // Small
-      "md:col-span-2 md:row-span-1", // Wide
-      "md:col-span-1 md:row-span-2", // Tall
-      "md:col-span-2 md:row-span-2", // Large square
-      "md:col-span-1 md:row-span-1", // Small
-      "md:col-span-1 md:row-span-1", // Small
-    ]
-    return patterns[index % patterns.length]
-  }
-
   const totalBatches = Math.ceil(allImages.length / BATCH_SIZE)
-  const progress = ((batchIndex + 1) / totalBatches) * 100
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-[#0a0a0a] flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/30 rounded-full blur-[120px] animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500/30 rounded-full blur-[120px] animate-pulse animation-delay-1000"></div>
-        </div>
-        
-        <div className="text-center relative z-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 mb-6">
-            <div className="absolute w-20 h-20 border-4 border-amber-500/30 rounded-full animate-spin"></div>
-            <div className="absolute w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full animate-spin animation-reverse"></div>
+      <section className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 border-t-4 border-rose-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-3 border-t-4 border-amber-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-6 border-t-4 border-cyan-400 rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
           </div>
-          <p className="text-amber-100 text-2xl font-light tracking-[0.3em]">LOADING</p>
+          <p className="text-zinc-400 text-xl font-light uppercase tracking-[0.5em]">Loading</p>
         </div>
       </section>
     )
@@ -130,205 +89,190 @@ export function StudioShowcase() {
   return (
     <>
       <section 
-        ref={containerRef}
-        className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1410] to-[#0a0a0a] py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
+        className="min-h-screen bg-zinc-950 py-16 px-4 relative overflow-hidden"
       >
-        {/* Animated grain overlay */}
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] animate-grain"></div>
-        </div>
-
-        {/* Parallax background elements */}
-        <div 
-          className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-amber-600/10 to-orange-600/10 rounded-full blur-[100px] pointer-events-none"
+        {/* Radial spotlight background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(244,63,94,0.05),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(251,191,36,0.05),transparent_50%),radial-gradient(circle_at_20%_80%,rgba(34,211,238,0.05),transparent_50%)]"></div>
+        
+        {/* Animated grid lines */}
+        <div className="absolute inset-0 opacity-[0.02]" 
           style={{
-            transform: `translate(${mousePosition.x * 30}px, ${mousePosition.y * 30}px)`,
-            transition: "transform 0.3s ease-out"
-          }}
-        ></div>
-        <div 
-          className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tl from-yellow-600/10 to-amber-600/10 rounded-full blur-[100px] pointer-events-none"
-          style={{
-            transform: `translate(${mousePosition.x * -40}px, ${mousePosition.y * -40}px)`,
-            transition: "transform 0.3s ease-out"
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '80px 80px'
           }}
         ></div>
 
-        <div className="max-w-[1800px] mx-auto relative z-10">
-          {/* Header with Progress */}
-          <div className="mb-16 text-center">
+        <div className="max-w-[2000px] mx-auto relative z-10">
+          {/* Header */}
+          <div className="text-center mb-16 space-y-6">
             <div className="inline-block relative">
-              <h1 
-                className="text-5xl md:text-7xl lg:text-8xl font-light text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-100 to-yellow-200 mb-4 tracking-tight"
-                style={{
-                  transform: `perspective(1000px) rotateX(${mousePosition.y * 2}deg) rotateY(${mousePosition.x * 2}deg)`,
-                  transition: "transform 0.2s ease-out"
-                }}
-              >
-                STUDIO
-              </h1>
-              <div className="h-1 w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto"></div>
-            </div>
-            
-            {/* Progress indicator */}
-            <div className="mt-8 space-y-3">
-              <p className="text-amber-200/60 text-lg tracking-[0.2em] font-light">
-                BATCH {batchIndex + 1} OF {totalBatches} • {allImages.length} TOTAL IMAGES
-              </p>
+              {/* Decorative corners */}
+              <div className="absolute -top-4 -left-4 w-8 h-8 border-l-2 border-t-2 border-rose-500"></div>
+              <div className="absolute -top-4 -right-4 w-8 h-8 border-r-2 border-t-2 border-amber-400"></div>
+              <div className="absolute -bottom-4 -left-4 w-8 h-8 border-l-2 border-b-2 border-cyan-400"></div>
+              <div className="absolute -bottom-4 -right-4 w-8 h-8 border-r-2 border-b-2 border-rose-500"></div>
               
-              {/* Progress bar */}
-              <div className="max-w-md mx-auto">
-                <div className="h-1 bg-amber-900/30 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
+              <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold relative px-8 py-4">
+                <span className="absolute inset-0 text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400 blur-xl opacity-50">
+                  GALLERY
+                </span>
+                <span className="relative text-white">
+                  GALLERY
+                </span>
+              </h1>
+            </div>
+
+            {/* Progress Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-center gap-4 text-zinc-500 text-sm uppercase tracking-widest">
+                <div className="h-px w-12 bg-gradient-to-r from-transparent to-zinc-700"></div>
+                <span>Collection {batchIndex + 1} / {totalBatches}</span>
+                <div className="h-px w-12 bg-gradient-to-l from-transparent to-zinc-700"></div>
               </div>
 
-              {/* Pause indicator */}
-              {isPaused && (
-                <p className="text-amber-400/80 text-sm tracking-wider animate-pulse">
-                  PAUSED - Move mouse away to continue
-                </p>
-              )}
+              {/* Animated progress dots */}
+              <div className="flex justify-center gap-2">
+                {Array.from({ length: totalBatches }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setBatchIndex(index)
+                      const startIdx = index * BATCH_SIZE
+                      const endIdx = startIdx + BATCH_SIZE
+                      setCurrentBatch(allImages.slice(startIdx, endIdx))
+                    }}
+                    className={`transition-all duration-500 ${
+                      index === batchIndex
+                        ? 'w-12 h-2 bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400'
+                        : 'w-2 h-2 bg-zinc-800 hover:bg-zinc-600'
+                    } rounded-full`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Rotating Bento Grid Gallery */}
+          {/* Spotlight Gallery Grid */}
           <div 
-            key={batchIndex} 
-            className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[240px]"
+            key={batchIndex}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8"
           >
             {currentBatch.map((image, index) => (
               <div
                 key={`${batchIndex}-${image.id}`}
-                className={`group relative overflow-hidden rounded-2xl ${getBentoClass(index)} cursor-pointer`}
+                className="group relative aspect-[3/4] cursor-pointer"
                 style={{
-                  animation: `fadeInUp 0.6s ease-out ${index * 0.08}s backwards`
+                  animation: `spotlightIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s backwards`
                 }}
                 onClick={() => setSelectedImage(image)}
               >
-                {/* Image container with parallax */}
-                <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-110">
-                  <Image
-                    src={getImageUrl(image.image_path)}
-                    alt={image.alt_text || `Image ${image.id}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-
-                {/* Animated border */}
-                <div className="absolute inset-0 border-2 border-amber-500/0 group-hover:border-amber-500/50 transition-all duration-500 rounded-2xl"></div>
-
-                {/* Content overlay */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                  <div className="space-y-2">
-                    <div className="text-amber-400 font-mono text-sm tracking-wider">
-                      #{String(image.id).padStart(4, "0")}
+                {/* Spotlight glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-br from-rose-500/20 via-amber-400/20 to-cyan-400/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                
+                {/* Card container */}
+                <div className="relative h-full bg-zinc-900/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-700 transition-all duration-500">
+                  {/* Image */}
+                  <div className="absolute inset-0 p-3">
+                    <div className="relative w-full h-full bg-zinc-950 rounded-lg overflow-hidden">
+                      <Image
+                        src={getImageUrl(image.image_path)}
+                        alt={image.alt_text || `Image ${image.id}`}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        className="object-contain transition-transform duration-700 group-hover:scale-105"
+                        priority
+                      />
                     </div>
+                  </div>
+
+                  {/* Number badge */}
+                  <div className="absolute top-6 left-6 z-10">
+                    <div className="bg-black/60 backdrop-blur-md border border-zinc-700 rounded-lg px-3 py-1.5">
+                      <span className="text-white font-mono text-xs font-bold">
+                        {String(image.id).padStart(3, "0")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
                     {image.alt_text && (
-                      <p className="text-amber-100/90 text-sm font-light line-clamp-2">
+                      <p className="text-white/90 text-sm font-light line-clamp-2">
                         {image.alt_text}
                       </p>
                     )}
                   </div>
-                  
-                  {/* View icon */}
-                  <div className="absolute top-6 right-6 w-10 h-10 rounded-full bg-amber-500/20 backdrop-blur-sm flex items-center justify-center border border-amber-500/30">
-                    <svg className="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </div>
-                </div>
 
-                {/* Batch change animation overlay */}
-                <div 
-                  className="absolute inset-0 bg-amber-500/20 pointer-events-none"
-                  style={{
-                    animation: `flash 0.4s ease-out ${index * 0.08}s backwards`
-                  }}
-                ></div>
+                  {/* Animated corner accents */}
+                  <div className="absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 border-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Navigation dots */}
-          <div className="flex justify-center gap-2 mt-12">
-            {Array.from({ length: totalBatches }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setBatchIndex(index)
-                  const startIdx = index * BATCH_SIZE
-                  const endIdx = startIdx + BATCH_SIZE
-                  setCurrentBatch(allImages.slice(startIdx, endIdx))
-                }}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === batchIndex 
-                    ? 'bg-amber-500 w-8' 
-                    : 'bg-amber-900/40 hover:bg-amber-700/60'
-                }`}
-              />
-            ))}
+          {/* Batch info footer */}
+          <div className="mt-16 text-center">
+            <p className="text-zinc-600 text-sm uppercase tracking-wider">
+              Showing {currentBatch.length} of {allImages.length} images
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox */}
       {selectedImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-6"
           style={{ animation: "fadeIn 0.3s ease-out" }}
           onClick={() => setSelectedImage(null)}
         >
+          {/* Close button */}
           <button
-            className="absolute top-8 right-8 w-14 h-14 rounded-full bg-amber-500/10 backdrop-blur-sm border border-amber-500/30 flex items-center justify-center text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all z-10 group"
+            className="absolute top-8 right-8 w-16 h-16 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700 flex items-center justify-center text-white hover:bg-zinc-800 hover:border-zinc-600 transition-all z-20 group"
             onClick={() => setSelectedImage(null)}
           >
-            <svg className="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
+          {/* Image container */}
           <div 
-            className="relative max-w-7xl max-h-[85vh] w-full h-full flex items-center justify-center"
+            className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
             style={{ animation: "scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
           >
-            <div className="relative w-full h-full flex items-center justify-center">
-              <Image
-                src={getImageUrl(selectedImage.image_path)}
-                alt={selectedImage.alt_text || `Image ${selectedImage.id}`}
-                width={1920}
-                height={1080}
-                className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl shadow-amber-900/20"
-                priority
-              />
+            {/* Spotlight glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-amber-400/10 to-cyan-400/10 blur-3xl"></div>
+            
+            <div className="relative w-full h-full flex items-center justify-center p-8">
+              <div className="relative max-w-full max-h-full">
+                <Image
+                  src={getImageUrl(selectedImage.image_path)}
+                  alt={selectedImage.alt_text || `Image ${selectedImage.id}`}
+                  width={1920}
+                  height={1080}
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
+                  priority
+                />
+              </div>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-8 rounded-b-xl">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-end justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="text-amber-400 font-mono text-lg tracking-wider">
-                      #{String(selectedImage.id).padStart(4, "0")}
-                    </div>
-                    {selectedImage.alt_text && (
-                      <p className="text-amber-100/90 text-base font-light max-w-2xl">
-                        {selectedImage.alt_text}
-                      </p>
-                    )}
+            {/* Info bar */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent p-8">
+              <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <div className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400 font-mono text-xl font-bold">
+                    #{String(selectedImage.id).padStart(3, "0")}
                   </div>
+                  {selectedImage.alt_text && (
+                    <p className="text-zinc-300 text-sm">
+                      {selectedImage.alt_text}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -337,14 +281,14 @@ export function StudioShowcase() {
       )}
 
       <style jsx global>{`
-        @keyframes fadeInUp {
+        @keyframes spotlightIn {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(40px) scale(0.9);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
           }
         }
 
@@ -356,42 +300,12 @@ export function StudioShowcase() {
         @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.95);
           }
           to {
             opacity: 1;
             transform: scale(1);
           }
-        }
-
-        @keyframes flash {
-          0% {
-            opacity: 0.5;
-          }
-          100% {
-            opacity: 0;
-          }
-        }
-
-        @keyframes grain {
-          0%, 100% { transform: translate(0, 0); }
-          10% { transform: translate(-5%, -10%); }
-          30% { transform: translate(3%, -15%); }
-          50% { transform: translate(12%, 9%); }
-          70% { transform: translate(9%, 4%); }
-          90% { transform: translate(-1%, 7%); }
-        }
-
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-
-        .animation-reverse {
-          animation-direction: reverse;
-        }
-
-        .animate-grain {
-          animation: grain 8s steps(10) infinite;
         }
       `}</style>
     </>
