@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
 import PWARegister from "@/components/PWARegister"
 import Chatbot from "@/components/Chatbot"
-import { Analytics } from '@vercel/analytics/react'
+import { Analytics } from '@vercel/analytics/next'
 import {
   defaultMetadata,
   organizationSchema,
