@@ -136,9 +136,36 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
   },
   
-  // Caching headers for static assets
+  // Security and caching headers
   async headers() {
     return [
+      // Security headers for all routes
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http://localhost:8000 https://infinitech-api15.site https://g-limitstudio.com https://www.g-limitstudio.com; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://infinitech-api15.site; frame-ancestors 'self';",
+          },
+        ],
+      },
+      // Caching headers for static assets
       {
         source: '/:all*(svg|jpg|jpeg|png|gif|webp|avif|ico|woff|woff2)',
         headers: [
