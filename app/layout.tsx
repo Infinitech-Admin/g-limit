@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
 import PWARegister from "@/components/PWARegister"
 import Chatbot from "@/components/Chatbot"
+import { Analytics } from '@vercel/analytics/react'
 import {
   defaultMetadata,
   organizationSchema,
@@ -110,9 +111,7 @@ export const metadata: Metadata = {
     canonical: 'https://g-limitstudio.com',
   },
   verification: {
-    google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
-    // Add other verification codes as needed
+    google: 'pFlfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxe', // Updated with your verification code
   },
   category: 'Photography & Videography',
 }
@@ -370,6 +369,7 @@ export default function RootLayout({
           <Toaster position="top-right" />
           <Chatbot />
         </PublicLayoutProvider>
+        <Analytics />
       </body>
     </html>
   )
