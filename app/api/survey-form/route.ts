@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const wouldRecommend = searchParams.get('would_recommend') || ''
     const sortBy = searchParams.get('sortBy') || 'created_at'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
-
+    
     // Build query string
     const queryParams = new URLSearchParams()
     queryParams.append('page', page)
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     if (wouldRecommend) queryParams.append('would_recommend', wouldRecommend)
     queryParams.append('sortBy', sortBy)
     queryParams.append('sortOrder', sortOrder)
-
+    
     const response = await fetch(
       `${API_URL}/survey-form?${queryParams.toString()}`,
       {
@@ -32,16 +32,50 @@ export async function GET(request: NextRequest) {
         credentials: 'include',
       }
     )
-
+    
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to fetch survey responses' }))
+      const error = await response.json().catch(() => ({ 
+        error: 'Failed to fetch survey responses' 
+      }))
       return NextResponse.json(error, { status: response.status })
     }
-
+    
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {
     console.error('Survey API error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    
+    const response = await fetch(`${API_URL}/survey-form`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ 
+        error: 'Failed to submit survey' 
+      }))
+      return NextResponse.json(error, { status: response.status })
+    }
+    
+    const data = await response.json()
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Survey POST error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
