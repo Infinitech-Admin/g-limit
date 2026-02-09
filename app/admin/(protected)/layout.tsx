@@ -18,6 +18,7 @@ const sidebarItems = [
   { name: "Portfolio", href: "/admin/portfolio", icon: Folder },
    { name: "News", href: "/admin/news", icon: Newspaper },
   { name: "Videos", href: "/admin/videos", icon: FileText },
+    { name: "Survey Responses", href: "/admin/survey-response", icon: FileText },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
