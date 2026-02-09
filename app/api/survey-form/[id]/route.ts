@@ -4,10 +4,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${API_URL}/surveys/${params.id}`, {
+    const { id } = await params
+    
+    const response = await fetch(`${API_URL}/surveys/${id}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -17,7 +19,9 @@ export async function GET(
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to fetch survey response' }))
+      const error = await response.json().catch(() => ({ 
+        error: 'Failed to fetch survey response' 
+      }))
       return NextResponse.json(error, { status: response.status })
     }
 
@@ -34,10 +38,12 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${API_URL}/surveys/${params.id}`, {
+    const { id } = await params
+    
+    const response = await fetch(`${API_URL}/surveys/${id}`, {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
@@ -47,7 +53,9 @@ export async function DELETE(
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to delete' }))
+      const error = await response.json().catch(() => ({ 
+        error: 'Failed to delete' 
+      }))
       return NextResponse.json(error, { status: response.status })
     }
 
