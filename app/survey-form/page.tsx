@@ -151,7 +151,8 @@ export default function BookingPage() {
           <SurveyForm />
         </motion.section>
 
-       
+      
+      </section>
     </div>
   )
 }
