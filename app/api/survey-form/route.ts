@@ -55,6 +55,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
+    // Log the payload being sent
+    console.log('Sending to backend:', JSON.stringify(body, null, 2))
+    console.log('Backend URL:', `${API_URL}/survey-form`)
+    
     const response = await fetch(`${API_URL}/survey-form`, {
       method: 'POST',
       headers: {
@@ -65,19 +69,42 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     })
     
+    // Log response details
+    console.log('Backend response status:', response.status)
+    
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ 
-        error: 'Failed to submit survey' 
-      }))
+      let error
+      const contentType = response.headers.get('content-type')
+      
+      if (contentType && contentType.includes('application/json')) {
+        error = await response.json()
+      } else {
+        const text = await response.text()
+        console.error('Backend error (non-JSON):', text)
+        error = { error: 'Failed to submit survey', details: text }
+      }
+      
+      console.error('Backend error response:', error)
       return NextResponse.json(error, { status: response.status })
     }
     
     const data = await response.json()
+    console.log('Backend success response:', data)
     return NextResponse.json(data)
   } catch (error) {
     console.error('Survey POST error:', error)
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
