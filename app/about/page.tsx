@@ -532,7 +532,7 @@ export default function About() {
               size="lg"
               className="bg-linear-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 font-bold shadow-xl shadow-amber-500/30 border-2 border-black"
             >
-              <Link href="/contact">
+              <Link href="/booking-form">
                 <Camera className="w-5 h-5 mr-2" />
                 Start Your Project
               </Link>
