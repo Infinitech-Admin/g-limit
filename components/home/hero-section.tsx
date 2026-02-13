@@ -1,11 +1,17 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useCallback, memo } from "react"
 import { Camera, Award, Users, Heart, Aperture, Star, CheckCircle2, Sparkles } from "lucide-react"
-import FloatingParticles from "../animated-golden-particles"
+import dynamic from 'next/dynamic'
+
+// Lazy load particles - they're purely decorative
+const FloatingParticles = dynamic(
+  () => import("../animated-golden-particles"),
+  { ssr: false }
+)
 
 // Use client-side accessible env vars
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
@@ -17,6 +23,35 @@ interface HeroImage {
   status: 'active' | 'inactive'
 }
 
+// Memoized stat card component
+const StatCard = memo(({ stat, index, shouldReduceMotion }: { 
+  stat: { icon: any; value: string; label: string }; 
+  index: number;
+  shouldReduceMotion: boolean;
+}) => {
+  const Icon = stat.icon;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: shouldReduceMotion ? 0 : 0.3 + index * 0.1, duration: 0.5 }}
+      className="text-center group"
+      whileHover={shouldReduceMotion ? {} : { y: -5 }}
+    >
+      <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:from-amber-500/40 group-hover:to-amber-600/40 transition-all border border-amber-500/30 shadow-lg shadow-amber-500/20">
+        <Icon className="w-6 h-6 text-amber-500" />
+      </div>
+      <p className="text-3xl md:text-4xl font-serif font-bold bg-gradient-to-r from-amber-500 to-amber-300 bg-clip-text text-transparent">
+        {stat.value}
+      </p>
+      <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
+    </motion.div>
+  )
+})
+
+StatCard.displayName = 'StatCard'
+
 export function HeroSection() {
   const heroRef = useRef<HTMLDivElement>(null)
   const [isFlashing, setIsFlashing] = useState(false)
@@ -24,16 +59,17 @@ export function HeroSection() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [heroImages, setHeroImages] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const shouldReduceMotion = useReducedMotion()
 
   // Helper function to get full image URL
-  const getImageUrl = (path: string) => {
+  const getImageUrl = useCallback((path: string) => {
     if (!path) return '/placeholder.svg'
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path
     }
     const cleanPath = path.startsWith('/') ? path.slice(1) : path
     return `${API_IMG}/${cleanPath}`
-  }
+  }, [])
 
   // Fetch hero images from API
   useEffect(() => {
@@ -41,23 +77,18 @@ export function HeroSection() {
       try {
         setLoading(true)
         
-        // Use Next.js API route instead of direct Laravel API call
         const response = await fetch('/api/hero-sections?status=active', {
-          cache: 'no-store',
+          next: { revalidate: 3600 }, // Cache for 1 hour
           headers: {
             'Accept': 'application/json',
           },
         })
 
-        console.log('Hero section fetch status:', response.status)
-
         if (!response.ok) {
-          console.error('Failed to fetch hero images:', response.statusText)
           throw new Error('Failed to fetch hero images')
         }
 
         const data = await response.json()
-        console.log('Hero section data:', data)
         
         const heroSections: HeroImage[] = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []
         
@@ -65,7 +96,6 @@ export function HeroSection() {
         const images: string[] = []
         heroSections.forEach(section => {
           if (section.status === 'active') {
-            // Prefer image_urls if available (already full URLs from Laravel)
             if (Array.isArray(section.image_urls) && section.image_urls.length > 0) {
               images.push(...section.image_urls)
             } else if (Array.isArray(section.image_path)) {
@@ -76,13 +106,10 @@ export function HeroSection() {
           }
         })
 
-        console.log('Extracted hero images:', images)
-
         // Set images or use fallback
         if (images.length > 0) {
           setHeroImages(images)
         } else {
-          console.warn('No active hero images found, using fallback')
           // Fallback images if no images from API
           setHeroImages([
             "/photo/elegant-bride-in-white-wedding-dress-portrait-phot.jpg",
@@ -106,9 +133,9 @@ export function HeroSection() {
     }
 
     fetchHeroImages()
-  }, [])
+  }, [getImageUrl])
 
-  const handleCameraShoot = () => {
+  const handleCameraShoot = useCallback(() => {
     if (heroImages.length === 0) return
     setIsFlashing(true)
     setShowCaptured(true)
@@ -117,14 +144,14 @@ export function HeroSection() {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length)
     }, 150)
     setTimeout(() => setShowCaptured(false), 1500)
-  }
+  }, [heroImages.length])
 
   // Auto-shoot every 5 seconds
   useEffect(() => {
-    if (heroImages.length === 0) return
-    const shootInterval = setInterval(handleCameraShoot, 5000)
+    if (heroImages.length === 0 || shouldReduceMotion) return
+    const shootInterval = setInterval(handleCameraShoot, 2000)
     return () => clearInterval(shootInterval)
-  }, [heroImages.length])
+  }, [heroImages.length, shouldReduceMotion, handleCameraShoot])
 
   const stats = [
     { icon: Camera, value: "500+", label: "Photo Sessions" },
@@ -162,105 +189,54 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-black via-neutral-900 to-amber-950" />
       <div className="absolute inset-0 bg-gradient-to-t from-amber-600/20 via-transparent to-transparent" />
       
-      {/* Animated gold particles */}
-      <FloatingParticles count={20}/>
+      {/* Animated gold particles - lazy loaded, fewer count */}
+      {!shouldReduceMotion && <FloatingParticles count={15} />}
 
-      {/* Floating gold orbs */}
-      <motion.div
-        className="absolute top-20 right-20 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"
-        animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-20 left-10 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl"
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.15, 0.3] }}
-        transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-      />
+      {/* Simplified floating gold orbs - CSS only */}
+      <div className="absolute top-20 right-20 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl opacity-20" />
+      <div className="absolute bottom-20 left-10 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl opacity-15" />
 
-      {/* Gold flash overlay */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100 pointer-events-none z-50 mix-blend-screen"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isFlashing ? 0.8 : 0 }}
-        transition={{ duration: 0.15 }}
+      {/* Gold flash overlay - simplified */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100 pointer-events-none z-50 mix-blend-screen transition-opacity duration-150"
+        style={{ opacity: isFlashing ? 0.8 : 0 }}
       />
 
       {/* Luxe top border */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
-      <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm" />
 
-      <motion.div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20 relative z-10 w-full">
+      <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20 relative z-10 w-full">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center min-h-[calc(100dvh-6rem)] lg:min-h-0">
           {/* Featured Image with gold frame */}
           <motion.div
             initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
+            transition={{ duration: shouldReduceMotion ? 0.3 : 0.8, delay: shouldReduceMotion ? 0 : 0.2 }}
             className="relative order-1 lg:order-1 mb-8 lg:mb-0"
           >
             <div className="relative">
-              {/* Animated gold corner brackets */}
-              <motion.div
-                className="absolute -top-6 -left-6 w-16 h-16 border-amber-500"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                style={{ borderWidth: "4px 0 0 4px" }}
-              >
-                <motion.div
-                  className="absolute top-0 left-0 w-4 h-4 bg-amber-500"
-                  animate={{ scale: [1, 0.8, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                />
-              </motion.div>
-              <motion.div
-                className="absolute -top-6 -right-6 w-16 h-16 border-amber-500"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-                style={{ borderWidth: "4px 4px 0 0" }}
-              >
-                <motion.div
-                  className="absolute top-0 right-0 w-4 h-4 bg-amber-500"
-                  animate={{ scale: [1, 0.8, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: 0.5 }}
-                />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-6 -left-6 w-16 h-16 border-amber-500"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-                style={{ borderWidth: "0 0 4px 4px" }}
-              >
-                <motion.div
-                  className="absolute bottom-0 left-0 w-4 h-4 bg-amber-500"
-                  animate={{ scale: [1, 0.8, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: 1 }}
-                />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-6 -right-6 w-16 h-16 border-amber-500"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-                style={{ borderWidth: "0 4px 4px 0" }}
-              >
-                <motion.div
-                  className="absolute bottom-0 right-0 w-4 h-4 bg-amber-500"
-                  animate={{ scale: [1, 0.8, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: 1.5 }}
-                />
-              </motion.div>
+              {/* Simplified corner brackets - no animation */}
+              <div className="absolute -top-6 -left-6 w-16 h-16 border-amber-500 border-l-4 border-t-4">
+                <div className="absolute top-0 left-0 w-4 h-4 bg-amber-500" />
+              </div>
+              <div className="absolute -top-6 -right-6 w-16 h-16 border-amber-500 border-r-4 border-t-4">
+                <div className="absolute top-0 right-0 w-4 h-4 bg-amber-500" />
+              </div>
+              <div className="absolute -bottom-6 -left-6 w-16 h-16 border-amber-500 border-l-4 border-b-4">
+                <div className="absolute bottom-0 left-0 w-4 h-4 bg-amber-500" />
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-16 h-16 border-amber-500 border-r-4 border-b-4">
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-amber-500" />
+              </div>
 
               <div className="relative aspect-[3/4] w-full max-w-md mx-auto lg:mx-0 overflow-hidden shadow-2xl shadow-amber-900/50 border-4 border-amber-500/30">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentImageIndex}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.5 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
                     className="absolute inset-0"
                   >
                     <Image
@@ -271,6 +247,9 @@ export function HeroSection() {
                       className="object-cover"
                       priority={currentImageIndex === 0}
                       loading={currentImageIndex === 0 ? "eager" : "lazy"}
+                      quality={85}
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         target.src = '/placeholder.svg'
@@ -281,24 +260,16 @@ export function HeroSection() {
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Premium viewfinder grid overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute top-1/3 left-0 right-0 h-px bg-amber-500/20" />
-                  <div className="absolute top-2/3 left-0 right-0 h-px bg-amber-500/20" />
-                  <div className="absolute left-1/3 top-0 bottom-0 w-px bg-amber-500/20" />
-                  <div className="absolute left-2/3 top-0 bottom-0 w-px bg-amber-500/20" />
+                {/* Simplified viewfinder grid overlay */}
+                <div className="absolute inset-0 pointer-events-none opacity-20">
+                  <div className="absolute top-1/3 left-0 right-0 h-px bg-amber-500" />
+                  <div className="absolute top-2/3 left-0 right-0 h-px bg-amber-500" />
+                  <div className="absolute left-1/3 top-0 bottom-0 w-px bg-amber-500" />
+                  <div className="absolute left-2/3 top-0 bottom-0 w-px bg-amber-500" />
 
-                  {/* Gold focus point */}
-                  <motion.div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 border-2 border-amber-500 rounded-full"
-                    animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  />
-                  <motion.div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50"
-                    animate={{ scale: [1, 1.5, 1] }}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  />
+                  {/* Simplified focus point */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 border-2 border-amber-500 rounded-full opacity-50" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50" />
                 </div>
 
                 <AnimatePresence>
@@ -307,6 +278,7 @@ export function HeroSection() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
                       className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-600 to-amber-500 text-black px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 shadow-xl"
                     >
                       <CheckCircle2 className="w-5 h-5" />
@@ -317,56 +289,30 @@ export function HeroSection() {
               </div>
             </div>
 
-            <motion.button
+            {/* Simplified camera button */}
+            <button
               onClick={handleCameraShoot}
               className="absolute -bottom-4 -left-4 w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-2xl shadow-amber-500/50 cursor-pointer hover:from-amber-400 hover:to-amber-500 transition-all group border-4 border-black"
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
             >
-              <motion.div animate={{ rotate: [0, 180, 0] }} transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}>
-                <Aperture className="w-10 h-10 text-black group-hover:text-white transition-colors" />
-              </motion.div>
-              {/* Pulse ring */}
-              <motion.div
-                className="absolute inset-0 border-4 border-amber-400/50 rounded-full"
-                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-              />
-            </motion.button>
+              <Aperture className="w-10 h-10 text-black group-hover:text-white transition-colors" />
+            </button>
 
             {/* Camera settings badge */}
-            <motion.div
-              className="absolute -top-4 right-0 bg-gradient-to-r from-amber-500 to-amber-600 text-black px-4 py-2 rounded-full text-xs font-black shadow-xl shadow-amber-500/30 flex items-center gap-2 border-2 border-black"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-            >
-              <motion.span
-                className="w-2 h-2 bg-black rounded-full"
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY }}
-              />
+            <div className="absolute -top-4 right-0 bg-gradient-to-r from-amber-500 to-amber-600 text-black px-4 py-2 rounded-full text-xs font-black shadow-xl shadow-amber-500/30 flex items-center gap-2 border-2 border-black">
+              <span className="w-2 h-2 bg-black rounded-full" />
               f/1.4 · 1/200s · ISO 100
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="absolute top-16 right-0 bg-black/90 backdrop-blur-sm text-amber-500 px-4 py-2 rounded-full text-xs font-bold shadow-xl border border-amber-500/30"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2 }}
-            >
+            {/* Image counter */}
+            <div className="absolute top-16 right-0 bg-black/90 backdrop-blur-sm text-amber-500 px-4 py-2 rounded-full text-xs font-bold shadow-xl border border-amber-500/30">
               {currentImageIndex + 1} / {heroImages.length}
-            </motion.div>
+            </div>
           </motion.div>
 
           <div className="space-y-6 sm:space-y-8 order-2 lg:order-2">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.8 }}>
+            <div>
               <div className="flex items-center gap-4 mb-4">
-                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}>
-                  <Sparkles className="w-6 h-6 text-amber-500" />
-                </motion.div>
+                <Sparkles className="w-6 h-6 text-amber-500" />
                 <p className="text-amber-500 font-black tracking-widest text-sm">G-LIMIT STUDIO</p>
                 <span className="flex items-center gap-1 text-xs text-amber-400">
                   {[...Array(5)].map((_, i) => (
@@ -375,13 +321,13 @@ export function HeroSection() {
                   <span className="ml-1 font-bold">5.0</span>
                 </span>
               </div>
-            </motion.div>
+            </div>
 
             <div className="space-y-2">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.8 }}
+                transition={{ delay: shouldReduceMotion ? 0 : 0.3, duration: 0.5 }}
                 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-light text-white"
               >
                 We capture moments
@@ -389,55 +335,31 @@ export function HeroSection() {
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2, duration: 0.8 }}
+                transition={{ delay: shouldReduceMotion ? 0 : 0.5, duration: 0.5 }}
                 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-light bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 bg-clip-text text-transparent"
               >
                 that last forever.
               </motion.h1>
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 1.8, duration: 1 }}
-                className="h-1 w-32 bg-gradient-to-r from-amber-500 to-transparent origin-left"
-              />
+              <div className="h-1 w-32 bg-gradient-to-r from-amber-500 to-transparent" />
             </div>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.4, duration: 0.8 }}
-              className="text-gray-300 text-base md:text-lg max-w-lg leading-relaxed"
-            >
+            <p className="text-gray-300 text-base md:text-lg max-w-lg leading-relaxed">
               Professional photography and videography services for weddings, events, portraits, and commercial projects. We transform fleeting
               moments into timeless memories with artistic precision.
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.6, duration: 0.8 }}
-              className="flex flex-wrap gap-3"
-            >
+            <div className="flex flex-wrap gap-3">
               {services.map((service, index) => (
-                <motion.span
+                <span
                   key={service}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 2.7 + index * 0.1 }}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/30 rounded-full text-sm text-amber-400 transition-all font-medium backdrop-blur-sm"
-                  whileHover={{ scale: 1.05 }}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border border-amber-500/30 rounded-full text-sm text-amber-400 transition-all font-medium backdrop-blur-sm hover:scale-105"
                 >
                   {service}
-                </motion.span>
+                </span>
               ))}
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 3, duration: 0.8 }}
-              className="flex flex-wrap gap-4 pt-2"
-            >
+            <div className="flex flex-wrap gap-4 pt-2">
               <Link href="/contact">
                 <Button
                   size="lg"
@@ -456,66 +378,33 @@ export function HeroSection() {
                   View Portfolio
                 </Button>
               </Link>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 3.2, duration: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-amber-500/20"
-            >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-amber-500/20">
               {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 3.3 + index * 0.1, duration: 0.5 }}
-                  className="text-center group"
-                  whileHover={{ y: -5 }}
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:from-amber-500/40 group-hover:to-amber-600/40 transition-all border border-amber-500/30 shadow-lg shadow-amber-500/20">
-                    <stat.icon className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <p className="text-3xl md:text-4xl font-serif font-bold bg-gradient-to-r from-amber-500 to-amber-300 bg-clip-text text-transparent">
-                    {stat.value}
-                  </p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
-                </motion.div>
+                <StatCard 
+                  key={stat.label} 
+                  stat={stat} 
+                  index={index} 
+                  shouldReduceMotion={!!shouldReduceMotion}
+                />
               ))}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 3.6, duration: 0.8 }}
-              className="flex items-center gap-4 pt-4 sm:pt-6 pb-4 sm:pb-0"
-            >
-              
-             
-            </motion.div>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Luxe bottom border */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-sm" />
 
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-12 sm:bottom-20 left-1/2 -translate-x-1/2 z-20 hidden sm:block"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1, y: [0, 10, 0] }}
-        transition={{ delay: 4, duration: 2, repeat: Number.POSITIVE_INFINITY }}
-      >
-        <div className="w-7 h-12 border-2 border-amber-500 rounded-full flex justify-center pt-2 shadow-lg shadow-lg-amber-500/30">
-          <motion.div
-            className="w-1.5 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50"
-            animate={{ y: [0, 16, 0] }}
-            transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-          />
+      {/* Simplified scroll indicator - CSS only */}
+      {!shouldReduceMotion && (
+        <div className="absolute bottom-12 sm:bottom-20 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
+          <div className="w-7 h-12 border-2 border-amber-500 rounded-full flex justify-center pt-2 shadow-lg shadow-amber-500/30">
+            <div className="w-1.5 h-3 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50 animate-bounce" />
+          </div>
         </div>
-      </motion.div>
+      )}
     </section>
   )
 }
