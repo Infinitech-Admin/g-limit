@@ -141,7 +141,7 @@ export function SpotlightGallery() {
                       const endIdx = startIdx + BATCH_SIZE
                       setCurrentBatch(allImages.slice(startIdx, endIdx))
                     }}
-                    className={`transition-all duration-500 ${
+                    className={`transition-all duration-300 ${
                       index === batchIndex
                         ? 'w-12 h-2 bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400'
                         : 'w-2 h-2 bg-zinc-800 hover:bg-zinc-600'
@@ -160,17 +160,15 @@ export function SpotlightGallery() {
             {currentBatch.map((image, index) => (
               <div
                 key={`${batchIndex}-${image.id}`}
-                className="group relative cursor-pointer"
+                className="group relative cursor-pointer animate-fade-in"
                 style={{
-                  animation: `spotlightIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s backwards`
+                  animationDelay: `${index * 0.05}s`,
+                  animationFillMode: 'backwards'
                 }}
                 onClick={() => setSelectedImage(image)}
               >
-                {/* Spotlight glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-br from-rose-500/20 via-amber-400/20 to-cyan-400/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                
                 {/* Card container - flexible height */}
-                <div className="relative bg-zinc-900/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-zinc-800 group-hover:border-zinc-700 transition-all duration-500">
+                <div className="relative bg-zinc-900/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:shadow-lg hover:shadow-rose-500/10">
                   {/* Image with natural aspect ratio */}
                   <div className="relative p-3">
                     <div className="relative w-full bg-zinc-950 rounded-lg overflow-hidden">
@@ -179,8 +177,9 @@ export function SpotlightGallery() {
                         alt={image.alt_text || `Image ${image.id}`}
                         width={400}
                         height={400}
-                        className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105"
-                        priority
+                        className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                        loading={index < 4 ? "eager" : "lazy"}
+                        priority={index < 4}
                       />
                     </div>
                   </div>
@@ -195,7 +194,7 @@ export function SpotlightGallery() {
                   </div>
 
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
                     {image.alt_text && (
                       <p className="text-white/90 text-sm font-light line-clamp-2">
                         {image.alt_text}
@@ -203,11 +202,11 @@ export function SpotlightGallery() {
                     )}
                   </div>
 
-                  {/* Animated corner accents */}
-                  <div className="absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 border-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  {/* Simplified corner accents */}
+                  <div className="absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 border-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 border-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
               </div>
             ))}
@@ -225,8 +224,7 @@ export function SpotlightGallery() {
       {/* Lightbox */}
       {selectedImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-6"
-          style={{ animation: "fadeIn 0.3s ease-out" }}
+          className="fixed inset-0 z-50 bg-black/98 flex items-center justify-center p-6 animate-fade-in"
           onClick={() => setSelectedImage(null)}
         >
           {/* Close button */}
@@ -241,9 +239,8 @@ export function SpotlightGallery() {
 
           {/* Image container */}
           <div 
-            className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center"
+            className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center animate-scale-in"
             onClick={(e) => e.stopPropagation()}
-            style={{ animation: "scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
           >
             {/* Spotlight glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-amber-400/10 to-cyan-400/10 blur-3xl"></div>
@@ -256,6 +253,7 @@ export function SpotlightGallery() {
                   width={1920}
                   height={1080}
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
+                  loading="eager"
                   priority
                 />
               </div>
@@ -281,17 +279,6 @@ export function SpotlightGallery() {
       )}
 
       <style jsx global>{`
-        @keyframes spotlightIn {
-          from {
-            opacity: 0;
-            transform: translateY(40px) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -306,6 +293,14 @@ export function SpotlightGallery() {
             opacity: 1;
             transform: scale(1);
           }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out;
+        }
+
+        .animate-scale-in {
+          animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
       `}</style>
     </>
