@@ -349,6 +349,7 @@ export default function Portfolio() {
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+                            loading="lazy"
                           />
 
                           {/* Image count badge */}
@@ -545,6 +546,8 @@ export default function Portfolio() {
                       fill
                       className="object-contain"
                       sizes="(max-width: 1536px) 90vw, 1536px"
+                      loading="lazy"
+                      priority={modalImageIndex === 0}
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -599,6 +602,7 @@ export default function Portfolio() {
                         fill
                         className="object-cover"
                         sizes="96px"
+                        loading="lazy"
                       />
                       {idx === modalImageIndex && (
                         <div className="absolute inset-0 bg-amber-500/20" />
