@@ -185,6 +185,7 @@ export function Navigation() {
               { href: "/about", label: "About" },
               { href: "/news", label: "News" },
               { href: "/blog", label: "Blog" },
+            
             ].map((link, i) => (
               <motion.div
                 key={link.href}
@@ -228,7 +229,7 @@ export function Navigation() {
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
-                href="/contact"
+                href="/booking-form"
                 className="hidden lg:inline-block px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 font-bold shadow-xl shadow-amber-500/30 border-2 border-black rounded-lg transition-all text-center text-sm"
               >
                 Book Now
