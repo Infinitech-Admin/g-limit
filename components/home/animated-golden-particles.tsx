@@ -1,9 +1,72 @@
 'use client'
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface FloatingParticlesProps {
   count?: number
   color?: string // "r, g, b"
+}
+
+// Define Particle class outside component to avoid type issues
+class Particle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  radius: number
+  opacity: number
+  maxOpacity: number
+  phaseOffset: number
+  width: number
+  height: number
+  color: string
+
+  constructor(width: number, height: number, color: string) {
+    this.width = width
+    this.height = height
+    this.color = color
+    this.x = Math.random() * width
+    this.y = Math.random() * height
+    // Slower movement for better performance
+    this.vx = (Math.random() - 0.5) * 0.3
+    this.vy = (Math.random() - 0.5) * 0.3
+    this.radius = Math.random() * 1.5 + 0.5
+    this.opacity = Math.random() * 0.5 + 0.2
+    this.maxOpacity = this.opacity
+    this.phaseOffset = Math.random() * Math.PI * 2
+  }
+
+  update(deltaTime: number, ctx: CanvasRenderingContext2D) {
+    // Use deltaTime for consistent animation speed
+    const speed = deltaTime / 16 // Normalize to 60fps
+    
+    this.x += this.vx * speed
+    this.y += this.vy * speed
+
+    // Bounce off edges
+    if (this.x < 0 || this.x > this.width) this.vx *= -1
+    if (this.y < 0 || this.y > this.height) this.vy *= -1
+
+    // Keep within bounds
+    this.x = Math.max(0, Math.min(this.width, this.x))
+    this.y = Math.max(0, Math.min(this.height, this.y))
+
+    // Slower opacity pulse for better performance
+    this.opacity = this.maxOpacity * (0.5 + 0.5 * Math.sin(Date.now() * 0.0005 + this.phaseOffset))
+  }
+
+  updateBounds(width: number, height: number) {
+    this.width = width
+    this.height = height
+    this.x = Math.min(this.x, width)
+    this.y = Math.min(this.y, height)
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(${this.color}, ${this.opacity})`
+    ctx.fill()
+  }
 }
 
 export default function FloatingParticles({
@@ -40,57 +103,8 @@ export default function FloatingParticles({
     }
     setCanvasSize()
 
-    class Particle {
-      x: number
-      y: number
-      vx: number
-      vy: number
-      radius: number
-      opacity: number
-      maxOpacity: number
-      phaseOffset: number
-
-      constructor() {
-        this.x = Math.random() * width
-        this.y = Math.random() * height
-        // Slower movement for better performance
-        this.vx = (Math.random() - 0.5) * 0.3
-        this.vy = (Math.random() - 0.5) * 0.3
-        this.radius = Math.random() * 1.5 + 0.5
-        this.opacity = Math.random() * 0.5 + 0.2
-        this.maxOpacity = this.opacity
-        this.phaseOffset = Math.random() * Math.PI * 2
-      }
-
-      update(deltaTime: number) {
-        // Use deltaTime for consistent animation speed
-        const speed = deltaTime / 16 // Normalize to 60fps
-        
-        this.x += this.vx * speed
-        this.y += this.vy * speed
-
-        // Bounce off edges
-        if (this.x < 0 || this.x > width) this.vx *= -1
-        if (this.y < 0 || this.y > height) this.vy *= -1
-
-        // Keep within bounds
-        this.x = Math.max(0, Math.min(width, this.x))
-        this.y = Math.max(0, Math.min(height, this.y))
-
-        // Slower opacity pulse for better performance
-        this.opacity = this.maxOpacity * (0.5 + 0.5 * Math.sin(Date.now() * 0.0005 + this.phaseOffset))
-      }
-
-      draw() {
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${color}, ${this.opacity})`
-        ctx.fill()
-      }
-    }
-
     // Initialize particles
-    particlesRef.current = Array.from({ length: count }, () => new Particle())
+    particlesRef.current = Array.from({ length: count }, () => new Particle(width, height, color))
 
     // Optimized animation loop with FPS throttling
     const animate = (currentTime: number) => {
@@ -107,8 +121,8 @@ export default function FloatingParticles({
 
       // Update and draw particles
       particlesRef.current.forEach((p) => {
-        p.update(deltaTime)
-        p.draw()
+        p.update(deltaTime, ctx)
+        p.draw(ctx)
       })
 
       animationRef.current = requestAnimationFrame(animate)
@@ -126,11 +140,8 @@ export default function FloatingParticles({
         width = window.innerWidth
         height = window.innerHeight
         setCanvasSize()
-        // Reposition particles to new bounds
-        particlesRef.current.forEach(p => {
-          p.x = Math.min(p.x, width)
-          p.y = Math.min(p.y, height)
-        })
+        // Update particle bounds
+        particlesRef.current.forEach(p => p.updateBounds(width, height))
       }, 150) // Debounce resize
     }
 
