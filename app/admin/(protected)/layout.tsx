@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 const sidebarItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Testimonials", href: "/admin/testimonials", icon: MessageSquare },
-  { name: "Bookings", href: "/admin/bookings", icon: Calendar },
+  { name: "Reservation", href: "/admin/reservation", icon: Calendar },
   { name: "Hero Sections", href: "/admin/hero-sections", icon: Image },
   { name: "Film Strip Gallery", href: "/admin/film-strip-gallery", icon: Images },
   { name: "Photo Category", href: "/admin/categories", icon: Folder },
