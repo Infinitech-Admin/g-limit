@@ -151,10 +151,8 @@ const nextConfig: NextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
   
-  // PERFORMANCE: Use SWC minifier (faster than Terser)
-  swcMinify: true,
-  
   // TURBOPACK: Empty config to silence the warning (Turbopack is enabled by default in Next.js 16)
+  // Note: SWC minification is now the default in Next.js 16, no need to specify swcMinify
   turbopack: {},
   
   // Security and caching headers
