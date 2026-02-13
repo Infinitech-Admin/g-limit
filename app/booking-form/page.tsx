@@ -797,7 +797,7 @@ export default function BookingForm() {
                     <div className="flex flex-col items-center justify-center py-6">
                       <Upload className="w-10 h-10 lg:w-12 lg:h-12 text-amber-400/60 mb-3 group-hover:text-amber-400 transition-colors" />
                       <p className="text-sm lg:text-base text-gray-300 mb-1">Click to upload screenshot</p>
-                      <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                      <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
                     </div>
                     <input
                       type="file"
