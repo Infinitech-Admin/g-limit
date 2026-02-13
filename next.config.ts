@@ -154,6 +154,9 @@ const nextConfig: NextConfig = {
   // PERFORMANCE: Use SWC minifier (faster than Terser)
   swcMinify: true,
   
+  // TURBOPACK: Empty config to silence the warning (Turbopack is enabled by default in Next.js 16)
+  turbopack: {},
+  
   // Security and caching headers
   async headers() {
     return [
@@ -203,13 +206,13 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // PERFORMANCE: Preload critical API endpoints
+      // PERFORMANCE: Preconnect to API
       {
         source: '/portfolio',
         headers: [
           {
             key: 'Link',
-            value: '<http://localhost:8000/api/portfolio/categories>; rel=preconnect',
+            value: '<http://localhost:8000>; rel=preconnect',
           },
         ],
       },
@@ -230,44 +233,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       'lucide-react', 
       'react-icons',
-      'framer-motion', // Add framer-motion for better tree-shaking
+      'framer-motion',
     ],
     
     // PERFORMANCE: Enable optimized CSS (removes unused CSS)
     optimizeCss: true,
-  },
-  
-  // PERFORMANCE: Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Production optimizations only
-    if (!dev && !isServer) {
-      // Enable module concatenation (scope hoisting)
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            // Vendor chunk for node_modules
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendor',
-              priority: 10,
-              reuseExistingChunk: true,
-            },
-            // Separate chunk for commonly used components
-            common: {
-              minChunks: 2,
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-    
-    return config;
   },
 };
 
