@@ -2,125 +2,37 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Custom loader to bypass Next.js optimization
-    loader: 'custom',
-    loaderFile: './lib/imageLoader.ts',
+    // IMPORTANT: Remove custom loader to enable Next.js image optimization
+    // Custom loaders bypass Next.js optimization which is causing your 20MB image problem
+    // loader: 'custom', // ❌ REMOVED - This was preventing optimization
+    // loaderFile: './lib/imageLoader.ts', // ❌ REMOVED
     
-    // Modern image formats - now optimized order (AVIF first, smaller files)
+    // Modern image formats - AVIF first for better compression
     formats: ['image/avif', 'image/webp'],
     
-    // Optimized device sizes - removed duplicates, sorted
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    // Optimized device sizes - tailored to your actual breakpoints
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     
     // Optimized image sizes for thumbnails and small images
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     
-    // PERFORMANCE: Increased cache TTL from 60s to 1 year for static images
-    // This dramatically improves repeat visit performance
-    minimumCacheTTL: 31536000, // 1 year (60 seconds was too short)
+    // PERFORMANCE: 1 year cache for static images
+    minimumCacheTTL: 31536000, // 1 year
     
     remotePatterns: [
-      // 🔹 Local development (Laravel / API) - All image paths
+      // 🔹 Local development (Laravel / API)
       {
         protocol: 'http',
         hostname: 'localhost',
         port: '8000',
-        pathname: '/uploads/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/storage/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/images/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/film-strip/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/post_images/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/categories/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/news/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/portfolio/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/medical-assistance-documents/**',
+        pathname: '/**', // Simplified - covers all paths
       },
       
-      // 🔹 Production API - All image paths
+      // 🔹 Production API - Consolidated patterns
       {
         protocol: 'https',
         hostname: 'infinitech-api15.site',
-        pathname: '/uploads/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/storage/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/images/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/film-strip/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/post_images/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/categories/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/news/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/portfolio/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'infinitech-api15.site',
-        pathname: '/medical-assistance-documents/**',
+        pathname: '/**', // Simplified - covers all paths
       },
       
       // 🔹 G-Limit Studio domains
@@ -137,27 +49,41 @@ const nextConfig: NextConfig = {
     ],
     
     dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    
+    // CRITICAL: Disable unoptimized images - forces Next.js optimization
+    unoptimized: false,
   },
   
-  // PERFORMANCE: Enable Gzip/Brotli compression
+  // PERFORMANCE: Enable compression
   compress: true,
   
   // PERFORMANCE: Generate ETags for better caching
   generateEtags: true,
   
-  // PERFORMANCE: Disable source maps in production (faster builds, smaller files)
+  // PERFORMANCE: Disable source maps in production
   productionBrowserSourceMaps: false,
   
   // Enable React strict mode
   reactStrictMode: true,
   
-  // TURBOPACK: Empty config to silence the warning (Turbopack is enabled by default in Next.js 16)
-  // Note: SWC minification is now the default in Next.js 16, no need to specify swcMinify
-  turbopack: {},
+  // PERFORMANCE: PoweredByHeader adds unnecessary bytes
+  poweredByHeader: false,
   
   // Security and caching headers
   async headers() {
     return [
+      // Preconnect to API domain for faster requests
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Link',
+            value: '<https://infinitech-api15.site>; rel=preconnect; crossorigin',
+          },
+        ],
+      },
       // Security headers for all routes
       {
         source: '/:path*',
@@ -179,14 +105,33 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
-  key: 'Content-Security-Policy',
-  value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http://localhost:8000 https://infinitech-api15.site https://g-limitstudio.com https://www.g-limitstudio.com; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://infinitech-api15.site; media-src 'self' http://localhost:8000 https://infinitech-api15.site; frame-src 'self' https://www.google.com https://google.com; frame-ancestors 'self';",
-},
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
         ],
       },
       // PERFORMANCE: Aggressive caching for static assets (1 year)
       {
-        source: '/:all*(svg|jpg|jpeg|png|gif|webp|avif|ico|woff|woff2)',
+        source: '/photo/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:all*(svg|jpg|jpeg|png|gif|webp|avif|ico)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // PERFORMANCE: Cache fonts (1 year)
+      {
+        source: '/:all*(woff|woff2|ttf|otf)',
         headers: [
           {
             key: 'Cache-Control',
@@ -204,13 +149,23 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // PERFORMANCE: Preconnect to API
+      // PERFORMANCE: Cache optimized images (1 year)
       {
-        source: '/portfolio',
+        source: '/_next/image/:path*',
         headers: [
           {
-            key: 'Link',
-            value: '<http://localhost:8000>; rel=preconnect',
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // API routes - short cache with revalidation
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
         ],
       },
@@ -219,7 +174,7 @@ const nextConfig: NextConfig = {
   
   // Compiler options
   compiler: {
-    // PERFORMANCE: Remove console.log in production (smaller bundle)
+    // PERFORMANCE: Remove console.log in production
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
@@ -232,10 +187,61 @@ const nextConfig: NextConfig = {
       'lucide-react', 
       'react-icons',
       'framer-motion',
+      '@radix-ui/react-icons',
     ],
     
     // PERFORMANCE: Enable optimized CSS (removes unused CSS)
     optimizeCss: true,
+    
+    // PERFORMANCE: Enable webpack build worker for faster builds
+    webpackBuildWorker: true,
+    
+    // PERFORMANCE: Optimize server components
+    serverComponentsExternalPackages: ['sharp'],
+  },
+  
+  // Webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    // PERFORMANCE: Optimize for production builds
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk for node_modules
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+            },
+            // Commons chunk for shared code
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+            // Separate chunk for Framer Motion (it's large)
+            framerMotion: {
+              name: 'framer-motion',
+              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+              priority: 30,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      };
+    }
+    
+    return config;
   },
 };
 
