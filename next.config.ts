@@ -179,9 +179,9 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http://localhost:8000 https://infinitech-api15.site https://g-limitstudio.com https://www.g-limitstudio.com; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://infinitech-api15.site; media-src 'self' http://localhost:8000 https://infinitech-api15.site; frame-ancestors 'self';",
-          },
+  key: 'Content-Security-Policy',
+  value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http://localhost:8000 https://infinitech-api15.site https://g-limitstudio.com https://www.g-limitstudio.com; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://infinitech-api15.site; media-src 'self' http://localhost:8000 https://infinitech-api15.site; frame-src 'self' https://www.google.com https://google.com; frame-ancestors 'self';",
+},
         ],
       },
       // PERFORMANCE: Aggressive caching for static assets (1 year)
