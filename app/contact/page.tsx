@@ -1,4 +1,3 @@
-
 "use client"
 import Link from "next/link"
 import { motion } from "motion/react"
@@ -182,7 +181,7 @@ export default function BookingPage() {
                 <h3 className="text-sm uppercase tracking-widest font-semibold text-gold mb-3">Location</h3>
                 <p className="text-lg font-serif font-semibold text-white">G-Limit Studio</p>
                 <p className="text-white leading-relaxed">
-                  Unit 303, Campos Rueda Building,
+                  Unit 311, Campos Rueda Building,
                   <br />
                   Urban Ave, Makati City
                   <br />
