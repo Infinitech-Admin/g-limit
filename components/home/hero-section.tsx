@@ -360,7 +360,7 @@ export function HeroSection() {
             </div>
 
             <div className="flex flex-wrap gap-4 pt-2">
-              <Link href="/contact">
+              <Link href="/booking-form">
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 px-8 md:px-10 group font-bold shadow-xl shadow-amber-500/30 border-2 border-black"
