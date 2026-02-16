@@ -122,7 +122,7 @@ export default function ServicesPage() {
 
   const handleBooking = (serviceType: string) => {
     setSelectedService(serviceType)
-    router.push("/contact")
+    router.push("/booking-form")
   }
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -520,7 +520,7 @@ export default function ServicesPage() {
               size="lg"
               className="bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 font-black px-10 py-6 text-lg shadow-2xl shadow-amber-500/40 border-2 border-black"
             >
-              <Link href="/contact">
+              <Link href="/booking-form">
                 <Camera className="w-6 h-6 mr-3" />
                 Book a Consultation
               </Link>
