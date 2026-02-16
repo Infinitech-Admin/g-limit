@@ -193,55 +193,8 @@ const nextConfig: NextConfig = {
     // PERFORMANCE: Enable optimized CSS (removes unused CSS)
     optimizeCss: true,
     
-    // PERFORMANCE: Enable webpack build worker for faster builds
-    webpackBuildWorker: true,
-    
     // PERFORMANCE: Optimize server components
     serverComponentsExternalPackages: ['sharp'],
-  },
-  
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    // PERFORMANCE: Optimize for production builds
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk for node_modules
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            // Commons chunk for shared code
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-            // Separate chunk for Framer Motion (it's large)
-            framerMotion: {
-              name: 'framer-motion',
-              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-              priority: 30,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-    
-    return config;
   },
 };
 
