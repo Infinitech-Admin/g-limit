@@ -32,14 +32,14 @@ const socialLinks = [
   {
     name: "Email",
     icon: Mail,
-    href: "mailto:infinitechcorp.ph@gmail.com",
+    href: "mailto:g.limitstudio@gmail.com",
     bgColor: "bg-red-600 hover:bg-red-700",
     ariaLabel: "Send us an email",
   },
   {
     name: "Phone",
     icon: Phone,
-    href: "tel:+639456754591",
+    href: "tel:096905373701",
     bgColor: "bg-blue-500 hover:bg-blue-600",
     ariaLabel: "Call us now",
   },
