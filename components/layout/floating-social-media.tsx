@@ -11,7 +11,7 @@ const socialLinks = [
   {
     name: "Facebook",
     icon: Facebook,
-    href: "https://www.facebook.com/people/Infinitech-Advertising-Corp/100080647808810/",
+    href: "https://www.facebook.com/share/1b4YbMQfKw/?mibextid=wwXIfr",
     bgColor: "bg-blue-600 hover:bg-blue-700",
     ariaLabel: "Visit our Facebook page",
   },
