@@ -130,9 +130,20 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gold/20 mt-12 pt-4 text-center">
-          <p className="text-sm opacity-80">© {new Date().getFullYear()} G-Limit Studio. All rights reserved.</p>
-        </div>
+        <div className="border-t border-gold/20 mt-12 pt-4 text-center space-y-1">
+  <p className="text-sm opacity-80">© {new Date().getFullYear()} G-Limit Studio. All rights reserved.</p>
+  <p className="text-xs opacity-60">
+    Designed & Developed by{" "}
+    
+      href="https://infinitechphil.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-amber-300 transition-colors underline decoration-amber-300/50 hover:decoration-amber-300"
+    >
+      Infinitech Advertising Corporation
+    </a>
+  </p>
+</div>
       </div>
     </footer>
   )
