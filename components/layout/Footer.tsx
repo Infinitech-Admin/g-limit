@@ -135,7 +135,7 @@ const Footer = () => {
   <p className="text-xs opacity-60">
     Designed & Developed by{" "}
     
-      href="https://infinitechphil.com"
+      <a href="https://infinitechphil.com"
       target="_blank"
       rel="noopener noreferrer"
       className="hover:text-amber-300 transition-colors underline decoration-amber-300/50 hover:decoration-amber-300"
