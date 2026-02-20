@@ -41,7 +41,7 @@ export default function BookingForm() {
       ],
       addons: [
         "Extra edited photo - ₱100 every 5 photos",
-        "Extended session - ₱450 per additional hour",
+        "Extended session - ₱1,000 per additional hour",
         "Hair & Make Up Services - ₱1,999 only"
       ]
     },
@@ -58,7 +58,7 @@ export default function BookingForm() {
       ],
       addons: [
         "Extra edited photo - ₱100 every 5 photos",
-        "Extended session - ₱450 per additional hour",
+        "Extended session - ₱1,000 per additional hour",
         "Hair & Make Up Services - ₱1,999 only"
       ]
     },
@@ -75,7 +75,7 @@ export default function BookingForm() {
         "FREE Hair & Make Up Services for 1 additional person"
       ],
       addons: [
-        "Extended session - ₱450 per additional hour"
+        "Extended session - ₱1,000 per additional hour"
       ]
     }
   ]
