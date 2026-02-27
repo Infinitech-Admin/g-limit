@@ -42,15 +42,12 @@ export function Navigation() {
     } else {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [isOpen])
 
-  // PWA Install Prompt Handler
   useEffect(() => {
-    // Check if already installed
     const checkInstalled = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       const isIOSStandalone = (window.navigator as any).standalone === true
@@ -60,19 +57,16 @@ export function Navigation() {
     if (checkInstalled()) {
       setIsInstalled(true)
       setShowInstallButton(false)
-      console.log('PWA is already installed')
       return
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event fired - Install button will show')
       e.preventDefault()
       setDeferredPrompt(e)
       setShowInstallButton(true)
     }
 
     const handleAppInstalled = () => {
-      console.log('PWA was installed')
       setShowInstallButton(false)
       setIsInstalled(true)
       setDeferredPrompt(null)
@@ -88,29 +82,11 @@ export function Navigation() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // If no deferred prompt available, user needs to use browser's install button
-      console.log('No deferred prompt available')
-      // Guide user to browser install - but don't show alert, just log
-      return
-    }
-
+    if (!deferredPrompt) return
     try {
-      // Show the install prompt
       await deferredPrompt.prompt()
-
-      // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice
-
       console.log(`User response to install prompt: ${outcome}`)
-
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt')
-      } else {
-        console.log('User dismissed the install prompt')
-      }
-
-      // Clear the deferredPrompt and hide button
       setDeferredPrompt(null)
       setShowInstallButton(false)
     } catch (error) {
@@ -152,28 +128,32 @@ export function Navigation() {
     >
       <FloatingParticles />
 
-      <div ref={menuRef} className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 relative">
+      <div ref={menuRef} className="max-w-6xl mx-auto px-4 sm:px-8 py-3 relative">
         <div className="flex items-center justify-between">
+
+          {/* ── Logo ── */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            <Link href="/" className="flex items-center gap-2 shrink-0 group">
-              <div className="relative w-8 h-8">
+            <Link href="/" className="flex items-center shrink-0 group">
+              <div className="relative">
+                {/* Glow behind logo */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-gold to-gold/50 rounded-full blur-lg opacity-60 group-hover:opacity-100"
-                  animate={{ scale: [1, 1.2, 1] }}
+                  className="absolute inset-0 bg-gradient-to-br from-gold to-gold/50 blur-2xl opacity-30 group-hover:opacity-60"
+                  animate={{ scale: [1, 1.15, 1] }}
                   transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
                 />
-                <div className="relative w-8 h-8 bg-gradient-to-br from-gold to-gold/70 rounded-full flex items-center justify-center shadow-lg shadow-gold/40">
-                  <span className="text-black font-serif text-lg font-bold">G</span>
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/glimitlogo.png"
+                  alt="G-Limit Studio"
+                  className="relative h-14 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,215,0,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.8)] transition-all duration-300"
+                />
               </div>
-              <span className="font-serif text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold to-gold/80 hidden sm:inline">
-                G-Limit
-              </span>
             </Link>
           </motion.div>
 
+          {/* ── Desktop Nav Links ── */}
           <motion.div
-            className="hidden lg:flex items-center gap-1 lg:gap-8"
+            className="hidden lg:flex items-center gap-6 xl:gap-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -185,8 +165,7 @@ export function Navigation() {
               { href: "/about", label: "About" },
               { href: "/news", label: "News" },
               { href: "/blog", label: "Blog" },
-                { href: "/ambassador", label: "Ambassador" },
-            
+              { href: "/ambassador", label: "Ambassador" },
             ].map((link, i) => (
               <motion.div
                 key={link.href}
@@ -199,6 +178,7 @@ export function Navigation() {
             ))}
           </motion.div>
 
+          {/* ── Right Actions ── */}
           <motion.div
             className="flex items-center gap-2 sm:gap-4"
             initial={{ opacity: 0, x: 20 }}
@@ -231,7 +211,7 @@ export function Navigation() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href="/booking-form"
-                className="hidden lg:inline-block px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 font-bold shadow-xl shadow-amber-500/30 border-2 border-black rounded-lg transition-all text-center text-sm"
+                className="hidden lg:inline-flex items-center px-5 py-2 bg-gradient-to-r from-amber-400 to-amber-500 text-black hover:from-amber-300 hover:to-amber-400 font-bold text-sm rounded-lg shadow-lg shadow-amber-500/25 border border-amber-300/30 transition-all duration-200 whitespace-nowrap"
               >
                 Book Now
               </Link>
@@ -251,6 +231,7 @@ export function Navigation() {
           </motion.div>
         </div>
 
+        {/* ── Mobile Menu ── */}
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{
@@ -265,11 +246,7 @@ export function Navigation() {
             initial="hidden"
             animate={isOpen ? "visible" : "hidden"}
             variants={{
-              visible: {
-                transition: {
-                  staggerChildren: 0.05,
-                },
-              },
+              visible: { transition: { staggerChildren: 0.05 } },
             }}
           >
             {[
@@ -297,17 +274,11 @@ export function Navigation() {
             {/* Mobile Install Button */}
             {showInstallButton && (
               <motion.div
-                variants={{
-                  hidden: { opacity: 0, x: -20 },
-                  visible: { opacity: 1, x: 0 },
-                }}
+                variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}
                 className="pt-2"
               >
                 <button
-                  onClick={() => {
-                    handleInstallClick()
-                    setIsOpen(false)
-                  }}
+                  onClick={() => { handleInstallClick(); setIsOpen(false) }}
                   className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-gradient-to-r from-gold/20 to-gold/10 text-gold hover:from-gold/30 hover:to-gold/20 border border-gold/30 rounded-lg transition-all shadow-lg shadow-gold/20 text-sm font-medium"
                 >
                   <Download size={16} />
@@ -317,10 +288,7 @@ export function Navigation() {
             )}
 
             <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 },
-              }}
+              variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}
               className="pt-2"
             >
               <Link
