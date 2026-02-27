@@ -55,7 +55,7 @@ export default function AmbassadorPage() {
   const [ambassadors, setAmbassadors]   = useState<Ambassador[]>([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState<string | null>(null)
-  const [activeId, setActiveId]         = useState<number | null>(null)
+  const [activeId, setActiveId]         = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   // ── Fetch all ambassadors (no pagination — we want them all for the gallery)
@@ -76,22 +76,21 @@ export default function AmbassadorPage() {
           : []
 
         // Deduplicate by name — merge image_paths from entries with the same name
-        const merged = Object.values(
-          raw.reduce<Record<string, Ambassador>>((acc, amb) => {
-            const key = amb.name.trim().toLowerCase()
-            if (acc[key]) {
-              const existing = new Set(acc[key].image_paths)
-              amb.image_paths.forEach((p) => existing.add(p))
-              acc[key].image_paths = Array.from(existing)
-            } else {
-              acc[key] = { ...amb, image_paths: [...amb.image_paths] }
-            }
-            return acc
-          }, {})
-        )
+        const mergedMap = raw.reduce<Record<string, Ambassador>>((acc, amb) => {
+          const key = amb.name.trim().toLowerCase()
+          if (acc[key]) {
+            const existing = new Set(acc[key].image_paths)
+            amb.image_paths.forEach((p) => existing.add(p))
+            acc[key].image_paths = Array.from(existing)
+          } else {
+            acc[key] = { ...amb, image_paths: [...amb.image_paths] }
+          }
+          return acc
+        }, {})
 
+        const merged = Object.values(mergedMap)
         setAmbassadors(merged)
-        if (merged.length > 0) setActiveId(merged[0].id)
+        if (merged.length > 0) setActiveId(merged[0].name.trim().toLowerCase())
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load ambassadors")
       } finally {
@@ -101,7 +100,7 @@ export default function AmbassadorPage() {
     fetchAll()
   }, [])
 
-  const current     = ambassadors.find((a) => a.id === activeId) ?? null
+  const current     = ambassadors.find((a) => a.name.trim().toLowerCase() === activeId) ?? null
   const accentTheme = current
     ? ACCENTS[ambassadors.indexOf(current) % ACCENTS.length]
     : ACCENTS[0]
@@ -211,11 +210,11 @@ export default function AmbassadorPage() {
           >
             {ambassadors.map((amb, idx) => {
               const theme   = ACCENTS[idx % ACCENTS.length]
-              const isActive = activeId === amb.id
+              const isActive = activeId === amb.name.trim().toLowerCase()
               return (
                 <button
-                  key={amb.id}
-                  onClick={() => { setActiveId(amb.id); setLightboxIndex(null) }}
+                  key={amb.name}
+                  onClick={() => { setActiveId(amb.name.trim().toLowerCase()); setLightboxIndex(null) }}
                   className="relative group flex items-center gap-3 px-7 py-3.5 rounded-full font-sans font-bold text-sm uppercase tracking-widest transition-all duration-300 overflow-hidden"
                   style={{
                     border: `2px solid ${isActive ? theme.accent : "rgba(245,217,138,0.2)"}`,
@@ -261,7 +260,7 @@ export default function AmbassadorPage() {
         <AnimatePresence mode="wait">
           {current && (
             <motion.div
-              key={current.id}
+              key={current.name}
               initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 12 }}
@@ -304,7 +303,7 @@ export default function AmbassadorPage() {
             </motion.div>
           ) : current && current.image_paths.length > 0 ? (
             <motion.div
-              key={current.id}
+              key={current.name}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
