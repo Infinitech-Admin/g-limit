@@ -1,49 +1,61 @@
 "use client"
 import { useState } from "react"
-import { Facebook, MessageCircle, Send, Mail, Phone, Share2, X } from "lucide-react"
+import { Facebook, Instagram, Mail, Phone, Share2, X } from "lucide-react"
 import { useLockBodyScroll } from "@/hooks/use-scroll"
+
+// TikTok doesn't have a lucide icon, so we use a simple SVG inline component
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z" />
+  </svg>
+)
 
 const FloatingSocialIcons = () => {
   const [isOpen, setIsOpen] = useState(false)
   useLockBodyScroll(isOpen)
 
-const socialLinks = [
-  {
-    name: "Facebook",
-    icon: Facebook,
-    href: "https://www.facebook.com/share/1b4YbMQfKw/?mibextid=wwXIfr",
-    bgColor: "bg-blue-600 hover:bg-blue-700",
-    ariaLabel: "Visit our Facebook page",
-  },
-  {
-    name: "WhatsApp",
-    icon: MessageCircle,
-    href: "https://wa.me/639456754591", // PH format (remove leading 0, add 63)
-    bgColor: "bg-green-500 hover:bg-green-600",
-    ariaLabel: "Chat with us on WhatsApp",
-  },
-  {
-    name: "Telegram",
-    icon: Send,
-    href: "https://t.me/infinitech_justin",
-    bgColor: "bg-sky-500 hover:bg-sky-600",
-    ariaLabel: "Message us on Telegram",
-  },
-  {
-    name: "Email",
-    icon: Mail,
-    href: "mailto:g.limitstudio@gmail.com",
-    bgColor: "bg-red-600 hover:bg-red-700",
-    ariaLabel: "Send us an email",
-  },
-  {
-    name: "Phone",
-    icon: Phone,
-    href: "tel:096905373701",
-    bgColor: "bg-blue-500 hover:bg-blue-600",
-    ariaLabel: "Call us now",
-  },
-];
+  const socialLinks = [
+    {
+      name: "Facebook",
+      icon: Facebook,
+      href: "https://www.facebook.com/share/1b4YbMQfKw/?mibextid=wwXIfr",
+      bgColor: "bg-blue-600 hover:bg-blue-700",
+      ariaLabel: "Visit our Facebook page",
+    },
+    {
+      name: "Instagram",
+      icon: Instagram,
+      href: "https://www.instagram.com/g.limitstudioph?igsh=MXA3YzhuaTFmNnNudA==",
+      bgColor: "bg-pink-600 hover:bg-pink-700",
+      ariaLabel: "Visit our Instagram page",
+    },
+    {
+      name: "TikTok",
+      icon: TikTokIcon,
+      href: "https://www.tiktok.com/@glimit.studio?_r=1&_t=ZS-942cxTHnfFd",
+      bgColor: "bg-black hover:bg-neutral-800",
+      ariaLabel: "Visit our TikTok page",
+    },
+    {
+      name: "Email",
+      icon: Mail,
+      href: "mailto:g.limitstudio@gmail.com",
+      bgColor: "bg-red-600 hover:bg-red-700",
+      ariaLabel: "Send us an email",
+    },
+    {
+      name: "Phone",
+      icon: Phone,
+      href: "tel:096905373701",
+      bgColor: "bg-blue-500 hover:bg-blue-600",
+      ariaLabel: "Call us now",
+    },
+  ]
 
   return (
     <>
