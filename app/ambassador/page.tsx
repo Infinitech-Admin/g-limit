@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react"
 import FloatingParticles from "@/components/animated-golden-particles"
-
+//
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface Ambassador {
   id: number
