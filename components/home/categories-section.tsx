@@ -100,45 +100,45 @@ const CategoryCard = memo(({
             {/* Dark overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />
 
-            {/* Gold overlay on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#d4a574]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Light gold overlay on hover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#f5d98a]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
 
           {/* Simplified corner brackets - only show on hover */}
           {!shouldReduceMotion && (
             <div className="absolute inset-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {/* Top-left corner */}
-              <div className="absolute top-6 left-6 w-8 h-8 border-l-2 border-t-2 border-[#d4a574]">
-                <div className="absolute top-0 left-0 w-2 h-2 bg-[#d4a574] rounded-full" />
+              <div className="absolute top-6 left-6 w-8 h-8 border-l-2 border-t-2 border-[#f5d98a]">
+                <div className="absolute top-0 left-0 w-2 h-2 bg-[#f5d98a] rounded-full" />
               </div>
 
               {/* Top-right corner */}
-              <div className="absolute top-6 right-6 w-8 h-8 border-r-2 border-t-2 border-[#d4a574]">
-                <div className="absolute top-0 right-0 w-2 h-2 bg-[#d4a574] rounded-full" />
+              <div className="absolute top-6 right-6 w-8 h-8 border-r-2 border-t-2 border-[#f5d98a]">
+                <div className="absolute top-0 right-0 w-2 h-2 bg-[#f5d98a] rounded-full" />
               </div>
 
               {/* Bottom-left corner */}
-              <div className="absolute bottom-6 left-6 w-8 h-8 border-l-2 border-b-2 border-[#d4a574]">
-                <div className="absolute bottom-0 left-0 w-2 h-2 bg-[#d4a574] rounded-full" />
+              <div className="absolute bottom-6 left-6 w-8 h-8 border-l-2 border-b-2 border-[#f5d98a]">
+                <div className="absolute bottom-0 left-0 w-2 h-2 bg-[#f5d98a] rounded-full" />
               </div>
 
               {/* Bottom-right corner */}
-              <div className="absolute bottom-6 right-6 w-8 h-8 border-r-2 border-b-2 border-[#d4a574]">
-                <div className="absolute bottom-0 right-0 w-2 h-2 bg-[#d4a574] rounded-full" />
+              <div className="absolute bottom-6 right-6 w-8 h-8 border-r-2 border-b-2 border-[#f5d98a]">
+                <div className="absolute bottom-0 right-0 w-2 h-2 bg-[#f5d98a] rounded-full" />
               </div>
 
               {/* Simplified center focus point */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-16 h-16 border-2 border-[#d4a574] rounded-full opacity-50" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-[#d4a574] rounded-full shadow-lg shadow-[#d4a574]/50" />
+                <div className="w-16 h-16 border-2 border-[#f5d98a] rounded-full opacity-50" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-[#f5d98a] rounded-full shadow-lg shadow-[#f5d98a]/50" />
               </div>
 
               {/* Grid overlay - rule of thirds */}
               <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-1/3 left-0 right-0 h-px bg-[#d4a574]/40" />
-                <div className="absolute top-2/3 left-0 right-0 h-px bg-[#d4a574]/40" />
-                <div className="absolute left-1/3 top-0 bottom-0 w-px bg-[#d4a574]/40" />
-                <div className="absolute left-2/3 top-0 bottom-0 w-px bg-[#d4a574]/40" />
+                <div className="absolute top-1/3 left-0 right-0 h-px bg-[#f5d98a]/40" />
+                <div className="absolute top-2/3 left-0 right-0 h-px bg-[#f5d98a]/40" />
+                <div className="absolute left-1/3 top-0 bottom-0 w-px bg-[#f5d98a]/40" />
+                <div className="absolute left-2/3 top-0 bottom-0 w-px bg-[#f5d98a]/40" />
               </div>
             </div>
           )}
@@ -146,31 +146,31 @@ const CategoryCard = memo(({
           {/* Category info */}
           <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
             {/* Icon badge */}
-            <div className="w-14 h-14 bg-gradient-to-br from-[#d4a574] to-[#c9944a] rounded-full flex items-center justify-center mb-4 border-2 border-black shadow-xl shadow-[#d4a574]/30 transition-transform duration-300 group-hover:scale-110">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#f5d98a] to-[#ecc84e] rounded-full flex items-center justify-center mb-4 border-2 border-black shadow-xl shadow-[#f5d98a]/30 transition-transform duration-300 group-hover:scale-110">
               <IconComponent className="w-7 h-7 text-black" />
             </div>
 
-            <h3 className="text-3xl font-serif font-light text-white mb-3 group-hover:text-[#d4a574] transition-colors duration-300">
+            <h3 className="text-3xl font-serif font-light text-white mb-3 group-hover:text-[#f5d98a] transition-colors duration-300">
               {category.name}
             </h3>
 
             {/* Animated gold line */}
-            <div className="h-1 bg-gradient-to-r from-[#d4a574] to-transparent w-full" />
+            <div className="h-1 bg-gradient-to-r from-[#f5d98a] to-transparent w-full" />
 
             {/* Explore text */}
-            <p className="text-[#d4a574] text-sm font-bold mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-2">
+            <p className="text-[#f5d98a] text-sm font-bold mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-2">
               EXPLORE
               <span>→</span>
             </p>
           </div>
 
           {/* Camera settings overlay */}
-          <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm text-[#d4a574] px-3 py-1.5 rounded-full text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-[#d4a574]/30">
+          <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm text-[#f5d98a] px-3 py-1.5 rounded-full text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-[#f5d98a]/30">
             <span>● REC</span>
           </div>
 
           {/* Border glow effect */}
-          <div className="absolute inset-0 rounded-lg border-2 border-[#d4a574]/0 group-hover:border-[#d4a574]/50 transition-all duration-300 shadow-lg shadow-[#d4a574]/0 group-hover:shadow-[#d4a574]/30" />
+          <div className="absolute inset-0 rounded-lg border-2 border-[#f5d98a]/0 group-hover:border-[#f5d98a]/50 transition-all duration-300 shadow-lg shadow-[#f5d98a]/0 group-hover:shadow-[#f5d98a]/30" />
         </div>
       </Card>
     </motion.div>
@@ -242,11 +242,11 @@ export function CategoriesSection() {
   return (
     <section className="py-16 relative overflow-hidden">
       {/* Black to gold gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-[#1a1410] to-[#2a1f15]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-[#1a1610] to-[#241d0f]" />
 
-      {/* Radial gold glow accents */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#d4a574]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#d4a574]/10 rounded-full blur-3xl" />
+      {/* Radial light gold glow accents */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#f5d98a]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#f5d98a]/10 rounded-full blur-3xl" />
 
       {/* Animated gold particles - lazy loaded */}
       {!shouldReduceMotion && <FloatingParticles count={15} />}
@@ -260,9 +260,9 @@ export function CategoriesSection() {
           className="text-center mb-12"
         >
           <motion.div variants={fadeInUp} transition={smoothTransition} className="flex items-center justify-center gap-3 mb-6">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#d4a574]" />
-            <p className="text-[#d4a574] font-black tracking-[0.3em] text-sm">OUR SERVICES</p>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#d4a574]" />
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#f5d98a]" />
+            <p className="text-[#f5d98a] font-black tracking-[0.3em] text-sm">OUR SERVICES</p>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#f5d98a]" />
           </motion.div>
 
           <motion.h2
@@ -270,7 +270,7 @@ export function CategoriesSection() {
             transition={smoothTransition}
             className="text-5xl md:text-6xl lg:text-7xl font-serif font-light text-white mb-4"
           >
-            What We <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent">Capture</span>
+            What We <span className="bg-gradient-to-r from-[#f5d98a] via-[#fae9a0] to-[#f5d98a] bg-clip-text text-transparent">Capture</span>
           </motion.h2>
 
           <motion.p variants={fadeInUp} transition={smoothTransition} className="text-gray-400 text-lg max-w-2xl mx-auto">
