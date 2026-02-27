@@ -76,10 +76,10 @@ const FeatureCard = memo(({
       <div
         className="w-14 h-14 border-2 flex items-center justify-center shadow-lg shrink-0 transition-all duration-300"
         style={{
-          background: "rgba(255, 149, 0, 0.1)",
-          borderColor: "rgba(255, 149, 0, 0.4)",
-          boxShadow: "0 4px 20px rgba(255, 149, 0, 0.2)",
-          color: "#ff9500",
+          background: "rgba(245, 217, 138, 0.1)",
+          borderColor: "rgba(245, 217, 138, 0.4)",
+          boxShadow: "0 4px 20px rgba(245, 217, 138, 0.2)",
+          color: "#f5d98a",
         }}
       >
         {feature.icon}
@@ -121,17 +121,17 @@ const StatCard = memo(({
       <div
         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold mb-4"
         style={{
-          background: "linear-gradient(to right, #ff9500, #ff8c00, #ff9500)",
+          background: "linear-gradient(to right, #f5d98a, #ecc84e, #f5d98a)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
-          filter: "drop-shadow(0 0 30px rgba(255, 149, 0, 0.5))",
+          filter: "drop-shadow(0 0 30px rgba(245, 217, 138, 0.5))",
         }}
       >
         <CountingNumber number={stat.value} />
         {stat.suffix}
       </div>
-      <p className="text-sm sm:text-base md:text-lg uppercase tracking-widest font-bold" style={{ color: "#ff9500" }}>
+      <p className="text-sm sm:text-base md:text-lg uppercase tracking-widest font-bold" style={{ color: "#f5d98a" }}>
         {stat.label}
       </p>
     </motion.div>
@@ -154,8 +154,8 @@ const FilmPerforation = memo(({
     <motion.div
       className="w-8 h-5 rounded-sm"
       style={{
-        background: "linear-gradient(to bottom, #ff9500, #ff8c00)",
-        boxShadow: "0 0 15px rgba(255, 149, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.3)",
+        background: "linear-gradient(to bottom, #f5d98a, #ecc84e)",
+        boxShadow: "0 0 15px rgba(245, 217, 138, 0.6), inset 0 1px 2px rgba(255,255,255,0.3)",
       }}
       initial={{ opacity: 0, scale: 0, x: side === 'left' ? -20 : 20 }}
       animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -188,12 +188,12 @@ export default function AboutSection() {
   }, [isMobile, isTablet])
 
   return (
-    <section ref={sectionRef} className="py-20 relative overflow-hidden" style={{ backgroundColor: "#2b1d12" }}>
+    <section ref={sectionRef} className="py-20 relative overflow-hidden" style={{ backgroundColor: "#1a1610" }}>
       {/* Simplified gradient background */}
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(135deg, #2b1d12 0%, #3d2817 30%, #4a2f1a 60%, #2b1d12 100%)",
+          background: "linear-gradient(135deg, #1a1610 0%, #241d0f 30%, #2e2410 60%, #1a1610 100%)",
         }}
       />
 
@@ -205,7 +205,7 @@ export default function AboutSection() {
         }}
       />
 
-      {/* Animated orange particles - lazy loaded, reduced count */}
+      {/* Animated light gold particles - lazy loaded, reduced count */}
       {!shouldReduceMotion && <FloatingParticles count={30} />}
 
       {/* Film perforations - simplified */}
@@ -228,11 +228,11 @@ export default function AboutSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-4 mb-6">
-            <Sparkles className="w-6 h-6" style={{ color: "#ff9500" }} />
-            <p className="font-black tracking-[0.3em] text-sm" style={{ color: "#ff9500" }}>
+            <Sparkles className="w-6 h-6" style={{ color: "#f5d98a" }} />
+            <p className="font-black tracking-[0.3em] text-sm" style={{ color: "#f5d98a" }}>
               ABOUT US
             </p>
-            <Sparkles className="w-6 h-6" style={{ color: "#ff9500" }} />
+            <Sparkles className="w-6 h-6" style={{ color: "#f5d98a" }} />
           </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-light leading-tight">
@@ -240,7 +240,7 @@ export default function AboutSection() {
             <br />
             <span
               style={{
-                background: "linear-gradient(to right, #ff9500, #ff8c00, #ff9500)",
+                background: "linear-gradient(to right, #f5d98a, #ecc84e, #f5d98a)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -254,7 +254,7 @@ export default function AboutSection() {
           <div
             className="h-1 w-32 mx-auto mt-8"
             style={{
-              background: "linear-gradient(to right, transparent, #ff9500, transparent)",
+              background: "linear-gradient(to right, transparent, #f5d98a, transparent)",
             }}
           />
         </div>
@@ -273,8 +273,8 @@ export default function AboutSection() {
               <div
                 className="relative aspect-4/5 h-80 md:h-[420px] lg:h-[500px] overflow-hidden border-4 shadow-2xl"
                 style={{
-                  borderColor: "rgba(255, 149, 0, 0.5)",
-                  boxShadow: "0 25px 70px rgba(255, 149, 0, 0.4)",
+                  borderColor: "rgba(245, 217, 138, 0.5)",
+                  boxShadow: "0 25px 70px rgba(245, 217, 138, 0.4)",
                 }}
               >
                 <Image
@@ -293,17 +293,17 @@ export default function AboutSection() {
                 <div
                   className="absolute inset-0 mix-blend-multiply"
                   style={{
-                    background: "linear-gradient(to top, rgba(43, 29, 18, 0.9), transparent, rgba(43, 29, 18, 0.4))",
+                    background: "linear-gradient(to top, rgba(26, 22, 16, 0.9), transparent, rgba(26, 22, 16, 0.4))",
                   }}
                 />
 
                 {/* Simplified corner brackets */}
                 <div className="absolute inset-4">
                   {[
-                    { top: 0, left: 0, borderLeft: "3px solid #ff9500", borderTop: "3px solid #ff9500" },
-                    { top: 0, right: 0, borderRight: "3px solid #ff9500", borderTop: "3px solid #ff9500" },
-                    { bottom: 0, left: 0, borderLeft: "3px solid #ff9500", borderBottom: "3px solid #ff9500" },
-                    { bottom: 0, right: 0, borderRight: "3px solid #ff9500", borderBottom: "3px solid #ff9500" },
+                    { top: 0, left: 0, borderLeft: "3px solid #f5d98a", borderTop: "3px solid #f5d98a" },
+                    { top: 0, right: 0, borderRight: "3px solid #f5d98a", borderTop: "3px solid #f5d98a" },
+                    { bottom: 0, left: 0, borderLeft: "3px solid #f5d98a", borderBottom: "3px solid #f5d98a" },
+                    { bottom: 0, right: 0, borderRight: "3px solid #f5d98a", borderBottom: "3px solid #f5d98a" },
                   ].map((style, i) => (
                     <div
                       key={i}
@@ -318,8 +318,8 @@ export default function AboutSection() {
               <div
                 className="absolute top-1/4 -right-2 sm:-right-6 sm:top-1/3 md:-right-10 md:top-1/4 lg:-right-16 lg:top-1/4 text-black p-3 sm:p-4 md:p-6 font-mono text-xs sm:text-sm md:text-base font-bold space-y-2 shadow-xl border-2 border-black rounded-lg transition-transform duration-300 hover:scale-110"
                 style={{
-                  background: "linear-gradient(135deg, #ff9500, #ff8c00)",
-                  boxShadow: "0 10px 40px rgba(255, 149, 0, 0.5)",
+                  background: "linear-gradient(135deg, #f5d98a, #ecc84e)",
+                  boxShadow: "0 10px 40px rgba(245, 217, 138, 0.5)",
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -381,10 +381,10 @@ export default function AboutSection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="group bg-transparent border-2 font-bold transition-all duration-300 hover:bg-gradient-to-r hover:from-[#ff9500] hover:to-[#ff8c00] hover:text-black"
+                  className="group bg-transparent border-2 font-bold transition-all duration-300 hover:bg-gradient-to-r hover:from-[#f5d98a] hover:to-[#ecc84e] hover:text-black"
                   style={{
-                    borderColor: "#ff9500",
-                    color: "#ff9500",
+                    borderColor: "#f5d98a",
+                    color: "#f5d98a",
                   }}
                 >
                   Learn More
@@ -404,15 +404,15 @@ export default function AboutSection() {
           className="relative"
         >
           {/* Film strip top border */}
-          <div className="h-12 bg-black flex items-center justify-around mb-2 border-y-2" style={{ borderColor: "#ff9500" }}>
+          <div className="h-12 bg-black flex items-center justify-around mb-2 border-y-2" style={{ borderColor: "#f5d98a" }}>
             {[...Array(filmStripCount)].map((_, i) => (
               <div
                 key={i}
                 className="w-5 h-6 rounded-sm shadow-lg border"
                 style={{
-                  background: "linear-gradient(to bottom, #ff9500, #ff8c00)",
-                  boxShadow: "0 0 15px rgba(255, 149, 0, 0.6)",
-                  borderColor: "#ffaa33",
+                  background: "linear-gradient(to bottom, #f5d98a, #ecc84e)",
+                  boxShadow: "0 0 15px rgba(245, 217, 138, 0.6)",
+                  borderColor: "#fae9a0",
                 }}
               />
             ))}
@@ -420,7 +420,7 @@ export default function AboutSection() {
 
           <div
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12 py-10 sm:py-16 md:py-20 bg-black px-4 sm:px-8 md:px-12 backdrop-blur-sm border-x-2"
-            style={{ borderColor: "#ff9500" }}
+            style={{ borderColor: "#f5d98a" }}
           >
             {stats.map((stat, index) => (
               <StatCard 
@@ -433,15 +433,15 @@ export default function AboutSection() {
           </div>
 
           {/* Film strip bottom border */}
-          <div className="h-12 bg-black flex items-center justify-around mt-2 border-y-2" style={{ borderColor: "#ff9500" }}>
+          <div className="h-12 bg-black flex items-center justify-around mt-2 border-y-2" style={{ borderColor: "#f5d98a" }}>
             {[...Array(filmStripCount)].map((_, i) => (
               <div
                 key={i}
                 className="w-5 h-6 rounded-sm shadow-lg border"
                 style={{
-                  background: "linear-gradient(to bottom, #ff9500, #ff8c00)",
-                  boxShadow: "0 0 15px rgba(255, 149, 0, 0.6)",
-                  borderColor: "#ffaa33",
+                  background: "linear-gradient(to bottom, #f5d98a, #ecc84e)",
+                  boxShadow: "0 0 15px rgba(245, 217, 138, 0.6)",
+                  borderColor: "#fae9a0",
                 }}
               />
             ))}
