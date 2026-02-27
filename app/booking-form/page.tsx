@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "motion/react"
-import { Calendar, Clock, User, Mail, Phone, MessageSquare, CreditCard, Upload, X, Check, Camera, Loader2 } from "lucide-react"
+import { Calendar, Clock, User, Mail, Phone, MessageSquare, CreditCard, Upload, X, Check, Camera, Loader2, Users } from "lucide-react"
 
 export default function BookingForm() {
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ export default function BookingForm() {
     email: "",
     phone: "",
     facebook: "",
+    referredBy: "",
     date: "",
     time: "",
     package: "",
@@ -179,14 +180,13 @@ export default function BookingForm() {
     setSubmitMessage(null)
 
     try {
-      // Create FormData object
       const data = new FormData()
       
-      // Append all form fields
       data.append('name', formData.name)
       data.append('email', formData.email)
       data.append('phone', formData.phone)
       data.append('facebook', formData.facebook)
+      data.append('referred_by', formData.referredBy)   // ← new field (nullable)
       data.append('date', formData.date)
       data.append('time', formData.time)
       data.append('package', formData.package)
@@ -198,12 +198,10 @@ export default function BookingForm() {
       data.append('addons_other', formData.addonsOther)
       data.append('payment_method', formData.paymentMethod)
       
-      // Append file if exists
       if (formData.paymentProof) {
         data.append('payment_proof', formData.paymentProof)
       }
 
-      // Submit to Next.js API route
       const response = await fetch('/api/reservation-form', {
         method: 'POST',
         body: data,
@@ -214,12 +212,12 @@ export default function BookingForm() {
       if (result.success) {
         setSubmitMessage({ type: 'success', text: result.message || 'Reservation submitted successfully! We\'ll contact you within 24 hours.' })
         
-        // Reset form
         setFormData({
           name: "",
           email: "",
           phone: "",
           facebook: "",
+          referredBy: "",
           date: "",
           time: "",
           package: "",
@@ -233,8 +231,6 @@ export default function BookingForm() {
           paymentProof: null,
         })
         setPreviewUrl(null)
-        
-        // Scroll to top to show success message
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         setSubmitMessage({ type: 'error', text: result.message || 'Failed to submit reservation. Please try again.' })
@@ -282,18 +278,9 @@ export default function BookingForm() {
             <motion.div
               key={i}
               className="absolute inset-0"
-              style={{
-                transform: `rotate(${(i * 360) / apertureBlades}deg)`,
-              }}
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                delay: i * 0.2,
-              }}
+              style={{ transform: `rotate(${(i * 360) / apertureBlades}deg)` }}
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity, delay: i * 0.2 }}
             >
               <div className="w-full h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
             </motion.div>
@@ -307,18 +294,9 @@ export default function BookingForm() {
             <motion.div
               key={i}
               className="absolute inset-0 border-2 border-amber-400 rounded-full"
-              style={{
-                transform: `scale(${1 + i * 0.15})`,
-              }}
-              animate={{
-                rotate: [0, 360],
-                opacity: [0.2, 0.5, 0.2],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                delay: i * 0.3,
-              }}
+              style={{ transform: `scale(${1 + i * 0.15})` }}
+              animate={{ rotate: [0, 360], opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 8, repeat: Infinity, delay: i * 0.3 }}
             />
           ))}
         </div>
@@ -355,8 +333,8 @@ export default function BookingForm() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`max-w-4xl mx-auto mb-8 p-4 rounded-xl border ${
-              submitMessage.type === 'success' 
-                ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+              submitMessage.type === 'success'
+                ? 'bg-green-500/10 border-green-500/30 text-green-400'
                 : 'bg-red-500/10 border-red-500/30 text-red-400'
             }`}
           >
@@ -396,7 +374,6 @@ export default function BookingForm() {
                   <p className="mb-1">{pkg.duration} session</p>
                   <p>{pkg.photos}</p>
                 </div>
-                
                 <div className="space-y-3 mb-6">
                   <p className="text-sm font-semibold text-amber-400">Inclusions:</p>
                   {pkg.features.map((feature, i) => (
@@ -406,7 +383,6 @@ export default function BookingForm() {
                     </div>
                   ))}
                 </div>
-
                 <div className="border-t border-amber-400/20 pt-4">
                   <p className="text-sm font-semibold text-amber-400 mb-2">Optional Add-Ons:</p>
                   {pkg.addons.map((addon, i) => (
@@ -426,10 +402,11 @@ export default function BookingForm() {
           className="max-w-4xl mx-auto bg-black/60 backdrop-blur-sm border border-amber-400/30 rounded-2xl p-6 lg:p-12"
         >
           <form onSubmit={handleSubmit} className="space-y-8 lg:space-y-10">
+
             {/* A. Client Information */}
             <div className="space-y-6">
               <h3 className="text-xl lg:text-2xl font-bold text-amber-400">A. Client Information</h3>
-              
+
               <div>
                 <label className="block text-sm text-gray-300 mb-2">
                   Full Name <span className="text-amber-400">*</span>
@@ -486,18 +463,39 @@ export default function BookingForm() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">
-                  Facebook / Instagram Name
-                </label>
-                <input
-                  type="text"
-                  name="facebook"
-                  placeholder="@yourusername"
-                  value={formData.facebook}
-                  onChange={handleChange}
-                  className="w-full bg-black/40 border border-amber-400/30 rounded-lg py-3 lg:py-4 px-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-400 transition-colors"
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-2">
+                    Facebook / Instagram Name
+                  </label>
+                  <input
+                    type="text"
+                    name="facebook"
+                    placeholder="@yourusername"
+                    value={formData.facebook}
+                    onChange={handleChange}
+                    className="w-full bg-black/40 border border-amber-400/30 rounded-lg py-3 lg:py-4 px-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-400 transition-colors"
+                  />
+                </div>
+
+                {/* ── NEW: Referred By ── */}
+                <div>
+                  <label className="block text-sm text-gray-300 mb-2">
+                    Referred By
+                    <span className="ml-2 text-xs text-gray-500">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400/60" />
+                    <input
+                      type="text"
+                      name="referredBy"
+                      placeholder="Name of person who referred you"
+                      value={formData.referredBy}
+                      onChange={handleChange}
+                      className="w-full bg-black/40 border border-amber-400/30 rounded-lg py-3 lg:py-4 pl-12 pr-4 text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-400 transition-colors"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -559,7 +557,6 @@ export default function BookingForm() {
                   ))}
                 </div>
 
-                {/* Conditional "Other" field */}
                 {formData.shootType === "other" && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -686,7 +683,6 @@ export default function BookingForm() {
                   ))}
                 </div>
 
-                {/* Conditional "Others" field for add-ons */}
                 {formData.addons.includes("other") && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -714,8 +710,7 @@ export default function BookingForm() {
             {/* D. Payment Information */}
             <div className="space-y-6">
               <h3 className="text-xl lg:text-2xl font-bold text-amber-400">D. Payment Information</h3>
-              
-              {/* Package Pricing Display */}
+
               <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-4 lg:p-6">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -739,7 +734,7 @@ export default function BookingForm() {
                   <div>
                     <h4 className="text-white font-semibold mb-2">Down Payment Required</h4>
                     <p className="text-sm text-gray-300 mb-2">
-                      A <span className="text-amber-400 font-bold">₱500 down payment</span> is required to confirm your reservation. 
+                      A <span className="text-amber-400 font-bold">₱500 down payment</span> is required to confirm your reservation.
                       This secures your time slot and allows us to deliver a smooth scheduling experience.
                     </p>
                     <p className="text-xs text-gray-400">
@@ -791,7 +786,7 @@ export default function BookingForm() {
                 <label className="block text-sm text-gray-300 mb-3">
                   Upload Payment Proof <span className="text-amber-400">*</span>
                 </label>
-                
+
                 {!previewUrl ? (
                   <label className="flex flex-col items-center justify-center w-full h-40 lg:h-48 border-2 border-dashed border-amber-400/30 rounded-xl cursor-pointer hover:border-amber-400/50 transition-colors bg-black/40 group">
                     <div className="flex flex-col items-center justify-center py-6">
