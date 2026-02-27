@@ -2,8 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Video, Calendar, Clock, Sparkles, AlertCircle, Play, X } from "lucide-react";
-import FloatingParticles from "@/components/animated-golden-particles";
+import { Video, Calendar, AlertCircle, Play, X, Aperture } from "lucide-react";
 import useSWR from "swr";
 
 interface BlogVideo {
@@ -15,15 +14,13 @@ interface BlogVideo {
   updated_at: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function BlogVideos() {
   const [selectedVideo, setSelectedVideo] = useState<BlogVideo | null>(null);
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  // Fetch blog videos
   const { data, error, isLoading } = useSWR<{
     data: BlogVideo[];
     pagination?: {
@@ -38,274 +35,294 @@ export default function BlogVideos() {
 
   const getVideoUrl = (path: string) => {
     if (!path) return "";
-    if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
-    }
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
     return `${API_URL}/${cleanPath}`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Animated gold particles background */}
-      <FloatingParticles count={40} />
+    <div
+      className="min-h-screen relative"
+      style={{
+        background: "linear-gradient(160deg, #faf7f2 0%, #f5f0e8 40%, #ede8df 100%)",
+        fontFamily: "'Georgia', serif",
+      }}
+    >
+      {/* Noise texture */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "128px",
+        }}
+      />
 
-      {/* Hero Section with Film Strip Effect */}
-      <section className="pt-32 pb-16 px-6 relative overflow-hidden">
-        {/* Animated film perforations - gold */}
-        <div className="absolute top-0 left-0 right-0 h-16 bg-black border-b-2 border-amber-500 flex items-center overflow-hidden">
+      {/* ── HERO ── */}
+      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
+        <motion.div
+          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full border pointer-events-none"
+          style={{ borderColor: "rgba(192,120,32,0.15)" }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute -top-16 -right-16 w-[300px] h-[300px] rounded-full border pointer-events-none"
+          style={{ borderColor: "rgba(192,120,32,0.1)" }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+        />
+
+        <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
-            className="flex"
-            animate={{ x: [0, -200] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center gap-4 mb-8"
           >
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="w-10 h-7 bg-gradient-to-b from-amber-500 to-amber-600 mx-3 rounded-sm shadow-lg shadow-amber-500/30"
-              />
-            ))}
+            <div className="h-px w-12" style={{ background: "#a06820" }} />
+            <span
+              className="text-xs tracking-[0.3em] font-sans font-semibold uppercase"
+              style={{ color: "#a06820" }}
+            >
+              G-Limit Studio
+            </span>
           </motion.div>
-        </div>
 
-        <div className="max-w-5xl mx-auto text-center pt-8 relative z-10">
-          <motion.div
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-6xl md:text-8xl font-light leading-[0.95] mb-8"
+            style={{ color: "#1a1612", letterSpacing: "-0.02em" }}
           >
-            {/* Camera viewfinder decoration */}
-            <div className="inline-block relative mb-8">
-              <motion.div
-                className="absolute -top-6 -left-6 w-12 h-12 border-l-4 border-t-4 border-amber-500"
-                initial={{ opacity: 0, x: -10, y: -10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ delay: 0.3, type: "spring" }}
-              >
-                <div className="absolute top-0 left-0 w-3 h-3 bg-amber-500 rounded-full" />
-              </motion.div>
-              <motion.div
-                className="absolute -top-6 -right-6 w-12 h-12 border-r-4 border-t-4 border-amber-500"
-                initial={{ opacity: 0, x: 10, y: -10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ delay: 0.4, type: "spring" }}
-              >
-                <div className="absolute top-0 right-0 w-3 h-3 bg-amber-500 rounded-full" />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-6 -left-6 w-12 h-12 border-l-4 border-b-4 border-amber-500"
-                initial={{ opacity: 0, x: -10, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ delay: 0.5, type: "spring" }}
-              >
-                <div className="absolute bottom-0 left-0 w-3 h-3 bg-amber-500 rounded-full" />
-              </motion.div>
-              <motion.div
-                className="absolute -bottom-6 -right-6 w-12 h-12 border-r-4 border-b-4 border-amber-500"
-                initial={{ opacity: 0, x: 10, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ delay: 0.6, type: "spring" }}
-              >
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-amber-500 rounded-full" />
-              </motion.div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-light text-white px-12 py-6">
-                <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 bg-clip-text text-transparent font-bold">
-                  Blog
-                </span>
-              </h1>
-            </div>
-
-            {/* Sparkle decorations */}
-            <motion.div
-              className="flex items-center justify-center gap-4 mb-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
+            Our{" "}
+            <em
+              className="not-italic font-bold"
+              style={{
+                background: "linear-gradient(135deg, #c07820, #e8a030)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
             >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-6 h-6 text-amber-500" />
-              </motion.div>
-              <p className="text-lg text-gray-300 max-w-2xl">
-                {isLoading
-                  ? "Loading videos..."
-                  : `Explore our latest video content and updates.`}
-              </p>
-              <motion.div
-                animate={{ rotate: [360, 0] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-6 h-6 text-amber-500" />
-              </motion.div>
-            </motion.div>
+              Blog
+            </em>
+          </motion.h1>
 
-            {/* Decorative line */}
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 1.5, delay: 1 }}
-              className="h-1 w-40 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto"
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="text-lg md:text-xl font-sans font-normal leading-relaxed max-w-xl"
+            style={{ color: "#5c4f3a" }}
+          >
+            {isLoading
+              ? "Loading video content..."
+              : "Explore our latest video content and behind-the-scenes updates."}
+          </motion.p>
+
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.2, delay: 0.6 }}
+            className="flex items-center gap-6 mt-12"
+          >
+            <div
+              className="flex-1 h-px"
+              style={{ background: "linear-gradient(to right, #c07820, transparent)" }}
+            />
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>
+              <Aperture className="w-6 h-6" style={{ color: "#c07820" }} />
+            </motion.div>
+            <div
+              className="flex-1 h-px"
+              style={{ background: "linear-gradient(to left, #c07820, transparent)" }}
             />
           </motion.div>
         </div>
       </section>
 
-      {/* Error State */}
+      {/* ── ERROR ── */}
       {error && (
-        <section className="px-6 py-8">
-          <div className="max-w-6xl mx-auto bg-red-500/10 border border-red-500/30 rounded-lg p-6 flex items-center gap-4">
-            <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+        <section className="px-6 pb-8 relative z-10">
+          <div
+            className="max-w-6xl mx-auto p-6 rounded-xl flex items-center gap-4 font-sans"
+            style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)" }}
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: "#dc2626" }} />
             <div>
-              <h3 className="font-semibold text-red-500 mb-1">Failed to load videos</h3>
-              <p className="text-sm text-red-400">Please check your connection and try again</p>
+              <h3 className="font-semibold text-sm mb-0.5" style={{ color: "#dc2626" }}>
+                Failed to load videos
+              </h3>
+              <p className="text-xs" style={{ color: "#b91c1c" }}>
+                Please check your connection and try again
+              </p>
             </div>
           </div>
         </section>
       )}
 
-      {/* Videos Grid with Enhanced Hover Effects */}
-      <section className="px-6 py-20 relative z-10">
+      {/* ── VIDEO GRID ── */}
+      <section className="px-4 sm:px-6 md:px-10 pb-28 relative z-10">
         <div className="max-w-7xl mx-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="flex flex-col items-center gap-4">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            /* Skeleton */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl overflow-hidden animate-pulse"
+                  style={{ background: "#fff9f2", border: "1px solid #e2d5c0" }}
                 >
-                  <Video className="w-12 h-12 text-amber-500" />
-                </motion.div>
-                <p className="text-gray-400">Loading videos...</p>
-              </div>
+                  <div className="aspect-video" style={{ background: "#ede0cc" }} />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 rounded" style={{ background: "#ede0cc", width: "35%" }} />
+                    <div className="h-5 rounded" style={{ background: "#ede0cc", width: "88%" }} />
+                    <div className="h-4 rounded" style={{ background: "#ede0cc", width: "70%" }} />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : videoItems.length === 0 ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <Video className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">No videos available yet</p>
-                <p className="text-gray-500 text-sm mt-2">Check back soon for new content!</p>
-              </div>
+            <div className="flex flex-col items-center justify-center py-28 gap-4">
+              <Video className="w-12 h-12" style={{ color: "#c0a070" }} />
+              <p className="font-sans text-base" style={{ color: "#8a7560" }}>
+                No videos available yet
+              </p>
+              <p className="font-sans text-sm" style={{ color: "#a09080" }}>
+                Check back soon for new content!
+              </p>
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
                 {videoItems.map((video, index) => (
                   <motion.div
                     key={video.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.8, rotateY: -30 }}
-                    animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, rotateY: 30 }}
-                    transition={{ delay: index * 0.08, duration: 0.6, type: "spring" }}
-                    className="relative group cursor-pointer"
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.07, duration: 0.5 }}
+                    whileHover={{ y: -6, transition: { duration: 0.25 } }}
+                    className="group cursor-pointer"
                     onClick={() => setSelectedVideo(video)}
-                    onMouseEnter={() => setHoveredId(video.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    whileHover={{ y: -10 }}
                   >
-                    {/* Gold frame with shadow */}
-                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 p-1 rounded-lg hover:shadow-2xl hover:shadow-amber-500/30 transition-all duration-500 border-2 border-amber-500/30">
-                      <div className="bg-black rounded-lg relative overflow-hidden h-full flex flex-col">
-                        {/* Video Thumbnail Section */}
-                        <div className="relative aspect-video overflow-hidden bg-black">
-                          <video
-                            src={getVideoUrl(video.video_path)}
-                            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
-                            muted
-                            playsInline
-                            onMouseEnter={(e) => e.currentTarget.play()}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.pause();
-                              e.currentTarget.currentTime = 0;
+                    <div
+                      className="h-full rounded-2xl overflow-hidden transition-all duration-400 flex flex-col"
+                      style={{
+                        background: "#fff9f2",
+                        border: "1px solid #e2d5c0",
+                        boxShadow: "0 2px 20px rgba(160,104,32,0.06)",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.boxShadow =
+                          "0 12px 40px rgba(160,104,32,0.15)";
+                        (e.currentTarget as HTMLDivElement).style.borderColor = "#c07820";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.boxShadow =
+                          "0 2px 20px rgba(160,104,32,0.06)";
+                        (e.currentTarget as HTMLDivElement).style.borderColor = "#e2d5c0";
+                      }}
+                    >
+                      {/* Top accent bar */}
+                      <div
+                        className="h-1 flex-shrink-0"
+                        style={{
+                          background: "linear-gradient(90deg, #c07820, #e8a030, #c07820)",
+                        }}
+                      />
+
+                      {/* Video thumbnail */}
+                      <div className="relative aspect-video overflow-hidden bg-stone-900 flex-shrink-0">
+                        <video
+                          src={getVideoUrl(video.video_path)}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          muted
+                          playsInline
+                          onMouseEnter={(e) => e.currentTarget.play()}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0;
+                          }}
+                        />
+
+                        {/* Dark scrim */}
+                        <div
+                          className="absolute inset-0 transition-opacity duration-300"
+                          style={{ background: "linear-gradient(to top, rgba(26,22,18,0.55) 0%, transparent 50%)" }}
+                        />
+
+                        {/* Play button — visible on hover */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-transform duration-200 group-hover:scale-110"
+                            style={{
+                              background: "linear-gradient(135deg, #c07820, #e8a030)",
                             }}
-                          />
-
-                          {/* Gold overlay gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-
-                          {/* Play button overlay */}
-                          <motion.div
-                            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                            initial={{ scale: 0.8 }}
-                            whileHover={{ scale: 1 }}
                           >
-                            <div className="w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center shadow-2xl shadow-amber-500/50">
-                              <Play className="w-10 h-10 text-black ml-1" fill="currentColor" />
-                            </div>
-                          </motion.div>
-
-                          {/* Date badge */}
-                          <motion.div
-                            className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-amber-600 text-black px-4 py-2 rounded-full text-sm font-bold shadow-xl flex items-center gap-2"
-                            initial={{ x: 20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                          >
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(video.created_at)}
-                          </motion.div>
-
-                          {/* Video indicator */}
-                          <motion.div
-                            className="absolute bottom-4 left-4 bg-black/80 text-amber-500 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2"
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                          >
-                            <Video className="w-3 h-3" />
-                            Video
-                          </motion.div>
+                            <Play className="w-7 h-7 ml-1" fill="#1a1612" style={{ color: "#1a1612" }} />
+                          </div>
                         </div>
 
-                        {/* Content Section */}
-                        <div className="p-6 flex-1 flex flex-col">
-                          <motion.h3
-                            className="font-serif text-2xl text-white mb-3 line-clamp-2"
-                            initial={{ y: 10, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                          >
-                            {video.title}
-                          </motion.h3>
-                          
-                          {video.description && (
-                            <motion.p
-                              className="text-gray-400 text-sm mb-4 line-clamp-3 flex-1"
-                              initial={{ y: 10, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              transition={{ delay: 0.3 }}
-                            >
-                              {video.description}
-                            </motion.p>
-                          )}
-
-                          {/* Watch now button */}
-                          <motion.div
-                            className="flex items-center gap-2 text-amber-500 font-bold text-sm group-hover:gap-3 transition-all duration-300"
-                            initial={{ y: 10, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.4 }}
-                          >
-                            <Play className="w-4 h-4" fill="currentColor" />
-                            Watch Now
-                          </motion.div>
+                        {/* Date pill */}
+                        <div
+                          className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-sans text-xs font-semibold"
+                          style={{ background: "rgba(26,22,18,0.85)", color: "#e8a030" }}
+                        >
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(video.created_at)}
                         </div>
 
-                        {/* Corner glow effects */}
-                        <div className="absolute top-0 left-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="absolute bottom-0 right-0 w-20 h-20 bg-amber-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        {/* Video badge */}
+                        <div
+                          className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full font-sans text-xs font-semibold"
+                          style={{ background: "rgba(192,120,32,0.9)", color: "#1a1612" }}
+                        >
+                          <Video className="w-3 h-3" />
+                          Video
+                        </div>
+                      </div>
+
+                      {/* Card content */}
+                      <div className="p-6 flex flex-col gap-3 flex-1">
+                        <h3
+                          className="text-xl font-semibold leading-tight line-clamp-2"
+                          style={{ color: "#1a1612", letterSpacing: "-0.01em" }}
+                        >
+                          {video.title}
+                        </h3>
+
+                        {video.description && (
+                          <p
+                            className="font-sans text-sm leading-relaxed line-clamp-3 flex-1"
+                            style={{ color: "#6b5d4a" }}
+                          >
+                            {video.description}
+                          </p>
+                        )}
+
+                        {/* Divider */}
+                        <div className="h-px" style={{ background: "#ede0cc" }} />
+
+                        {/* Watch now */}
+                        <div
+                          className="flex items-center gap-2 font-sans text-sm font-semibold transition-all duration-300 group-hover:gap-3"
+                          style={{ color: "#c07820" }}
+                        >
+                          <Play className="w-4 h-4" fill="currentColor" />
+                          Watch Now
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -316,33 +333,53 @@ export default function BlogVideos() {
         </div>
       </section>
 
-      {/* Video Detail Modal */}
+      {/* ── VIDEO MODAL ── */}
       <AnimatePresence>
         {selectedVideo && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(26,22,18,0.9)", backdropFilter: "blur(14px)" }}
             onClick={() => setSelectedVideo(null)}
           >
             <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
-              className="bg-black border-2 border-amber-500/30 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto relative"
+              initial={{ scale: 0.92, y: 40, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.92, y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 120, damping: 18 }}
+              className="relative max-w-5xl w-full max-h-[90vh] overflow-y-auto rounded-2xl"
+              style={{
+                background: "#faf7f2",
+                border: "1px solid #e2d5c0",
+                boxShadow: "0 32px 80px rgba(26,22,18,0.5)",
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
+              {/* Top accent */}
+              <div
+                className="h-1 rounded-t-2xl"
+                style={{ background: "linear-gradient(90deg, #c07820, #e8a030, #c07820)" }}
+              />
+
+              {/* Close */}
               <button
                 onClick={() => setSelectedVideo(null)}
-                className="absolute top-4 right-4 z-10 w-10 h-10 bg-amber-500 hover:bg-amber-600 text-black rounded-full flex items-center justify-center transition-colors shadow-lg shadow-amber-500/50"
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
+                style={{ background: "#1a1612", color: "#e8a030" }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.background = "#c07820")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.background = "#1a1612")
+                }
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
 
-              {/* Video Player */}
-              <div className="relative aspect-video overflow-hidden rounded-t-2xl bg-black">
+              {/* Video player */}
+              <div className="relative aspect-video overflow-hidden rounded-t-xl bg-black">
                 <video
                   src={getVideoUrl(selectedVideo.video_path)}
                   controls
@@ -353,38 +390,45 @@ export default function BlogVideos() {
 
               {/* Content */}
               <div className="p-8">
-                <div className="flex items-center gap-4 text-sm text-amber-500 mb-4">
-                  <div className="flex items-center gap-2">
+                {/* Meta */}
+                <div className="flex items-center gap-5 mb-5 font-sans text-sm">
+                  <div className="flex items-center gap-2" style={{ color: "#c07820" }}>
                     <Calendar className="w-4 h-4" />
                     {formatDate(selectedVideo.created_at)}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" style={{ color: "#8a7a68" }}>
                     <Video className="w-4 h-4" />
                     Blog
                   </div>
                 </div>
 
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+                <h2
+                  className="text-3xl md:text-4xl font-semibold mb-6 leading-tight"
+                  style={{ color: "#1a1612", letterSpacing: "-0.02em" }}
+                >
                   {selectedVideo.title}
                 </h2>
 
                 {selectedVideo.description && (
-                  <div className="prose prose-invert prose-amber max-w-none">
-                    <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
+                  <>
+                    <div className="h-px mb-6" style={{ background: "#e2d5c0" }} />
+                    <p
+                      className="font-sans text-base leading-relaxed whitespace-pre-wrap"
+                      style={{ color: "#4a3d2a" }}
+                    >
                       {selectedVideo.description}
                     </p>
-                  </div>
+                  </>
                 )}
 
-                {/* Meta info */}
-                <div className="mt-8 pt-8 border-t border-amber-500/30 flex items-center justify-between text-sm text-gray-500">
-                  <div>
-                    Published on {formatDate(selectedVideo.created_at)}
-                  </div>
+                {/* Footer meta */}
+                <div
+                  className="mt-8 pt-6 flex items-center justify-between font-sans text-xs"
+                  style={{ borderTop: "1px solid #e2d5c0", color: "#a09080" }}
+                >
+                  <span>Published {formatDate(selectedVideo.created_at)}</span>
                   {selectedVideo.updated_at !== selectedVideo.created_at && (
-                    <div>
-                      Updated on {formatDate(selectedVideo.updated_at)}
-                    </div>
+                    <span>Updated {formatDate(selectedVideo.updated_at)}</span>
                   )}
                 </div>
               </div>
