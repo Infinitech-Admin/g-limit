@@ -1,7 +1,7 @@
 "use client"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
-
+import { useRouter, useSearchParams } from "next/navigation"
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react"
 import FloatingParticles from "@/components/animated-golden-particles"
 
@@ -39,6 +39,16 @@ function getInitials(name: string): string {
     .join("")
 }
 
+// Convert name to URL slug: "Gherel Mae" → "gherel-mae"
+function toSlug(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, "-")
+}
+
+// Convert slug back to key for lookup: "gherel-mae" → "gherel mae"
+function fromSlug(slug: string): string {
+  return slug.replace(/-/g, " ")
+}
+
 const apertureBlades = 8
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
@@ -52,10 +62,12 @@ function SkeletonCard() {
 }
 
 export default function AmbassadorPage() {
-  const [ambassadors, setAmbassadors]   = useState<Ambassador[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [error, setError]               = useState<string | null>(null)
-  const [activeId, setActiveId]         = useState<string | null>(null)
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const [ambassadors, setAmbassadors]     = useState<Ambassador[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [error, setError]                 = useState<string | null>(null)
+  const [activeId, setActiveId]           = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   // ── Fetch all ambassadors (no pagination — we want them all for the gallery)
@@ -90,7 +102,14 @@ export default function AmbassadorPage() {
 
         const merged = Object.values(mergedMap)
         setAmbassadors(merged)
-        if (merged.length > 0) setActiveId(merged[0].name.trim().toLowerCase())
+        if (merged.length > 0) {
+          // Read slug from URL ?ambassador=gherel-mae, fallback to first
+          const urlSlug = searchParams.get("ambassador")
+          const match = urlSlug
+            ? merged.find((a) => toSlug(a.name) === urlSlug)
+            : null
+          setActiveId(toSlug(match ? match.name : merged[0].name))
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load ambassadors")
       } finally {
@@ -100,7 +119,7 @@ export default function AmbassadorPage() {
     fetchAll()
   }, [])
 
-  const current     = ambassadors.find((a) => a.name.trim().toLowerCase() === activeId) ?? null
+  const current     = ambassadors.find((a) => toSlug(a.name) === activeId) ?? null
   const accentTheme = current
     ? ACCENTS[ambassadors.indexOf(current) % ACCENTS.length]
     : ACCENTS[0]
@@ -210,11 +229,16 @@ export default function AmbassadorPage() {
           >
             {ambassadors.map((amb, idx) => {
               const theme   = ACCENTS[idx % ACCENTS.length]
-              const isActive = activeId === amb.name.trim().toLowerCase()
+              const slug     = toSlug(amb.name)
+              const isActive = activeId === slug
               return (
                 <button
                   key={amb.name}
-                  onClick={() => { setActiveId(amb.name.trim().toLowerCase()); setLightboxIndex(null) }}
+                  onClick={() => {
+                    setActiveId(slug)
+                    setLightboxIndex(null)
+                    router.push(`?ambassador=${slug}`, { scroll: false })
+                  }}
                   className="relative group flex items-center gap-3 px-7 py-3.5 rounded-full font-sans font-bold text-sm uppercase tracking-widest transition-all duration-300 overflow-hidden"
                   style={{
                     border: `2px solid ${isActive ? theme.accent : "rgba(245,217,138,0.2)"}`,
