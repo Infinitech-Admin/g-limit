@@ -69,13 +69,29 @@ export default function AmbassadorPage() {
         })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
-        const list: Ambassador[] = Array.isArray(json.data)
+        const raw: Ambassador[] = Array.isArray(json.data)
           ? json.data
           : Array.isArray(json)
           ? json
           : []
-        setAmbassadors(list)
-        if (list.length > 0) setActiveId(list[0].id)
+
+        // Deduplicate by name — merge image_paths from entries with the same name
+        const merged = Object.values(
+          raw.reduce<Record<string, Ambassador>>((acc, amb) => {
+            const key = amb.name.trim().toLowerCase()
+            if (acc[key]) {
+              const existing = new Set(acc[key].image_paths)
+              amb.image_paths.forEach((p) => existing.add(p))
+              acc[key].image_paths = Array.from(existing)
+            } else {
+              acc[key] = { ...amb, image_paths: [...amb.image_paths] }
+            }
+            return acc
+          }, {})
+        )
+
+        setAmbassadors(merged)
+        if (merged.length > 0) setActiveId(merged[0].id)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load ambassadors")
       } finally {
@@ -144,7 +160,7 @@ export default function AmbassadorPage() {
         >
           <div className="flex items-center gap-4 mb-4">
             <div className="h-px w-10 bg-gradient-to-r from-transparent to-[#f5d98a]" />
-            <p className="font-sans mt-10 font-black tracking-[0.3em] text-[10px] uppercase" style={{ color: "#f5d98a" }}>
+            <p className="font-sans font-black tracking-[0.3em] text-[10px] uppercase" style={{ color: "#f5d98a" }}>
               G-Limit Studio
             </p>
             <div className="h-px w-10 bg-gradient-to-l from-transparent to-[#f5d98a]" />
