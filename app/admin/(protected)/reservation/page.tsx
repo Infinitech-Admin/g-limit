@@ -42,6 +42,7 @@ interface Reservation {
   email: string
   phone: string
   facebook?: string
+  referred_by?: string | null  // fixed typo: was reffered_by
   preferred_date: string
   preferred_time: string
   package: string
@@ -209,6 +210,12 @@ const AdminReservations = () => {
       accessorKey: "phone", 
       header: "Phone" 
     },
+    // ── NEW: Referred By column ──
+    {
+      accessorKey: "referred_by",
+      header: "Referred By",
+      cell: ({ row }) => row.original.referred_by || <span className="text-muted-foreground text-xs">—</span>,
+    },
     { 
       accessorKey: "package", 
       header: "Package", 
@@ -360,14 +367,7 @@ const AdminReservations = () => {
 
       {/* Filters */}
       <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
+        
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -453,6 +453,17 @@ const AdminReservations = () => {
                       </p>
                     </div>
                   )}
+                  {/* ── NEW: Referred By ── */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Referred By
+                    </Label>
+                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                      {selectedItem.referred_by || (
+                        <span className="text-gray-400 italic text-sm">Not specified</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
 
