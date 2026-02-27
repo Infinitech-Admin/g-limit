@@ -4,12 +4,13 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, MessageSquare, Calendar, FileText, LogOut, Menu, X, ChevronLeft, Images, Image, Folder,Newspaper } from "lucide-react"
+import { LayoutDashboard, MessageSquare, Calendar, FileText, LogOut, Menu, X, ChevronLeft, Images, Image, Folder,Newspaper, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 
 const sidebarItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+        { name: "Ambassadors", href: "/admin/ambassador", icon: Users },
   { name: "Testimonials", href: "/admin/testimonials", icon: MessageSquare },
   { name: "Reservation", href: "/admin/reservation", icon: Calendar },
   { name: "Hero Sections", href: "/admin/hero-sections", icon: Image },
