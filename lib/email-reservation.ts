@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 
-// Create reusable transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -9,6 +8,10 @@ const createTransporter = () => {
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
+    },
+    // Helps with some Gmail connection issues
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 };
@@ -19,6 +22,7 @@ interface Reservation {
   email: string;
   phone: string;
   facebook?: string;
+  referred_by?: string | null;
   preferred_date: string;
   preferred_time: string;
   package: string;
@@ -30,9 +34,9 @@ interface Reservation {
   addons_other?: string;
   payment_method: string;
   status: string;
+  _overrideAdminEmail?: string;
 }
 
-// Email templates
 const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
   const statusMessages = {
     confirmed: {
@@ -70,35 +74,25 @@ const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
         <tr>
           <td align="center">
             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              
-              <!-- Header -->
               <tr>
                 <td style="background-color: ${statusInfo.color}; padding: 30px 20px; text-align: center;">
-                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">
-                    ${statusInfo.heading}
-                  </h1>
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">${statusInfo.heading}</h1>
                 </td>
               </tr>
-              
-              <!-- Content -->
               <tr>
                 <td style="padding: 40px 30px;">
                   <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #333333;">
                     Hi <strong>${reservation.name}</strong>,
                   </p>
-                  
                   <p style="margin: 0 0 30px; font-size: 16px; line-height: 1.5; color: #333333;">
                     ${statusInfo.message}
                   </p>
-                  
-                  <!-- Reservation Details Box -->
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
                     <tr>
                       <td>
                         <h2 style="margin: 0 0 20px; font-size: 20px; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
                           Reservation Details
                         </h2>
-                        
                         <table width="100%" cellpadding="8" cellspacing="0">
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px; width: 140px;">Package:</td>
@@ -107,14 +101,14 @@ const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Shoot Type:</td>
                             <td style="color: #1f2937; font-size: 14px; text-transform: capitalize;">
-                              ${reservation.shoot_type === 'other' && reservation.shoot_type_other 
-                                ? reservation.shoot_type_other 
+                              ${reservation.shoot_type === 'other' && reservation.shoot_type_other
+                                ? reservation.shoot_type_other
                                 : reservation.shoot_type}
                             </td>
                           </tr>
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Services:</td>
-                            <td style="color: #1f2937; font-size: 14px;">${reservation.service_type.join(', ')}</td>
+                            <td style="color: #1f2937; font-size: 14px;">${Array.isArray(reservation.service_type) ? reservation.service_type.join(', ') : reservation.service_type}</td>
                           </tr>
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Date:</td>
@@ -134,37 +128,34 @@ const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
                             <td style="color: #1f2937; font-size: 14px;">${reservation.addons.join(', ')}${reservation.addons_other ? ` - ${reservation.addons_other}` : ''}</td>
                           </tr>
                           ` : ''}
+                          ${reservation.referred_by ? `
+                          <tr>
+                            <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Referred By:</td>
+                            <td style="color: #1f2937; font-size: 14px;">${reservation.referred_by}</td>
+                          </tr>
+                          ` : ''}
                         </table>
                       </td>
                     </tr>
                   </table>
-                  
                   ${status === 'confirmed' ? `
                   <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                     <p style="margin: 0; font-size: 14px; color: #92400e;">
-                      <strong>Important:</strong> Please arrive 10-15 minutes before your scheduled time. If you need to reschedule, please contact us at least 24 hours in advance.
+                      <strong>Important:</strong> Please arrive 10–15 minutes before your scheduled time. If you need to reschedule, please contact us at least 24 hours in advance.
                     </p>
                   </div>
                   ` : ''}
-                  
                   <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6b7280;">
                     If you have any questions, please don't hesitate to contact us.
                   </p>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                  <p style="margin: 0 0 10px; font-size: 14px; color: #6b7280;">
-                    Thank you for choosing our studio!
-                  </p>
-                  <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                    This is an automated email. Please do not reply to this message.
-                  </p>
+                  <p style="margin: 0 0 10px; font-size: 14px; color: #6b7280;">Thank you for choosing our studio!</p>
+                  <p style="margin: 0; font-size: 12px; color: #9ca3af;">This is an automated email. Please do not reply to this message.</p>
                 </td>
               </tr>
-              
             </table>
           </td>
         </tr>
@@ -188,23 +179,17 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
         <tr>
           <td align="center">
             <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              
-              <!-- Header -->
               <tr>
                 <td style="background-color: #7c3aed; padding: 30px 20px; text-align: center;">
-                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">
-                    🎉 New Reservation Received!
-                  </h1>
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">🎉 New Reservation Received!</h1>
                 </td>
               </tr>
-              
-              <!-- Content -->
               <tr>
                 <td style="padding: 40px 30px;">
                   <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #333333;">
                     A new reservation has been submitted and requires your attention.
                   </p>
-                  
+
                   <!-- Client Information -->
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                     <tr>
@@ -231,11 +216,17 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                             <td style="color: #1f2937; font-size: 14px;">${reservation.facebook}</td>
                           </tr>
                           ` : ''}
+                          ${reservation.referred_by ? `
+                          <tr>
+                            <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Referred By:</td>
+                            <td style="color: #1f2937; font-size: 14px;">${reservation.referred_by}</td>
+                          </tr>
+                          ` : ''}
                         </table>
                       </td>
                     </tr>
                   </table>
-                  
+
                   <!-- Service Details -->
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                     <tr>
@@ -251,14 +242,14 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Shoot Type:</td>
                             <td style="color: #1f2937; font-size: 14px; text-transform: capitalize;">
-                              ${reservation.shoot_type === 'other' && reservation.shoot_type_other 
-                                ? reservation.shoot_type_other 
+                              ${reservation.shoot_type === 'other' && reservation.shoot_type_other
+                                ? reservation.shoot_type_other
                                 : reservation.shoot_type}
                             </td>
                           </tr>
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Services:</td>
-                            <td style="color: #1f2937; font-size: 14px;">${reservation.service_type.join(', ')}</td>
+                            <td style="color: #1f2937; font-size: 14px;">${Array.isArray(reservation.service_type) ? reservation.service_type.join(', ') : reservation.service_type}</td>
                           </tr>
                           <tr>
                             <td style="font-weight: bold; color: #6b7280; font-size: 14px;">Date:</td>
@@ -282,22 +273,18 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                       </td>
                     </tr>
                   </table>
-                  
+
                   ${reservation.message ? `
                   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                     <tr>
                       <td>
-                        <h2 style="margin: 0 0 10px; font-size: 16px; color: #92400e;">
-                          Additional Requests:
-                        </h2>
-                        <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">
-                          ${reservation.message}
-                        </p>
+                        <h2 style="margin: 0 0 10px; font-size: 16px; color: #92400e;">Additional Requests:</h2>
+                        <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">${reservation.message}</p>
                       </td>
                     </tr>
                   </table>
                   ` : ''}
-                  
+
                   <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                     <p style="margin: 0; font-size: 14px; color: #1e40af;">
                       <strong>Action Required:</strong> Please review this reservation and confirm or contact the client for any clarifications.
@@ -305,8 +292,6 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                   </div>
                 </td>
               </tr>
-              
-              <!-- Footer -->
               <tr>
                 <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                   <p style="margin: 0; font-size: 12px; color: #9ca3af;">
@@ -314,7 +299,6 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                   </p>
                 </td>
               </tr>
-              
             </table>
           </td>
         </tr>
@@ -328,6 +312,10 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
 export const sendStatusUpdateEmail = async (reservation: Reservation, newStatus: string) => {
   try {
     const transporter = createTransporter();
+
+    // Verify connection before sending
+    await transporter.verify();
+
     const statusMessages = {
       confirmed: '✓ Your Reservation is Confirmed!',
       cancelled: '✗ Reservation Cancelled',
@@ -336,43 +324,59 @@ export const sendStatusUpdateEmail = async (reservation: Reservation, newStatus:
 
     const subject = statusMessages[newStatus as keyof typeof statusMessages] || 'Reservation Update';
 
+    // SMTP_USER must match SMTP_FROM for Gmail
+    const fromAddress = process.env.SMTP_USER!;
+
     await transporter.sendMail({
-      from: `"Studio Reservations" <${process.env.SMTP_FROM}>`,
+      from: `"Studio Reservations" <${fromAddress}>`,
       to: reservation.email,
-      subject: subject,
+      subject,
       html: getCustomerEmailTemplate(reservation, newStatus),
     });
 
     console.log(`Status update email sent to ${reservation.email}`);
     return { success: true };
-  } catch (error) {
-    console.error('Error sending status update email:', error);
-    return { success: false, error };
+  } catch (error: any) {
+    console.error('Error sending status update email:', error?.message || error);
+    return { success: false, error: error?.message || String(error) };
   }
 };
 
-// Send new booking notification to admin
+// Send new booking notification to admin(s)
+// Pass _overrideAdminEmail to target a specific inbox per call.
 export const sendNewBookingAdminEmail = async (reservation: Reservation) => {
   try {
     const transporter = createTransporter();
-    const adminEmail = process.env.ADMIN_EMAIL;
+
+    // Verify SMTP connection — throws immediately if credentials are wrong
+    await transporter.verify();
+
+    const adminEmail = reservation._overrideAdminEmail || process.env.ADMIN_EMAIL;
 
     if (!adminEmail) {
-      console.error('ADMIN_EMAIL not configured');
-      return { success: false, error: 'Admin email not configured' };
+      const msg = 'No admin email configured (ADMIN_EMAIL env var missing and no override supplied)';
+      console.error(msg);
+      return { success: false, error: msg };
     }
 
-    await transporter.sendMail({
-      from: `"Studio Reservations" <${process.env.SMTP_FROM}>`,
+    // Strip internal field before building the template
+    const { _overrideAdminEmail, ...cleanReservation } = reservation;
+
+    // Gmail requires from === SMTP_USER — ignore SMTP_FROM if it differs
+    const fromAddress = process.env.SMTP_USER!;
+
+    const info = await transporter.sendMail({
+      from: `"Studio Reservations" <${fromAddress}>`,
       to: adminEmail,
-      subject: `🎉 New Reservation: ${reservation.name} - ${new Date(reservation.preferred_date).toLocaleDateString()}`,
-      html: getAdminNewBookingEmailTemplate(reservation),
+      subject: `🎉 New Reservation: ${cleanReservation.name} - ${new Date(cleanReservation.preferred_date).toLocaleDateString()}`,
+      html: getAdminNewBookingEmailTemplate(cleanReservation as Reservation),
     });
 
-    console.log(`New booking notification sent to admin: ${adminEmail}`);
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending new booking admin email:', error);
-    return { success: false, error };
+    console.log(`✅ Email sent to ${adminEmail} — messageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    // Log the full error so it surfaces in adminEmailErrors in the API response
+    console.error('Error sending new booking admin email:', error?.message || error);
+    return { success: false, error: error?.message || String(error) };
   }
 };
