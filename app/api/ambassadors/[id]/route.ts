@@ -4,10 +4,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
-    const response = await fetch(`${API_URL}/ambassadors/${params.id}`, {
+    const response = await fetch(`${API_URL}/ambassadors/${id}`, {
       headers: { 'Accept': 'application/json' },
     })
 
@@ -25,17 +26,16 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const formData = await request.formData()
+    formData.append('_method', 'PUT')
 
-    const response = await fetch(`${API_URL}/ambassadors/${params.id}`, {
+    const response = await fetch(`${API_URL}/ambassadors/${id}`, {
       method: 'POST', // Laravel _method spoofing
-      body: (() => {
-        formData.append('_method', 'PUT')
-        return formData
-      })(),
+      body: formData,
       headers: { 'Accept': 'application/json' },
     })
 
@@ -53,10 +53,11 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
-    const response = await fetch(`${API_URL}/ambassadors/${params.id}`, {
+    const response = await fetch(`${API_URL}/ambassadors/${id}`, {
       method: 'DELETE',
       headers: { 'Accept': 'application/json' },
     })
