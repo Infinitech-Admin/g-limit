@@ -190,7 +190,7 @@ function AmbassadorContent() {
           className="text-center mb-16"
         >
           <div
-            className="inline-block text-xs font-bold uppercase tracking-[0.4em] mb-4 px-4 py-2 rounded-full"
+            className="inline-block mt-10 text-xs font-bold uppercase tracking-[0.4em] mb-4 px-4 py-2 rounded-full"
             style={{
               color: "#f5d98a",
               border: "1px solid rgba(245,217,138,0.2)",
