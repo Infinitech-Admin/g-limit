@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import type React from "react";
 import Image from "next/image";
-import { useState, useMemo, useCallback, useEffect, memo } from "react";
+import { useState, useMemo, useCallback, useEffect, memo, useRef } from "react";
 import { Camera, Aperture, Focus, ZoomIn, Sparkles, AlertCircle, X, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -63,7 +63,7 @@ const GalleryCard = memo(({ group, index, onClick }: {
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, duration: 0.5 }}
+      transition={{ delay: Math.min(index * 0.07, 0.5), duration: 0.5 }}
       onClick={onClick}
       className="group relative overflow-hidden cursor-pointer"
       whileHover={{ y: -4 }}
@@ -112,7 +112,7 @@ const GalleryCard = memo(({ group, index, onClick }: {
 });
 GalleryCard.displayName = "GalleryCard";
 
-// ─── Image Modal (redesigned — compact, image-first) ─────────────────────────
+// ─── Image Modal ──────────────────────────────────────────────────────────────
 const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNext, onThumbnailClick }: {
   selectedGroup: GroupedImages;
   modalImageIndex: number;
@@ -156,7 +156,6 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
           transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
           className="relative flex flex-col overflow-hidden"
           style={{
-            // Compact width — image fills it entirely, no dead space
             width: "min(94vw, 480px)",
             background: "linear-gradient(160deg, #1c1408 0%, #0d0a04 100%)",
             border: "1px solid rgba(212,168,67,0.28)",
@@ -164,8 +163,7 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
           }}
           onClick={(e) => e.stopPropagation()}
         >
-
-          {/* ── Top bar ─────────────────────────────────────────────────── */}
+          {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-200/10">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-amber-200/80 text-xs leading-none">✦</span>
@@ -188,7 +186,7 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
             </div>
           </div>
 
-          {/* ── Image — 3:4 portrait, covers full width ──────────────────── */}
+          {/* Image */}
           <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
             <AnimatePresence mode="wait">
               <motion.div
@@ -210,13 +208,11 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
               </motion.div>
             </AnimatePresence>
 
-            {/* Corner brackets */}
             <div className="absolute top-3 left-3 w-5 h-5 border-l border-t border-amber-200/30 pointer-events-none" />
             <div className="absolute top-3 right-3 w-5 h-5 border-r border-t border-amber-200/30 pointer-events-none" />
             <div className="absolute bottom-3 left-3 w-5 h-5 border-l border-b border-amber-200/30 pointer-events-none" />
             <div className="absolute bottom-3 right-3 w-5 h-5 border-r border-b border-amber-200/30 pointer-events-none" />
 
-            {/* Prev / Next arrows */}
             {selectedGroup.images.length > 1 && (
               <>
                 <button
@@ -235,7 +231,7 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
             )}
           </div>
 
-          {/* ── Thumbnails ───────────────────────────────────────────────── */}
+          {/* Thumbnails */}
           {selectedGroup.images.length > 1 && (
             <div className="flex gap-1.5 px-3 py-2 border-t border-amber-200/10 overflow-x-auto">
               {selectedGroup.images.map((image, idx) => (
@@ -250,19 +246,13 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
                     opacity: idx === modalImageIndex ? 1 : 0.42,
                   }}
                 >
-                  <Image
-                    src={getImageUrl(image.image_path)}
-                    alt={image.alt}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
+                  <Image src={getImageUrl(image.image_path)} alt={image.alt} fill className="object-cover" sizes="40px" />
                 </button>
               ))}
             </div>
           )}
 
-          {/* ── Meta footer ──────────────────────────────────────────────── */}
+          {/* Meta footer */}
           <div className="flex items-center gap-2 px-4 py-2 border-t border-amber-200/10">
             <Camera className="w-3 h-3 text-amber-200/40 flex-shrink-0" />
             {currentImage.camera && (
@@ -271,14 +261,9 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
                 <span className="text-amber-200/20 text-xs">·</span>
               </>
             )}
-            <span className="text-amber-200/35 text-xs uppercase tracking-widest">
-              {currentImage.category}
-            </span>
-            <span className="ml-auto text-amber-200/20 text-xs hidden sm:block">
-              f/1.4 · 1/200s · ISO 100
-            </span>
+            <span className="text-amber-200/35 text-xs uppercase tracking-widest">{currentImage.category}</span>
+            <span className="ml-auto text-amber-200/20 text-xs hidden sm:block">f/1.4 · 1/200s · ISO 100</span>
           </div>
-
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -291,22 +276,44 @@ export default function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("all");
   const [selectedGroup, setSelectedGroup] = useState<GroupedImages | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [page, setPage] = useState(1);
+  const [allImages, setAllImages] = useState<GalleryImage[]>([]);
+  const isLoadingMore = useRef(false);
 
   const { data: categoriesData } = useSWR<{ success: boolean; data: string[] }>(
     "/api/portfolio/categories",
     fetcher,
-    { revalidateOnFocus: true, dedupingInterval: 0 }
+    { revalidateOnFocus: false, dedupingInterval: 60000 }
   );
 
-  const { data, error, isLoading } = useSWR<{ success: boolean; data: GalleryImage[] }>(
-    selectedCategory === "all"
-      ? "/api/portfolio"
-      : `/api/portfolio?category=${selectedCategory}`,
-    fetcher,
-    { revalidateOnFocus: true, dedupingInterval: 0 }
-  );
+  const swrKey = selectedCategory === "all"
+    ? `/api/portfolio?page=${page}&perPage=12`
+    : `/api/portfolio?category=${selectedCategory}&page=${page}&perPage=12`;
 
-  const galleryImages = data?.data || [];
+  const { data, error, isLoading } = useSWR<{
+    success: boolean;
+    data: GalleryImage[];
+    last_page: number;
+    total: number;
+  }>(swrKey, fetcher, { revalidateOnFocus: false, dedupingInterval: 30000 });
+
+  // Reset on category change
+  useEffect(() => {
+    setPage(1);
+    setAllImages([]);
+    isLoadingMore.current = false;
+  }, [selectedCategory]);
+
+  // Append pages
+  useEffect(() => {
+    if (!data?.data) return;
+    if (page === 1) {
+      setAllImages(data.data);
+    } else {
+      setAllImages((prev) => [...prev, ...data.data]);
+    }
+    isLoadingMore.current = false;
+  }, [data, page]);
 
   const categories: CategoryItem[] = useMemo(() => {
     const apiCategories = categoriesData?.data || [];
@@ -323,7 +330,7 @@ export default function Portfolio() {
   }, [categoriesData]);
 
   const groupedImages: GroupedImages[] = useMemo(() => {
-    const grouped = galleryImages.reduce((acc, image) => {
+    const grouped = allImages.reduce((acc, image) => {
       if (!acc[image.title]) acc[image.title] = [];
       acc[image.title].push(image);
       return acc;
@@ -333,7 +340,7 @@ export default function Portfolio() {
       images,
       coverImage: images[0],
     }));
-  }, [galleryImages]);
+  }, [allImages]);
 
   const openModal = useCallback((group: GroupedImages) => {
     setSelectedGroup(group);
@@ -359,6 +366,14 @@ export default function Portfolio() {
     );
   }, [selectedGroup]);
 
+  const handleLoadMore = () => {
+    isLoadingMore.current = true;
+    setPage((p) => p + 1);
+  };
+
+  const hasMore = page < (data?.last_page ?? 1);
+  const isFirstLoad = isLoading && page === 1;
+
   useEffect(() => {
     return () => { document.body.style.overflow = "auto"; };
   }, []);
@@ -375,7 +390,7 @@ export default function Portfolio() {
 
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="relative pt-24 pb-16 px-6 text-center">
         <div className="absolute top-6 left-6 w-12 h-12 border-l-4 border-t-4 border-amber-200 pointer-events-none">
           <div className="absolute top-0 left-0 w-3 h-3 bg-amber-200" />
@@ -425,7 +440,7 @@ export default function Portfolio() {
           transition={{ delay: 0.45, duration: 0.5 }}
           className="text-gray-400 text-base md:text-lg max-w-lg mx-auto leading-relaxed"
         >
-          {isLoading
+          {isFirstLoad
             ? "Loading portfolio…"
             : `A curated collection across ${categories.length > 1 ? categories.length - 1 : "multiple"} categories — weddings, portraits, events, and more.`}
         </motion.p>
@@ -436,7 +451,7 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* ── Error ────────────────────────────────────────────────────────── */}
+      {/* Error */}
       {error && (
         <div className="max-w-xl mx-auto px-6 mb-8">
           <div className="flex items-start gap-3 p-4 border border-amber-200/20 bg-amber-200/5 text-amber-200">
@@ -449,7 +464,7 @@ export default function Portfolio() {
         </div>
       )}
 
-      {/* ── Filter Bar ───────────────────────────────────────────────────── */}
+      {/* Filter Bar */}
       <div className="flex flex-wrap gap-3 justify-center px-6 pb-10 max-w-4xl mx-auto">
         {categories.map((cat) => (
           <motion.button
@@ -469,9 +484,9 @@ export default function Portfolio() {
         ))}
       </div>
 
-      {/* ── Gallery Grid ─────────────────────────────────────────────────── */}
+      {/* Gallery Grid */}
       <div className="px-6 pb-24 max-w-7xl mx-auto">
-        {isLoading ? (
+        {isFirstLoad ? (
           <div className="text-center py-20">
             <div className="w-8 h-8 border-2 border-amber-200/30 border-t-amber-200 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-amber-200/50 text-xs tracking-widest uppercase">Loading portfolio…</p>
@@ -482,22 +497,48 @@ export default function Portfolio() {
             <p className="text-amber-200/40 text-sm tracking-wide">No items found in this category.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {groupedImages.map((group, index) => (
-              <GalleryCard
-                key={group.title}
-                group={group}
-                index={index}
-                onClick={() => openModal(group)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {groupedImages.map((group, index) => (
+                <GalleryCard
+                  key={group.title}
+                  group={group}
+                  index={index}
+                  onClick={() => openModal(group)}
+                />
+              ))}
+            </div>
+
+            {/* Load More */}
+            {hasMore && (
+              <div className="text-center mt-12">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoading}
+                  className="inline-flex items-center gap-3 px-10 py-3 border border-amber-200/30 text-amber-200 text-xs font-bold tracking-widest uppercase hover:border-amber-200/60 hover:bg-amber-200/10 transition-all disabled:opacity-40"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border border-amber-200/40 border-t-amber-200 rounded-full animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-1 h-1 bg-amber-200 rounded-full" />
+                      Load More
+                      <span className="w-1 h-1 bg-amber-200 rounded-full" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
-      {/* ── Modal ────────────────────────────────────────────────────────── */}
+      {/* Modal */}
       {selectedGroup && (
         <ImageModal
           selectedGroup={selectedGroup}
