@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 
-// Lazy load particles - decorative only
 const FloatingParticles = dynamic(
   () => import("@/components/animated-golden-particles"),
   { ssr: false }
@@ -75,27 +74,23 @@ const GalleryCard = memo(({ group, index, onClick }: {
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
     >
-      {/* Corner brackets */}
       <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute bottom-[4.5rem] left-3 w-6 h-6 border-l-2 border-b-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute bottom-[4.5rem] right-3 w-6 h-6 border-r-2 border-b-2 border-amber-200/40 z-10 pointer-events-none" />
 
-      {/* Viewfinder crosshair on hover */}
       <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10">
         <div className="absolute top-1/2 left-0 right-0 h-px bg-amber-200/20" />
         <div className="absolute left-1/2 top-0 bottom-[4.5rem] w-px bg-amber-200/20" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+2rem)] w-8 h-8 border border-amber-200/40 rounded-full" />
       </div>
 
-      {/* Photo count badge */}
       {group.images.length > 1 && (
         <div className="absolute top-4 right-4 z-20 bg-black/70 border border-amber-200/30 text-amber-200 text-xs font-bold px-3 py-1 backdrop-blur-sm">
           {group.images.length} photos
         </div>
       )}
 
-      {/* Image */}
       <div className="relative overflow-hidden" style={{ aspectRatio: "4/5" }}>
         <Image
           src={getImageUrl(group.coverImage.image_path)}
@@ -108,7 +103,6 @@ const GalleryCard = memo(({ group, index, onClick }: {
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-amber-200/10 to-transparent" />
       </div>
 
-      {/* Caption */}
       <div className="px-5 py-4 border-t border-amber-200/10">
         <p className="text-white font-semibold text-sm tracking-wide truncate">{group.title}</p>
         <p className="text-amber-200/60 text-xs uppercase tracking-widest mt-1">{group.coverImage.category}</p>
@@ -118,7 +112,7 @@ const GalleryCard = memo(({ group, index, onClick }: {
 });
 GalleryCard.displayName = "GalleryCard";
 
-// ─── Image Modal ──────────────────────────────────────────────────────────────
+// ─── Image Modal (redesigned — compact, image-first) ─────────────────────────
 const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNext, onThumbnailClick }: {
   selectedGroup: GroupedImages;
   modalImageIndex: number;
@@ -143,143 +137,148 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, onPrev, onNext]);
 
+  const currentImage = selectedGroup.images[modalImageIndex];
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(12px)" }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+        style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)" }}
         onClick={onClose}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center border border-amber-200/30 text-amber-200 hover:border-amber-200/70 hover:bg-amber-200/10 transition-all"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          initial={{ scale: 0.93, opacity: 0, y: 12 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.93, opacity: 0, y: 12 }}
+          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex flex-col overflow-hidden"
           style={{
-            background: "linear-gradient(135deg, #1a1208 0%, #0d0a04 100%)",
-            border: "1px solid rgba(212,168,67,0.25)",
-            maxWidth: "900px",
-            width: "100%",
-            maxHeight: "90vh",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(212,168,67,0.1)",
+            // Compact width — image fills it entirely, no dead space
+            width: "min(94vw, 480px)",
+            background: "linear-gradient(160deg, #1c1408 0%, #0d0a04 100%)",
+            border: "1px solid rgba(212,168,67,0.28)",
+            boxShadow: "0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(212,168,67,0.06)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-amber-200/10">
-            <div className="flex items-center gap-3">
-              <span className="text-amber-200">✦</span>
-              <span className="text-white font-semibold text-sm tracking-wide">{selectedGroup.title}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-amber-200/50 text-xs tracking-widest">
-                {modalImageIndex + 1} / {selectedGroup.images.length}
+
+          {/* ── Top bar ─────────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-200/10">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-amber-200/80 text-xs leading-none">✦</span>
+              <span className="text-white font-semibold text-sm tracking-wide truncate leading-none">
+                {selectedGroup.title}
               </span>
-              <div className="hidden sm:flex items-center gap-2 bg-amber-200/10 border border-amber-200/20 text-amber-200 text-xs px-3 py-1">
-                <span className="w-1.5 h-1.5 bg-amber-200 rounded-full" />
-                f/1.4 · 1/200s · ISO 100
-              </div>
+            </div>
+            <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
+              {selectedGroup.images.length > 1 && (
+                <span className="text-amber-200/45 text-xs tabular-nums">
+                  {modalImageIndex + 1} / {selectedGroup.images.length}
+                </span>
+              )}
+              <button
+                onClick={onClose}
+                className="w-6 h-6 flex items-center justify-center border border-amber-200/20 text-amber-200/60 hover:text-amber-200 hover:border-amber-200/50 hover:bg-amber-200/10 transition-all"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </div>
           </div>
 
-          {/* Main image */}
-          <div className="relative flex-1" style={{ minHeight: "400px", background: "#080604" }}>
+          {/* ── Image — 3:4 portrait, covers full width ──────────────────── */}
+          <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={modalImageIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.16 }}
                 className="absolute inset-0"
               >
                 <Image
-                  src={getImageUrl(selectedGroup.images[modalImageIndex].image_path)}
-                  alt={selectedGroup.images[modalImageIndex].alt || selectedGroup.title}
+                  src={getImageUrl(currentImage.image_path)}
+                  alt={currentImage.alt || selectedGroup.title}
                   fill
-                  className="object-contain"
-                  sizes="900px"
+                  className="object-cover"
+                  sizes="480px"
+                  priority
                 />
               </motion.div>
             </AnimatePresence>
 
-            {/* Viewfinder grid overlay */}
-            <div className="absolute inset-0 pointer-events-none opacity-10">
-              <div className="absolute top-1/3 left-0 right-0 h-px bg-amber-200" />
-              <div className="absolute top-2/3 left-0 right-0 h-px bg-amber-200" />
-              <div className="absolute left-1/3 top-0 bottom-0 w-px bg-amber-200" />
-              <div className="absolute left-2/3 top-0 bottom-0 w-px bg-amber-200" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 border border-amber-200 rounded-full" />
-            </div>
-
             {/* Corner brackets */}
-            <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-amber-200/30 pointer-events-none" />
-            <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-amber-200/30 pointer-events-none" />
-            <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-amber-200/30 pointer-events-none" />
-            <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-amber-200/30 pointer-events-none" />
+            <div className="absolute top-3 left-3 w-5 h-5 border-l border-t border-amber-200/30 pointer-events-none" />
+            <div className="absolute top-3 right-3 w-5 h-5 border-r border-t border-amber-200/30 pointer-events-none" />
+            <div className="absolute bottom-3 left-3 w-5 h-5 border-l border-b border-amber-200/30 pointer-events-none" />
+            <div className="absolute bottom-3 right-3 w-5 h-5 border-r border-b border-amber-200/30 pointer-events-none" />
 
+            {/* Prev / Next arrows */}
             {selectedGroup.images.length > 1 && (
               <>
                 <button
                   onClick={onPrev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-amber-200/30 text-amber-200 hover:bg-amber-200/10 transition-all backdrop-blur-sm bg-black/40"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={onNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-amber-200/30 text-amber-200 hover:bg-amber-200/10 transition-all backdrop-blur-sm bg-black/40"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </>
             )}
           </div>
 
-          {/* Thumbnails */}
+          {/* ── Thumbnails ───────────────────────────────────────────────── */}
           {selectedGroup.images.length > 1 && (
-            <div className="flex gap-2 px-4 py-3 border-t border-amber-200/10 overflow-x-auto">
+            <div className="flex gap-1.5 px-3 py-2 border-t border-amber-200/10 overflow-x-auto">
               {selectedGroup.images.map((image, idx) => (
-                <div
+                <button
                   key={image.id}
                   onClick={() => onThumbnailClick(idx)}
-                  className="relative flex-shrink-0 w-14 h-14 cursor-pointer overflow-hidden transition-all duration-200"
+                  className="relative flex-shrink-0 w-10 h-10 overflow-hidden transition-all duration-150 focus:outline-none"
                   style={{
-                    border: idx === modalImageIndex ? "2px solid #d4a843" : "1px solid rgba(212,168,67,0.2)",
-                    opacity: idx === modalImageIndex ? 1 : 0.5,
+                    border: idx === modalImageIndex
+                      ? "2px solid #d4a843"
+                      : "1px solid rgba(212,168,67,0.15)",
+                    opacity: idx === modalImageIndex ? 1 : 0.42,
                   }}
                 >
-                  <Image src={getImageUrl(image.image_path)} alt={image.alt} fill className="object-cover" sizes="56px" />
-                </div>
+                  <Image
+                    src={getImageUrl(image.image_path)}
+                    alt={image.alt}
+                    fill
+                    className="object-cover"
+                    sizes="40px"
+                  />
+                </button>
               ))}
             </div>
           )}
 
-          {/* Meta */}
-          <div className="flex items-center gap-3 px-6 py-3 border-t border-amber-200/10">
-            <Camera className="w-3.5 h-3.5 text-amber-200" />
-            {selectedGroup.images[modalImageIndex].camera && (
+          {/* ── Meta footer ──────────────────────────────────────────────── */}
+          <div className="flex items-center gap-2 px-4 py-2 border-t border-amber-200/10">
+            <Camera className="w-3 h-3 text-amber-200/40 flex-shrink-0" />
+            {currentImage.camera && (
               <>
-                <span className="text-amber-200/60 text-xs tracking-wide">{selectedGroup.images[modalImageIndex].camera}</span>
-                <span className="text-amber-200/30 text-xs">·</span>
+                <span className="text-amber-200/55 text-xs">{currentImage.camera}</span>
+                <span className="text-amber-200/20 text-xs">·</span>
               </>
             )}
-            <span className="text-amber-200/60 text-xs tracking-widest uppercase">{selectedGroup.images[modalImageIndex].category}</span>
+            <span className="text-amber-200/35 text-xs uppercase tracking-widest">
+              {currentImage.category}
+            </span>
+            <span className="ml-auto text-amber-200/20 text-xs hidden sm:block">
+              f/1.4 · 1/200s · ISO 100
+            </span>
           </div>
+
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -293,30 +292,18 @@ export default function Portfolio() {
   const [selectedGroup, setSelectedGroup] = useState<GroupedImages | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
 
-  // ✅ FIX: dedupingInterval: 0 + revalidateOnFocus: true
-  // Previously dedupingInterval: 60000 caused categories to be cached for 1 minute,
-  // meaning a newly added category wouldn't appear until cache expired.
   const { data: categoriesData } = useSWR<{ success: boolean; data: string[] }>(
     "/api/portfolio/categories",
     fetcher,
-    {
-      revalidateOnFocus: true,
-      dedupingInterval: 0,
-    }
+    { revalidateOnFocus: true, dedupingInterval: 0 }
   );
 
-  // ✅ FIX: dedupingInterval: 0 + revalidateOnFocus: true
-  // Previously dedupingInterval: 30000 caused newly uploaded photos to not appear
-  // for up to 30 seconds after creation. Now always fetches fresh data.
   const { data, error, isLoading } = useSWR<{ success: boolean; data: GalleryImage[] }>(
     selectedCategory === "all"
       ? "/api/portfolio"
       : `/api/portfolio?category=${selectedCategory}`,
     fetcher,
-    {
-      revalidateOnFocus: true,
-      dedupingInterval: 0,
-    }
+    { revalidateOnFocus: true, dedupingInterval: 0 }
   );
 
   const galleryImages = data?.data || [];
@@ -373,9 +360,7 @@ export default function Portfolio() {
   }, [selectedGroup]);
 
   useEffect(() => {
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    return () => { document.body.style.overflow = "auto"; };
   }, []);
 
   return (
@@ -383,13 +368,11 @@ export default function Portfolio() {
       className="relative min-h-screen overflow-hidden"
       style={{ background: "linear-gradient(135deg, #000000 0%, #0d0a04 50%, #1a0f00 100%)" }}
     >
-      {/* Ambient gold orbs */}
       <div className="absolute top-20 right-20 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl opacity-20 pointer-events-none" />
       <div className="absolute bottom-40 left-10 w-80 h-80 bg-yellow-100/8 rounded-full blur-3xl opacity-15 pointer-events-none" />
 
       <FloatingParticles count={12} />
 
-      {/* Top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -512,7 +495,6 @@ export default function Portfolio() {
         )}
       </div>
 
-      {/* Bottom border */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
       {/* ── Modal ────────────────────────────────────────────────────────── */}
