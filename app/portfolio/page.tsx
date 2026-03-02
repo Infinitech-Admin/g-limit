@@ -74,15 +74,14 @@ const GalleryCard = memo(({ group, index, onClick }: {
         boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
-      onHoverStart={() => {}}
     >
-      {/* Corner brackets — amber gold */}
+      {/* Corner brackets */}
       <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute bottom-[4.5rem] left-3 w-6 h-6 border-l-2 border-b-2 border-amber-200/40 z-10 pointer-events-none" />
       <div className="absolute bottom-[4.5rem] right-3 w-6 h-6 border-r-2 border-b-2 border-amber-200/40 z-10 pointer-events-none" />
 
-      {/* Viewfinder crosshair — on hover */}
+      {/* Viewfinder crosshair on hover */}
       <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10">
         <div className="absolute top-1/2 left-0 right-0 h-px bg-amber-200/20" />
         <div className="absolute left-1/2 top-0 bottom-[4.5rem] w-px bg-amber-200/20" />
@@ -105,9 +104,7 @@ const GalleryCard = memo(({ group, index, onClick }: {
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {/* Dark overlay with gold tint */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 group-hover:from-black/50 transition-all duration-500" />
-        {/* Gold shimmer on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-amber-200/10 to-transparent" />
       </div>
 
@@ -192,7 +189,6 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
               <span className="text-amber-200/50 text-xs tracking-widest">
                 {modalImageIndex + 1} / {selectedGroup.images.length}
               </span>
-              {/* Camera settings badge */}
               <div className="hidden sm:flex items-center gap-2 bg-amber-200/10 border border-amber-200/20 text-amber-200 text-xs px-3 py-1">
                 <span className="w-1.5 h-1.5 bg-amber-200 rounded-full" />
                 f/1.4 · 1/200s · ISO 100
@@ -297,16 +293,30 @@ export default function Portfolio() {
   const [selectedGroup, setSelectedGroup] = useState<GroupedImages | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
 
+  // ✅ FIX: dedupingInterval: 0 + revalidateOnFocus: true
+  // Previously dedupingInterval: 60000 caused categories to be cached for 1 minute,
+  // meaning a newly added category wouldn't appear until cache expired.
   const { data: categoriesData } = useSWR<{ success: boolean; data: string[] }>(
     "/api/portfolio/categories",
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 60000 }
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 0,
+    }
   );
 
+  // ✅ FIX: dedupingInterval: 0 + revalidateOnFocus: true
+  // Previously dedupingInterval: 30000 caused newly uploaded photos to not appear
+  // for up to 30 seconds after creation. Now always fetches fresh data.
   const { data, error, isLoading } = useSWR<{ success: boolean; data: GalleryImage[] }>(
-    selectedCategory === "all" ? "/api/portfolio" : `/api/portfolio?category=${selectedCategory}`,
+    selectedCategory === "all"
+      ? "/api/portfolio"
+      : `/api/portfolio?category=${selectedCategory}`,
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 30000 }
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 0,
+    }
   );
 
   const galleryImages = data?.data || [];
@@ -331,7 +341,11 @@ export default function Portfolio() {
       acc[image.title].push(image);
       return acc;
     }, {} as Record<string, GalleryImage[]>);
-    return Object.entries(grouped).map(([title, images]) => ({ title, images, coverImage: images[0] }));
+    return Object.entries(grouped).map(([title, images]) => ({
+      title,
+      images,
+      coverImage: images[0],
+    }));
   }, [galleryImages]);
 
   const openModal = useCallback((group: GroupedImages) => {
@@ -347,30 +361,39 @@ export default function Portfolio() {
   }, []);
 
   const handleModalPrev = useCallback(() => {
-    setModalImageIndex((prev) => (!selectedGroup ? prev : (prev - 1 + selectedGroup.images.length) % selectedGroup.images.length));
+    setModalImageIndex((prev) =>
+      !selectedGroup ? prev : (prev - 1 + selectedGroup.images.length) % selectedGroup.images.length
+    );
   }, [selectedGroup]);
 
   const handleModalNext = useCallback(() => {
-    setModalImageIndex((prev) => (!selectedGroup ? prev : (prev + 1) % selectedGroup.images.length));
+    setModalImageIndex((prev) =>
+      !selectedGroup ? prev : (prev + 1) % selectedGroup.images.length
+    );
   }, [selectedGroup]);
 
-  useEffect(() => { return () => { document.body.style.overflow = "auto"; }; }, []);
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: "linear-gradient(135deg, #000000 0%, #0d0a04 50%, #1a0f00 100%)" }}>
-
-      {/* Ambient gold orbs — same as HeroSection */}
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #000000 0%, #0d0a04 50%, #1a0f00 100%)" }}
+    >
+      {/* Ambient gold orbs */}
       <div className="absolute top-20 right-20 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl opacity-20 pointer-events-none" />
       <div className="absolute bottom-40 left-10 w-80 h-80 bg-yellow-100/8 rounded-full blur-3xl opacity-15 pointer-events-none" />
 
       <FloatingParticles count={12} />
 
-      {/* Top border — light gold */}
+      {/* Top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative pt-24 pb-16 px-6 text-center">
-        {/* Corner brackets */}
         <div className="absolute top-6 left-6 w-12 h-12 border-l-4 border-t-4 border-amber-200 pointer-events-none">
           <div className="absolute top-0 left-0 w-3 h-3 bg-amber-200" />
         </div>
@@ -378,7 +401,6 @@ export default function Portfolio() {
           <div className="absolute top-0 right-0 w-3 h-3 bg-amber-200" />
         </div>
 
-        {/* Studio label */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -388,12 +410,13 @@ export default function Portfolio() {
           <Sparkles className="w-5 h-5 text-amber-200" />
           <p className="text-amber-200 font-black tracking-widest text-sm">G-LIMIT STUDIO</p>
           <span className="flex items-center gap-0.5 text-amber-200">
-            {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-200 text-amber-200" />)}
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-3 h-3 fill-amber-200 text-amber-200" />
+            ))}
             <span className="ml-1 font-bold text-xs">5.0</span>
           </span>
         </motion.div>
 
-        {/* Titles */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -411,7 +434,6 @@ export default function Portfolio() {
           work.
         </motion.h1>
 
-        {/* Gold underline */}
         <div className="h-px w-24 bg-gradient-to-r from-amber-200 to-transparent mx-auto mt-4 mb-6" />
 
         <motion.p
@@ -425,7 +447,6 @@ export default function Portfolio() {
             : `A curated collection across ${categories.length > 1 ? categories.length - 1 : "multiple"} categories — weddings, portraits, events, and more.`}
         </motion.p>
 
-        {/* f-stop badge */}
         <div className="inline-flex items-center gap-2 mt-6 bg-amber-200/10 border border-amber-200/20 text-amber-200 text-xs font-bold px-4 py-2">
           <span className="w-1.5 h-1.5 bg-amber-200 rounded-full" />
           f/1.4 · 1/200s · ISO 100
@@ -480,7 +501,12 @@ export default function Portfolio() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {groupedImages.map((group, index) => (
-              <GalleryCard key={group.title} group={group} index={index} onClick={() => openModal(group)} />
+              <GalleryCard
+                key={group.title}
+                group={group}
+                index={index}
+                onClick={() => openModal(group)}
+              />
             ))}
           </div>
         )}
