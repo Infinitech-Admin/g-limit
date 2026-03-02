@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { X, MessageCircle, Send } from 'lucide-react'
+import { X, MessageCircle, Send, Sparkles, Aperture } from 'lucide-react'
 
 interface Message {
   id: string
@@ -52,47 +52,37 @@ const studioInfo = {
 
 const getBotResponse = (userMessage: string): string => {
   const message = userMessage.toLowerCase()
-  
+
   if (message.includes('service') || message.includes('offer')) {
     return "We offer a wide range of professional photography services including portraits, events, weddings, commercial photography, and creative shoots. Each service is tailored to capture your unique story with artistic excellence. With 1+ year of experience and 50+ satisfied clients, we ensure the highest standards of professional quality."
   }
-  
   if (message.includes('book') || message.includes('appointment') || message.includes('schedule') || message.includes('session')) {
-    return "Booking a session is easy! Contact us to discuss your vision, and we'll schedule a time that works best for you. Every project begins with understanding your story and creating a collaborative experience. We're committed to making your session comfortable and memorable."
+    return "Booking a session is easy! Fill out our booking form here: https://www.g-limitstudio.com/booking-form\n\nWe'll confirm your reservation within 24 hours. Every project begins with understanding your story — we're committed to making your session comfortable and memorable!"
   }
-  
   if (message.includes('price') || message.includes('pricing') || message.includes('cost')) {
     return "Our pricing varies based on the type of session, duration, and deliverables. We offer flexible packages designed to suit different needs and budgets. Contact us for a detailed, personalized quote. Your satisfaction is our priority, and we're committed to exceeding your expectations."
   }
-  
   if (message.includes('portfolio') || message.includes('work') || message.includes('examples') || message.includes('photos')) {
     return "We've preserved over 5,000+ moments for 50+ clients! Our portfolio showcases diverse photography styles across portraits, events, weddings, and commercial work. Check out our full portfolio here: https://www.g-limitstudio.com/portfolio"
   }
-  
   if (message.includes('contact') || message.includes('reach') || message.includes('phone') || message.includes('email')) {
-    return "You can reach us through our website contact form, by phone, or by visiting The G-Limit Studio in person. We're here to answer all your questions and help bring your creative vision to life. Let us know how we can help!"
+    return "Here's how you can reach us:\n\n📞 Contact No.: 09690537370\n📧 Email: g.limitstudio@gmail.com\n📸 Instagram: https://www.instagram.com/g.limitstudioph?igsh=MXA3YzhuaTFmNnNudA==\n🎵 TikTok: https://www.tiktok.com/@glimit.studio?_r=1&_t=ZS-942cxTHnfFd\n📘 Facebook: G-Limit Studio\n\nWe'd love to hear from you!"
   }
-  
   if (message.includes('location') || message.includes('where') || message.includes('address') || message.includes('studio')) {
-    return `The G-Limit Studio is located at ${studioInfo.studio.location}. Our thoughtfully designed creative space empowers creativity, precision, and artistic freedom. Visit us to experience our professional equipment, production capabilities, and inspiring creative environment with natural light and versatile backdrops.`
+    return `The G-Limit Studio is located at ${studioInfo.studio.location}. Our thoughtfully designed creative space empowers creativity, precision, and artistic freedom. Visit us to experience our professional equipment, production capabilities, and inspiring creative environment.`
   }
-  
   if (message.includes('about') || message.includes('who') || message.includes('values')) {
-    return studioInfo.about + " Our values include Artistic Excellence, Professional Quality, Personal Connection, and Client Commitment. We believe in creating meaningful, beautiful images that last generations."
+    return studioInfo.about + " Our values include Artistic Excellence, Professional Quality, Personal Connection, and Client Commitment."
   }
-  
   if (message.includes('experience') || message.includes('years')) {
     return `With ${studioInfo.experience.years}, we've built ${studioInfo.experience.clients} and preserved ${studioInfo.experience.photos}. Our experience speaks to our commitment to excellence and our clients' trust in us.`
   }
-  
   if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-    return "Hello! Welcome to G-Limit Studio. 👋 How can we help you today? Feel free to ask about our services, pricing, or use the quick replies below!"
+    return "Hello! Welcome to G-Limit Studio. ✦ How can we help you today? Feel free to ask about our services, pricing, or use the quick replies below!"
   }
-  
   if (message.includes('thank')) {
     return "You're welcome! If you have any other questions about our photography services or would like to book a session, just let us know. We're here to help!"
   }
-  
   return "Thank you for your message! I'd be happy to help you with information about our photography services, pricing, booking, or anything else. You can also use the quick reply buttons below for common questions!"
 }
 
@@ -102,7 +92,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! Welcome to G-Limit Studio. 👋 How can we help you capture your special moments today?",
+      text: "Hello! Welcome to G-Limit Studio. ✦ How can we help you capture your special moments today?",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -111,21 +101,14 @@ export default function Chatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Hide chatbot on admin pages
   const isAdminPage = pathname?.startsWith('/admin')
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus()
-    }
+    if (isOpen && inputRef.current) inputRef.current.focus()
   }, [isOpen])
 
   const handleSendMessage = (text?: string) => {
@@ -138,11 +121,9 @@ export default function Chatbot() {
       sender: 'user',
       timestamp: new Date()
     }
-
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
 
-    // Simulate bot response
     setTimeout(() => {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -154,10 +135,6 @@ export default function Chatbot() {
     }, 800)
   }
 
-  const handleQuickReply = (reply: QuickReply) => {
-    handleSendMessage(reply.message)
-  }
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -165,60 +142,101 @@ export default function Chatbot() {
     }
   }
 
-  // Don't render chatbot on admin pages
-  if (isAdminPage) {
-    return null
-  }
+  if (isAdminPage) return null
 
   return (
     <>
-      {/* Chat Button */}
+      {/* Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50"
           aria-label="Open chat"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center shadow-2xl shadow-amber-200/20 transition-all duration-300 hover:scale-105 group"
+          style={{
+            background: "linear-gradient(135deg, #d4a843 0%, #f5e17a 100%)",
+            border: "2px solid rgba(212,168,67,0.4)",
+          }}
         >
-          <MessageCircle className="w-6 h-6" />
+          {/* Corner accents */}
+          <span className="absolute top-1 left-1 w-2 h-2 border-l border-t border-black/20" />
+          <span className="absolute top-1 right-1 w-2 h-2 border-r border-t border-black/20" />
+          <span className="absolute bottom-1 left-1 w-2 h-2 border-l border-b border-black/20" />
+          <span className="absolute bottom-1 right-1 w-2 h-2 border-r border-b border-black/20" />
+          <MessageCircle className="w-6 h-6 text-black" />
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
+        <div
+          className="fixed bottom-6 right-6 w-[370px] h-[580px] flex flex-col z-50 shadow-2xl shadow-black/60"
+          style={{
+            background: "linear-gradient(135deg, #0d0a04 0%, #000000 100%)",
+            border: "1px solid rgba(212,168,67,0.25)",
+          }}
+        >
+          {/* Outer corner brackets */}
+          <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-l-2 border-t-2 border-amber-200 pointer-events-none z-10" />
+          <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-r-2 border-t-2 border-amber-200 pointer-events-none z-10" />
+          <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-l-2 border-b-2 border-amber-200 pointer-events-none z-10" />
+          <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-r-2 border-b-2 border-amber-200 pointer-events-none z-10" />
+
           {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div
+            className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #1a1208 0%, #0d0a04 100%)",
+              borderBottom: "1px solid rgba(212,168,67,0.2)",
+            }}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <MessageCircle className="w-5 h-5" />
+              <div
+                className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+                style={{ background: "linear-gradient(135deg, #d4a843, #f5e17a)" }}
+              >
+                <Aperture className="w-4 h-4 text-black" />
               </div>
               <div>
-                <h3 className="font-semibold text-base">G-Limit Studio</h3>
-                <p className="text-xs text-orange-100">Always here to help</p>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-200" />
+                  <h3 className="text-amber-200 font-black tracking-widest text-xs uppercase">G-Limit Studio</h3>
+                </div>
+                <p className="text-gray-500 text-xs mt-0.5">Always here to help</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="hover:bg-white/20 rounded-full p-1 transition-colors"
               aria-label="Close chat"
+              className="w-7 h-7 flex items-center justify-center border border-amber-200/20 text-amber-200/50 hover:text-amber-200 hover:border-amber-200/50 hover:bg-amber-200/10 transition-all"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+          >
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                  className="max-w-[82%] px-4 py-2.5"
+                  style={
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-none'
-                      : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-200'
-                  }`}
+                      ? {
+                          background: "linear-gradient(135deg, #d4a843 0%, #f5e17a 100%)",
+                          color: "#000",
+                        }
+                      : {
+                          background: "linear-gradient(135deg, #1a1208 0%, #0d0a04 100%)",
+                          border: "1px solid rgba(212,168,67,0.2)",
+                          color: "#e5e5e5",
+                        }
+                  }
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {message.text.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
@@ -229,11 +247,7 @@ export default function Chatbot() {
                             href={part}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`underline ${
-                              message.sender === 'user' 
-                                ? 'text-white hover:text-orange-100' 
-                                : 'text-orange-600 hover:text-orange-700'
-                            }`}
+                            className={`underline ${message.sender === 'user' ? 'text-black/70 hover:text-black' : 'text-amber-200 hover:text-amber-100'}`}
                           >
                             {part}
                           </a>
@@ -242,15 +256,8 @@ export default function Chatbot() {
                       return part
                     })}
                   </p>
-                  <span
-                    className={`text-xs mt-1 block ${
-                      message.sender === 'user' ? 'text-orange-100' : 'text-gray-400'
-                    }`}
-                  >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <span className={`text-xs mt-1 block ${message.sender === 'user' ? 'text-black/40' : 'text-gray-600'}`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               </div>
@@ -259,14 +266,17 @@ export default function Chatbot() {
           </div>
 
           {/* Quick Replies */}
-          <div className="px-4 py-3 bg-white border-t border-gray-200">
-            <p className="text-xs text-gray-500 mb-2 font-medium">Quick replies:</p>
-            <div className="flex flex-wrap gap-2">
+          <div
+            className="px-4 py-3 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #1a1208 0%, #0d0a04 100%)", borderTop: "1px solid rgba(212,168,67,0.15)" }}
+          >
+            <p className="text-xs text-amber-200/40 font-bold tracking-widest uppercase mb-2">Quick replies</p>
+            <div className="flex flex-wrap gap-1.5">
               {quickReplies.map((reply, index) => (
                 <button
                   key={index}
-                  onClick={() => handleQuickReply(reply)}
-                  className="text-xs px-3 py-1.5 rounded-full border-2 border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors font-medium"
+                  onClick={() => handleSendMessage(reply.message)}
+                  className="text-xs px-3 py-1.5 border border-amber-200/20 text-amber-200/60 hover:border-amber-200/60 hover:text-amber-200 hover:bg-amber-200/10 transition-all font-medium"
                 >
                   {reply.label}
                 </button>
@@ -275,27 +285,38 @@ export default function Chatbot() {
           </div>
 
           {/* Input */}
-          <div className="p-4 bg-white border-t border-gray-200 rounded-b-2xl">
-            <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-full focus:outline-none focus:border-orange-500 text-sm transition-colors"
-              />
-              <button
-                onClick={() => handleSendMessage()}
-                disabled={!inputValue.trim()}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full p-2.5 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Send message"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
+          <div
+            className="px-4 py-3 flex-shrink-0 flex gap-2"
+            style={{ background: "linear-gradient(135deg, #1a1208 0%, #0d0a04 100%)", borderTop: "1px solid rgba(212,168,67,0.15)" }}
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message…"
+              className="flex-1 px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none transition-all"
+              style={{
+                background: "rgba(0,0,0,0.6)",
+                border: "1px solid rgba(212,168,67,0.2)",
+              }}
+              onFocus={e => (e.target.style.borderColor = "rgba(212,168,67,0.6)")}
+              onBlur={e => (e.target.style.borderColor = "rgba(212,168,67,0.2)")}
+            />
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!inputValue.trim()}
+              aria-label="Send message"
+              className="w-10 h-10 flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #d4a843 0%, #f5e17a 100%)" }}
+            >
+              <Send className="w-4 h-4 text-black" />
+            </button>
           </div>
+
+          {/* Bottom border */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
         </div>
       )}
     </>
