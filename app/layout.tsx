@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
 import PWARegister from "@/components/PWARegister"
 import { Analytics } from "@vercel/analytics/next"
-import dynamic from "next/dynamic"
+import ClientProviders from "@/components/ClientProviders"
 import {
   defaultMetadata,
   organizationSchema,
@@ -14,21 +14,11 @@ import {
   serviceSchema,
 } from "@/lib/metadata"
 
-// ─── Lazy load heavy non-critical components ──────────────────────────────────
-// Chatbot is never needed on first paint — defer it entirely
-const Chatbot = dynamic(() => import("@/components/Chatbot"), {
-  ssr: false,
-  loading: () => null,
-})
-
-// ─── Fonts: only load what's actually used ────────────────────────────────────
-// Geist_Mono is almost certainly only used in code blocks / badges
-// If you're not showing code on most pages, remove it entirely
+// ─── Fonts ────────────────────────────────────────────────────────────────────
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
-  // Preload only the weights you actually use — don't load the full family
   weight: ["400", "600", "700"],
 })
 
@@ -37,7 +27,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "700"],
-  // Tell Next.js not to preload this — it's not needed on first paint
   preload: false,
 })
 
@@ -170,7 +159,9 @@ const localBusinessSchema = {
 const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
-  itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: "https://g-limitstudio.com" }],
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://g-limitstudio.com" },
+  ],
 }
 
 const faqSchema = {
@@ -210,11 +201,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-PH" suppressHydrationWarning>
       <head>
-        {/*
-          ─── CRITICAL: Preconnect to your image API server ──────────────────
-          This alone can save 300–600ms on mobile by resolving DNS + TLS
-          before the first image request fires. Must be BEFORE any other link.
-        */}
+        {/* Preconnect to image API — saves 300–600ms on mobile */}
         {API_IMG && (
           <>
             <link rel="preconnect" href={API_IMG} />
@@ -222,12 +209,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
 
-        {/*
-          ─── Preconnect to Vercel Analytics (fires early, saves RTT) ─────────
-        */}
+        {/* Preconnect to Vercel Analytics */}
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
-
-        {/* Fonts — already handled by next/font, no manual links needed */}
 
         {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
@@ -253,11 +236,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="geo.position" content="14.5547;121.0244" />
         <meta name="ICBM" content="14.5547, 121.0244" />
 
-        {/*
-          ─── JSON-LD: combine into ONE script tag ────────────────────────────
-          Multiple <script> tags = multiple parser insertions = extra FCP cost.
-          One @graph array is semantically identical and faster to parse.
-        */}
+        {/* All schemas in one script tag — fewer parser insertions = faster FCP */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -281,11 +260,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <Toaster position="top-right" />
           {/*
-            Chatbot is lazily loaded — it's heavy (likely loads a chat SDK)
-            and is never needed on first paint. This removes it from the
-            critical bundle entirely.
+            ClientProviders handles all ssr:false dynamic imports.
+            Chatbot loads after hydration, never blocks first paint.
           */}
-          <Chatbot />
+          <ClientProviders />
         </PublicLayoutProvider>
         <Analytics />
       </body>
