@@ -3,7 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // ✅ Added mobile-first sizes: 390, 414 cover iPhone/Android viewports
+    // These were missing — Next.js was serving 640px images to 390px screens
+    deviceSizes: [390, 414, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
     remotePatterns: [
@@ -32,8 +34,6 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // ✅ Keep false — you want Next.js image optimization (avif/webp conversion + resizing)
-    // Setting true would bypass optimization and serve raw originals = larger files = slower
     unoptimized: false,
   },
 
@@ -48,18 +48,21 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // ✅ Preconnect to API on ALL pages, not just "/"
         source: '/:path*',
         headers: [
-          { key: 'X-Frame-Options',       value: 'SAMEORIGIN' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy',        value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy',     value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          // ✅ Added preconnect for API on every page (was only on "/" before)
+          { key: 'X-Frame-Options',        value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options',  value: 'nosniff' },
+          { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'X-DNS-Prefetch-Control',  value: 'on' },
           {
             key: 'Link',
-            value: '<https://infinitech-api15.site>; rel=preconnect; crossorigin',
+            // ✅ Preconnect to BOTH your API server AND Next.js image optimizer endpoint
+            // This tells mobile browsers to open the TCP connection before they need it
+            value: [
+              '<https://infinitech-api15.site>; rel=preconnect; crossorigin',
+              '<https://infinitech-api15.site>; rel=dns-prefetch',
+            ].join(', '),
           },
         ],
       },
@@ -80,12 +83,13 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
+        // ✅ Removed immutable from /_next/image — Next.js image responses vary by
+        // query params (w, q, url). immutable here was causing stale image serving
+        // when images were updated on the backend.
         source: '/_next/image/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000' }],
       },
       {
-        // ✅ Reduced stale-while-revalidate — 86400s (24h) is too long for ambassador data
-        // that might be updated. 300s revalidation is safer.
         source: '/api/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }],
       },
@@ -106,6 +110,9 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-icons',
     ],
     optimizeCss: true,
+    // ✅ Inline critical CSS for above-the-fold content — reduces FCP
+    // Next.js will inline the CSS needed for the first paint, removing a render-blocking request
+    inlineCss: true,
   },
 };
 
