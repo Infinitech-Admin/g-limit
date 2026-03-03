@@ -1,13 +1,11 @@
 "use client"
-
-import { Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react"
 import FloatingParticles from "@/components/animated-golden-particles"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 interface Ambassador {
   id: number
   name: string
@@ -29,64 +27,235 @@ function getImageUrl(path: string): string {
 const ACCENTS = [
   { accent: "#f5d98a", accentDim: "rgba(245,217,138,0.12)", accentGlow: "#ecc84e" },
   { accent: "#fae9a0", accentDim: "rgba(250,233,160,0.12)", accentGlow: "#f5d98a" },
-  { accent: "#f0c060", accentDim: "rgba(240,192,96,0.12)", accentGlow: "#d4a030" },
+  { accent: "#f0c060", accentDim: "rgba(240,192,96,0.12)",  accentGlow: "#d4a030" },
 ]
 
 function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("")
+  return name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
 }
 
 function toSlug(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, "-")
 }
 
-function fromSlug(slug: string): string {
-  return slug.replace(/-/g, " ")
-}
-
 const apertureBlades = 8
 
-// ─── Skeleton card ────────────────────────────────────────────────────────────
-function SkeletonCard() {
+// ─── PAGE_SIZE: how many photos to show per "load more" ──────────────────────
+const PAGE_SIZE = 12
+
+// ─── Lazy image component — only loads when scrolled into view ───────────────
+const LazyPhoto = memo(function LazyPhoto({
+  src,
+  alt,
+  index,
+  accent,
+  name,
+  total,
+  onClick,
+}: {
+  src: string
+  alt: string
+  index: number
+  accent: string
+  name: string
+  total: number
+  onClick: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(index < 4) // first 4 load immediately
+  const [loaded, setLoaded] = useState(false)
+  const [errored, setErrored] = useState(false)
+
+  useEffect(() => {
+    if (inView) return
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect() } },
+      { rootMargin: "200px" }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [inView])
+
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-white/5 animate-pulse aspect-[3/4]">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+    <div
+      ref={ref}
+      className="group relative overflow-hidden rounded-xl cursor-pointer"
+      style={{ border: "1px solid rgba(245,217,138,0.08)" }}
+      onClick={onClick}
+    >
+      {/* Background */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #2a2318, #1c1810)" }} />
+
+      {/* Skeleton shimmer while loading */}
+      {!loaded && !errored && (
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(90deg, transparent 0%, rgba(245,217,138,0.06) 50%, transparent 100%)",
+              animation: "shimmer 1.6s infinite",
+              backgroundSize: "200% 100%",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Fallback icon when no image */}
+      {(!inView || errored) && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ background: `rgba(245,217,138,0.06)`, border: `1px solid ${accent}30` }}
+          >
+            <Camera className="w-4 h-4" style={{ color: `${accent}60` }} />
+          </div>
+          <p className="font-sans text-[9px] uppercase tracking-widest" style={{ color: `${accent}40` }}>
+            {index + 1}
+          </p>
+        </div>
+      )}
+
+      {/* Actual image — only rendered when in viewport */}
+      {inView && !errored && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease, transform 0.5s ease" }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+        />
+      )}
+
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+
+      {/* Hover info */}
+      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
+        <p className="text-white font-serif text-xs font-light">{name}</p>
+        <p className="font-sans text-[9px] uppercase tracking-widest mt-0.5" style={{ color: accent }}>
+          {index + 1} / {total}
+        </p>
+      </div>
+
+      {/* Corner brackets */}
+      <div className="absolute top-2 left-2 w-4 h-4 border-l border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" style={{ borderColor: accent }} />
+      <div className="absolute bottom-2 right-2 w-4 h-4 border-r border-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" style={{ borderColor: accent }} />
     </div>
   )
-}
+})
 
-// ─── Inner component (uses useSearchParams) ───────────────────────────────────
-function AmbassadorContent() {
-  const router = useRouter()
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+const Lightbox = memo(function Lightbox({
+  images,
+  index,
+  name,
+  accent,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  images: string[]
+  index: number
+  name: string
+  accent: string
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+}) {
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+      if (e.key === "ArrowLeft") onPrev()
+      if (e.key === "ArrowRight") onNext()
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [onClose, onPrev, onNext])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="relative max-w-4xl max-h-[80vh] w-full mx-16"
+        onClick={(e) => e.stopPropagation()}
+        style={{ border: `1px solid ${accent}25`, borderRadius: 16, overflow: "hidden" }}
+      >
+        <div className="relative w-full aspect-[4/3] bg-[#0a0806] flex items-center justify-center">
+          <Camera className="w-12 h-12 opacity-10 absolute" style={{ color: accent }} />
+          <img
+            src={getImageUrl(images[index])}
+            alt={`${name} photo ${index + 1}`}
+            className="w-full h-full object-cover absolute inset-0"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
+          />
+        </div>
+        <div className="px-6 py-4" style={{ background: "rgba(10,8,6,0.95)", borderTop: `1px solid ${accent}20` }}>
+          <p className="text-white font-serif font-light text-sm">{name}</p>
+          <p className="font-sans text-[10px] uppercase tracking-widest mt-0.5" style={{ color: accent }}>
+            Photo {index + 1} of {images.length}
+          </p>
+        </div>
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(to right, transparent, ${accent}, transparent)` }} />
+      </motion.div>
+
+      <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+        style={{ background: "rgba(245,217,138,0.08)", border: "1px solid rgba(245,217,138,0.2)", color: "#f5d98a" }}>
+        <X className="w-4 h-4" />
+      </button>
+      <button onClick={(e) => { e.stopPropagation(); onPrev() }} className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+        style={{ background: "rgba(245,217,138,0.08)", border: "1px solid rgba(245,217,138,0.2)", color: "#f5d98a" }}>
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button onClick={(e) => { e.stopPropagation(); onNext() }} className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+        style={{ background: "rgba(245,217,138,0.08)", border: "1px solid rgba(245,217,138,0.2)", color: "#f5d98a" }}>
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full font-sans text-xs"
+        style={{ background: "rgba(245,217,138,0.08)", border: "1px solid rgba(245,217,138,0.15)", color: "#f5d98a" }}>
+        {index + 1} / {images.length}
+      </div>
+    </motion.div>
+  )
+})
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function AmbassadorPage() {
+  const router       = useRouter()
   const searchParams = useSearchParams()
 
-  const [ambassadors, setAmbassadors] = useState<Ambassador[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [ambassadors, setAmbassadors]     = useState<Ambassador[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [error, setError]                 = useState<string | null>(null)
+  const [activeId, setActiveId]           = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [visibleCount, setVisibleCount]   = useState(PAGE_SIZE)
 
-  // ── Fetch all ambassadors
+  // ── Fetch — only once on mount ─────────────────────────────────────────────
   useEffect(() => {
     const fetchAll = async () => {
-      setLoading(true)
-      setError(null)
       try {
         const res = await fetch(`/api/ambassadors?perPage=100`, {
           headers: { Accept: "application/json" },
         })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
-
-        const raw: Ambassador[] = Array.isArray(json.data)
-          ? json.data
-          : Array.isArray(json)
-          ? json
-          : []
+        const raw: Ambassador[] = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : []
 
         // Deduplicate by name
         const mergedMap = raw.reduce<Record<string, Ambassador>>((acc, amb) => {
@@ -106,9 +275,7 @@ function AmbassadorContent() {
 
         if (merged.length > 0) {
           const urlSlug = searchParams.get("ambassador")
-          const match = urlSlug
-            ? merged.find((a) => toSlug(a.name) === urlSlug)
-            : null
+          const match   = urlSlug ? merged.find((a) => toSlug(a.name) === urlSlug) : null
           setActiveId(toSlug(match ? match.name : merged[0].name))
         }
       } catch (err) {
@@ -118,515 +285,225 @@ function AmbassadorContent() {
       }
     }
     fetchAll()
-  }, [])
+  }, []) // intentionally no deps — fetch once
 
-  const current = ambassadors.find((a) => toSlug(a.name) === activeId) ?? null
-  const accentTheme = current
-    ? ACCENTS[ambassadors.indexOf(current) % ACCENTS.length]
-    : ACCENTS[0]
+  const current     = ambassadors.find((a) => toSlug(a.name) === activeId) ?? null
+  const accentTheme = current ? ACCENTS[ambassadors.indexOf(current) % ACCENTS.length] : ACCENTS[0]
 
-  const images = current?.image_paths ?? []
-  const openLightbox = (i: number) => setLightboxIndex(i)
-  const closeLightbox = () => setLightboxIndex(null)
-  const prevImage = () =>
-    setLightboxIndex((prev) =>
-      prev !== null ? (prev - 1 + images.length) % images.length : null
-    )
-  const nextImage = () =>
-    setLightboxIndex((prev) =>
-      prev !== null ? (prev + 1) % images.length : null
-    )
+  // Reset visible count when switching ambassador
+  const selectAmbassador = useCallback((slug: string) => {
+    setActiveId(slug)
+    setLightboxIndex(null)
+    setVisibleCount(PAGE_SIZE)
+    router.push(`?ambassador=${slug}`, { scroll: false })
+  }, [router])
+
+  // Lightbox handlers — stable references with useCallback
+  const openLightbox  = useCallback((i: number) => setLightboxIndex(i), [])
+  const closeLightbox = useCallback(() => setLightboxIndex(null), [])
+  const prevImage     = useCallback(() =>
+    setLightboxIndex((prev) => prev !== null ? (prev - 1 + (current?.image_paths.length ?? 1)) % (current?.image_paths.length ?? 1) : null),
+    [current?.image_paths.length]
+  )
+  const nextImage     = useCallback(() =>
+    setLightboxIndex((prev) => prev !== null ? (prev + 1) % (current?.image_paths.length ?? 1) : null),
+    [current?.image_paths.length]
+  )
+
+  const visibleImages = current?.image_paths.slice(0, visibleCount) ?? []
+  const hasMore       = (current?.image_paths.length ?? 0) > visibleCount
 
   return (
-    <div
-      className="min-h-screen w-full relative overflow-x-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0d0d0d 100%)",
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0 }
+          100% { background-position: 200% 0 }
+        }
+      `}</style>
+
       <FloatingParticles />
 
-      {/* ── Aperture deco ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center opacity-[0.03]">
-        {[...Array(apertureBlades)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute"
-            style={{
-              width: "60vw",
-              height: "3px",
-              background: "linear-gradient(90deg, transparent, #f5d98a, transparent)",
-              transform: `rotate(${(i * 180) / apertureBlades}deg)`,
-              transformOrigin: "center",
-            }}
-          />
-        ))}
+      {/* Aperture deco */}
+      <div className="absolute left-[-8%] top-[20%] w-[360px] h-[360px] opacity-[0.05] pointer-events-none">
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          {[...Array(apertureBlades)].map((_, i) => (
+            <path key={i}
+              d={`M100,100 L${100+80*Math.cos(i*2*Math.PI/apertureBlades)},${100+80*Math.sin(i*2*Math.PI/apertureBlades)} A80,80 0 0,1 ${100+80*Math.cos((i+1)*2*Math.PI/apertureBlades)},${100+80*Math.sin((i+1)*2*Math.PI/apertureBlades)} Z`}
+              fill="none" stroke="#f5d98a" strokeWidth="0.8"
+            />
+          ))}
+          <circle cx="100" cy="100" r="55" fill="none" stroke="#f5d98a" strokeWidth="0.5" />
+          <circle cx="100" cy="100" r="78" fill="none" stroke="#f5d98a" strokeWidth="0.3" />
+        </svg>
       </div>
+      <div className="absolute right-[-5%] bottom-[12%] w-[240px] h-[240px] opacity-[0.04] pointer-events-none">
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          {[...Array(6)].map((_, i) => (
+            <circle key={i} cx="100" cy="100" r={28+i*12} fill="none" stroke="#f5d98a" strokeWidth="0.5" />
+          ))}
+        </svg>
+      </div>
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% -5%, rgba(245,217,138,0.06) 0%, transparent 55%)" }} />
 
-      {/* ── Corner decorations ── */}
-      {[...Array(6)].map((_, i) => (
-        <div
-          key={i}
-          className="fixed pointer-events-none z-0"
-          style={{
-            width: "200px",
-            height: "200px",
-            border: "1px solid rgba(245,217,138,0.05)",
-            borderRadius: "50%",
-            top: `${10 + i * 15}%`,
-            left: `${5 + i * 12}%`,
-            transform: "translate(-50%,-50%)",
-          }}
-        />
-      ))}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-20">
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
-        {/* ── Page heading ── */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <div
-            className="inline-block mt-10 text-xs font-bold uppercase tracking-[0.4em] mb-4 px-4 py-2 rounded-full"
-            style={{
-              color: "#f5d98a",
-              border: "1px solid rgba(245,217,138,0.2)",
-              background: "rgba(245,217,138,0.05)",
-            }}
-          >
-            G-Limit Studio
+        {/* Heading */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-12">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-px w-10 bg-gradient-to-r from-transparent to-[#f5d98a]" />
+            <p className="font-sans font-black tracking-[0.3em] text-[10px] uppercase" style={{ color: "#f5d98a" }}>G-Limit Studio</p>
+            <div className="h-px w-10 bg-gradient-to-l from-transparent to-[#f5d98a]" />
           </div>
-          <h1
-            className="text-5xl md:text-7xl font-black mb-6"
-            style={{
-              background: "linear-gradient(135deg, #f5d98a 0%, #ecc84e 50%, #f5d98a 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              letterSpacing: "-0.02em",
-            }}
-          >
+          <h1 className="text-5xl md:text-6xl font-serif font-light text-white leading-tight">
             Our{" "}
-            <span style={{ fontStyle: "italic" }}>Ambassadors</span>
+            <span className="italic" style={{ background: "linear-gradient(to right, #f5d98a, #fae9a0, #f5d98a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              Ambassadors
+            </span>
           </h1>
-          <p
-            className="text-lg max-w-xl mx-auto"
-            style={{ color: "rgba(245,217,138,0.5)" }}
-          >
-            Meet the faces behind the lens — our brand ambassadors captured in
-            their finest moments.
-          </p>
         </motion.div>
 
-        {/* ── Error state ── */}
+        {/* Error */}
         {error && (
-          <div
-            className="text-center py-8 px-6 rounded-2xl mb-8"
-            style={{
-              background: "rgba(255,80,80,0.08)",
-              border: "1px solid rgba(255,80,80,0.2)",
-              color: "#ff8080",
-            }}
-          >
+          <div className="mb-8 px-5 py-4 rounded-xl text-sm font-sans"
+            style={{ background: "rgba(220,60,60,0.08)", border: "1px solid rgba(220,60,60,0.25)", color: "#f87171" }}>
             {error}
           </div>
         )}
 
-        {/* ── Ambassador selector buttons ── */}
+        {/* Selector buttons */}
         {loading ? (
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-12 w-40 rounded-full animate-pulse"
-                style={{ background: "rgba(245,217,138,0.08)" }}
-              />
+          <div className="flex gap-4 mb-10">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 w-44 rounded-full animate-pulse"
+                style={{ background: "rgba(245,217,138,0.06)", border: "1px solid rgba(245,217,138,0.12)" }} />
             ))}
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-wrap justify-center gap-4 mb-12"
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex flex-wrap gap-3 mb-10">
             {ambassadors.map((amb, idx) => {
-              const theme = ACCENTS[idx % ACCENTS.length]
-              const slug = toSlug(amb.name)
+              const theme    = ACCENTS[idx % ACCENTS.length]
+              const slug     = toSlug(amb.name)
               const isActive = activeId === slug
-
               return (
-                <motion.button
-                  key={amb.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setActiveId(slug)
-                    setLightboxIndex(null)
-                    router.push(`?ambassador=${slug}`, { scroll: false })
-                  }}
+                <button key={amb.name} onClick={() => selectAmbassador(slug)}
                   className="relative group flex items-center gap-3 px-7 py-3.5 rounded-full font-sans font-bold text-sm uppercase tracking-widest transition-all duration-300 overflow-hidden"
                   style={{
                     border: `2px solid ${isActive ? theme.accent : "rgba(245,217,138,0.2)"}`,
-                    background: isActive
-                      ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentGlow})`
-                      : "rgba(245,217,138,0.04)",
+                    background: isActive ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentGlow})` : "rgba(245,217,138,0.04)",
                     color: isActive ? "#000" : theme.accent,
                     boxShadow: isActive ? `0 0 28px ${theme.accent}45` : "none",
-                  }}
-                >
-                  {!isActive && (
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: `linear-gradient(135deg, ${theme.accentDim}, transparent)` }}
-                    />
-                  )}
-                  {/* Initials circle */}
-                  <span
-                    className="relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
-                    style={{
-                      background: isActive ? "rgba(0,0,0,0.2)" : theme.accentDim,
-                      color: isActive ? "#000" : theme.accent,
-                    }}
-                  >
+                  }}>
+                  <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+                    style={{ background: isActive ? "rgba(0,0,0,0.18)" : "rgba(245,217,138,0.1)", border: `1px solid ${isActive ? "rgba(0,0,0,0.2)" : "rgba(245,217,138,0.25)"}` }}>
                     {getInitials(amb.name)}
                   </span>
-                  <span className="relative z-10">{amb.name}</span>
-                  <span
-                    className="relative z-10 text-xs font-normal opacity-70"
-                    style={{ fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {amb.image_paths.length} photos
-                  </span>
-                </motion.button>
+                  {amb.name}
+                  <span className="ml-1 text-[10px] font-sans font-normal opacity-70">{amb.image_paths.length} photos</span>
+                </button>
               )
             })}
-
             {ambassadors.length === 0 && !loading && !error && (
-              <p style={{ color: "rgba(245,217,138,0.4)" }}>No ambassadors found.</p>
+              <p className="font-sans text-sm" style={{ color: "rgba(245,217,138,0.4)" }}>No ambassadors found.</p>
             )}
           </motion.div>
         )}
 
-        {/* ── Active ambassador label ── */}
+        {/* Active ambassador label */}
         <AnimatePresence mode="wait">
           {current && (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.4 }}
-              className="flex items-center gap-4 mb-8"
-            >
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-black"
-                style={{
-                  background: `linear-gradient(135deg, ${accentTheme.accent}, ${accentTheme.accentGlow})`,
-                  color: "#000",
-                  boxShadow: `0 0 20px ${accentTheme.accent}40`,
-                }}
-              >
+            <motion.div key={current.name} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.3 }}
+              className="flex items-center gap-4 mb-6">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-serif font-bold text-sm shrink-0"
+                style={{ background: `linear-gradient(135deg, ${accentTheme.accent}, ${accentTheme.accentGlow})`, color: "#000", boxShadow: `0 0 20px ${accentTheme.accent}40` }}>
                 {getInitials(current.name)}
               </div>
               <div>
-                <h2
-                  className="text-2xl font-black"
-                  style={{ color: accentTheme.accent }}
-                >
-                  {current.name}
-                </h2>
-                <p className="text-sm" style={{ color: "rgba(245,217,138,0.4)" }}>
+                <p className="text-white font-serif text-lg font-light leading-none">{current.name}</p>
+                <p className="font-sans text-[10px] uppercase tracking-widest mt-0.5" style={{ color: accentTheme.accent }}>
                   {current.image_paths.length} photos · Ambassador
                 </p>
               </div>
+              <div className="h-px flex-1 ml-2" style={{ background: `linear-gradient(to right, ${accentTheme.accent}40, transparent)` }} />
+              <Camera className="w-4 h-4" style={{ color: `${accentTheme.accent}50` }} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Photo grid ── */}
+        {/* Photo grid */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-            >
+            <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="grid grid-cols-2 md:grid-cols-4 auto-rows-[220px] gap-3">
               {[...Array(8)].map((_, i) => (
-                <SkeletonCard key={i} />
+                <div key={i} className="rounded-xl animate-pulse"
+                  style={{ background: "rgba(245,217,138,0.05)", border: "1px solid rgba(245,217,138,0.08)" }} />
               ))}
             </motion.div>
           ) : current && current.image_paths.length > 0 ? (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-            >
-              {current.image_paths.map((path, i) => (
-                <motion.div
-                  key={path}
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.04, duration: 0.4 }}
-                  className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-[3/4]"
+            <motion.div key={current.name} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}
+              className="grid grid-cols-2 md:grid-cols-4 auto-rows-[220px] gap-3">
+              {visibleImages.map((path, i) => (
+                <LazyPhoto
+                  key={`${current.id}-${i}`}
+                  src={getImageUrl(path)}
+                  alt={`${current.name} photo ${i + 1}`}
+                  index={i}
+                  accent={accentTheme.accent}
+                  name={current.name}
+                  total={current.image_paths.length}
                   onClick={() => openLightbox(i)}
-                  style={{ border: "1px solid rgba(245,217,138,0.08)" }}
-                >
-                  {/* Placeholder background */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #1a1a1a 0%, #111 50%, #1a1a1a 100%)",
-                    }}
-                  />
-                  {/* Grid texture */}
-                  <div
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(0deg,transparent,transparent 20px,rgba(245,217,138,0.03) 20px,rgba(245,217,138,0.03) 21px),repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(245,217,138,0.03) 20px,rgba(245,217,138,0.03) 21px)",
-                    }}
-                  />
-                  {/* Fallback camera icon */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
-                    <Camera size={32} color="#f5d98a" />
-                    <span
-                      className="text-xs font-bold"
-                      style={{ color: "#f5d98a" }}
-                    >
-                      Photo {i + 1}
-                    </span>
-                  </div>
-
-                  {/* Actual image */}
-                  <div className="absolute inset-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getImageUrl(path)}
-                      alt={`${current.name} photo ${i + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        ;(e.currentTarget as HTMLImageElement).style.display = "none"
-                      }}
-                    />
-                  </div>
-
-                  {/* Hover overlay */}
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      background:
-                        "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)",
-                    }}
-                  />
-
-                  {/* Hover info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <p
-                      className="font-bold text-sm"
-                      style={{ color: accentTheme.accent }}
-                    >
-                      {current.name}
-                    </p>
-                    <p className="text-xs text-white/60">
-                      Photo {i + 1} of {current.image_paths.length}
-                    </p>
-                  </div>
-
-                  {/* Hover corner brackets */}
-                  <div
-                    className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ borderColor: accentTheme.accent }}
-                  />
-                  <div
-                    className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ borderColor: accentTheme.accent }}
-                  />
-
-                  {/* Gold glow on hover */}
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                    style={{
-                      boxShadow: `inset 0 0 30px ${accentTheme.accent}15`,
-                    }}
-                  />
-                </motion.div>
+                />
               ))}
             </motion.div>
           ) : !loading && current ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-24"
-              style={{ color: "rgba(245,217,138,0.3)" }}
-            >
-              <Camera size={48} className="mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-bold">No photos uploaded yet</p>
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(245,217,138,0.06)", border: "1px solid rgba(245,217,138,0.15)" }}>
+                <Camera className="w-7 h-7" style={{ color: "rgba(245,217,138,0.3)" }} />
+              </div>
+              <p className="font-sans text-sm" style={{ color: "rgba(245,217,138,0.35)" }}>No photos uploaded yet</p>
             </motion.div>
           ) : null}
         </AnimatePresence>
+
+        {/* Load more button */}
+        {hasMore && !loading && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center mt-8">
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="px-8 py-3 rounded-full font-sans font-bold text-sm uppercase tracking-widest transition-all duration-300"
+              style={{
+                border: `1px solid ${accentTheme.accent}40`,
+                background: "rgba(245,217,138,0.04)",
+                color: accentTheme.accent,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(245,217,138,0.1)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(245,217,138,0.04)")}
+            >
+              Load more · {current!.image_paths.length - visibleCount} remaining
+            </button>
+          </motion.div>
+        )}
       </div>
 
-      {/* ── Lightbox ── */}
+      {/* Lightbox */}
       <AnimatePresence>
-        {lightboxIndex !== null && current && images[lightboxIndex] && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.95)" }}
-            onClick={closeLightbox}
-          >
-            {/* Image container */}
-            <motion.div
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.85, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative max-w-4xl w-full max-h-[90vh] flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                border: `1px solid ${accentTheme.accent}25`,
-                borderRadius: "16px",
-                overflow: "hidden",
-              }}
-            >
-              <div className="relative flex-1 bg-black flex items-center justify-center min-h-[60vh]">
-                {/* Placeholder behind image */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #111 0%, #0a0a0a 100%)",
-                  }}
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={getImageUrl(images[lightboxIndex])}
-                  alt={`${current.name} photo ${lightboxIndex + 1}`}
-                  className="relative z-10 max-h-[75vh] max-w-full object-contain"
-                  onError={(e) => {
-                    ;(e.currentTarget as HTMLImageElement).style.display = "none"
-                  }}
-                />
-              </div>
-
-              {/* Caption */}
-              <div
-                className="px-6 py-4 flex items-center justify-between"
-                style={{ background: "rgba(10,10,10,0.95)" }}
-              >
-                <div>
-                  <p className="font-bold" style={{ color: accentTheme.accent }}>
-                    {current.name}
-                  </p>
-                  <p className="text-sm text-white/40">
-                    Photo {lightboxIndex + 1} of {images.length}
-                  </p>
-                </div>
-              </div>
-
-              {/* Gold top bar */}
-              <div
-                className="absolute top-0 left-0 right-0 h-0.5"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${accentTheme.accent}, transparent)`,
-                }}
-              />
-
-              {/* Close button */}
-              <button
-                onClick={closeLightbox}
-                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                style={{
-                  background: "rgba(245,217,138,0.1)",
-                  border: "1px solid rgba(245,217,138,0.2)",
-                  color: "#f5d98a",
-                }}
-              >
-                <X size={18} />
-              </button>
-
-              {/* Prev */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  prevImage()
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                style={{
-                  background: "rgba(245,217,138,0.08)",
-                  border: "1px solid rgba(245,217,138,0.2)",
-                  color: "#f5d98a",
-                }}
-              >
-                <ChevronLeft size={20} />
-              </button>
-
-              {/* Next */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  nextImage()
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-                style={{
-                  background: "rgba(245,217,138,0.08)",
-                  border: "1px solid rgba(245,217,138,0.2)",
-                  color: "#f5d98a",
-                }}
-              >
-                <ChevronRight size={20} />
-              </button>
-
-              {/* Counter pill */}
-              <div
-                className="absolute bottom-20 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold"
-                style={{
-                  background: "rgba(245,217,138,0.1)",
-                  border: "1px solid rgba(245,217,138,0.2)",
-                  color: "#f5d98a",
-                }}
-              >
-                {lightboxIndex + 1} / {images.length}
-              </div>
-            </motion.div>
-          </motion.div>
+        {lightboxIndex !== null && current && (
+          <Lightbox
+            images={current.image_paths}
+            index={lightboxIndex}
+            name={current.name}
+            accent={accentTheme.accent}
+            onClose={closeLightbox}
+            onPrev={prevImage}
+            onNext={nextImage}
+          />
         )}
       </AnimatePresence>
     </div>
-  )
-}
-
-// ─── Default export wrapped in Suspense ───────────────────────────────────────
-export default function AmbassadorPage() {
-  return (
-    <Suspense
-      fallback={
-        <div
-          className="min-h-screen flex items-center justify-center"
-          style={{ background: "#0a0a0a" }}
-        >
-          <div
-            className="text-sm font-bold uppercase tracking-widest animate-pulse"
-            style={{ color: "rgba(245,217,138,0.4)" }}
-          >
-            Loading Ambassadors...
-          </div>
-        </div>
-      }
-    >
-      <AmbassadorContent />
-    </Suspense>
   )
 }
