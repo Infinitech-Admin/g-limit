@@ -1,6 +1,6 @@
 "use client"
 import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect, useCallback, useRef, memo } from "react"
+import { useState, useEffect, useCallback, useRef, memo, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react"
 import FloatingParticles from "@/components/animated-golden-particles"
@@ -234,8 +234,8 @@ const Lightbox = memo(function Lightbox({
   )
 })
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function AmbassadorPage() {
+// ─── Main Page (inner — uses useSearchParams) ─────────────────────────────────
+function AmbassadorPageInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
@@ -505,5 +505,24 @@ export default function AmbassadorPage() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+// ─── Suspense wrapper — fixes Next.js prerender error with useSearchParams ────
+export default function AmbassadorPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full animate-pulse"
+            style={{ background: "rgba(245,217,138,0.1)", border: "1px solid rgba(245,217,138,0.2)" }} />
+          <p className="font-sans text-sm uppercase tracking-widest" style={{ color: "rgba(245,217,138,0.4)" }}>
+            Loading…
+          </p>
+        </div>
+      </div>
+    }>
+      <AmbassadorPageInner />
+    </Suspense>
   )
 }
