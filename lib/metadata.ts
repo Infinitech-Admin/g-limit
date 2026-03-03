@@ -13,23 +13,23 @@ export const siteConfig = {
   url: siteUrl,
   ogImage: `${siteUrl}/og-image.jpg`,
   links: {
-    facebook: 'https://www.facebook.com/p/Infinitech-Advertising-Corp-100080647808810/',
-    instagram: 'https://instagram.com/glimitstudio',
+    facebook: 'https://www.facebook.com/people/G-Limit-Studio/61587225507593/#',
+    instagram: 'https://www.instagram.com/g.limitstudioph?igsh=MXA3YzhuaTFmNnNudA%3D%3D',
     twitter: '@glimitstudio',
   },
   contact: {
-    phone: '+63-945-675-4591', // Update with actual phone number
-    email: 'info@glimitstudio.com',
+    phone: '+63-945-675-4591',
+    email: 'g.limitstudio@gmail.com',
     address: {
       street: 'Urban Avenue',
       city: 'Makati City',
       region: 'Metro Manila',
-      postal: '1200', // Update with actual postal code
+      postal: '1200',
       country: 'Philippines',
     },
     coordinates: {
-      lat: 14.5547, // Update with exact coordinates
-      lng: 121.0244, // Update with exact coordinates
+      lat: 14.5547,
+      lng: 121.0244,
     },
   },
 };
@@ -91,7 +91,7 @@ export const defaultMetadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_PH', // Changed to Philippines locale
+    locale: 'en_PH',
     url: siteUrl,
     siteName,
     title: `${siteName} | Professional Photography & Videography in Makati`,
@@ -144,9 +144,9 @@ export const defaultMetadata: Metadata = {
   alternates: {
     canonical: siteUrl,
   },
+  // ✅ FIXED: Correct Google verification code. Yandex removed (not relevant for PH market).
   verification: {
-    google: 'your-google-verification-code', // Update after Google Search Console setup
-    yandex: 'your-yandex-verification-code',
+    google: 'pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw',
   },
   category: 'Photography & Videography',
 };
