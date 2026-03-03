@@ -95,7 +95,8 @@ export const metadata: Metadata = {
     },
   },
   alternates: { canonical: "https://g-limitstudio.com" },
-  verification: { google: "pFlfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxe" },
+  // ✅ FIXED: Correct full Google verification code
+  verification: { google: "pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw" },
   category: "Photography & Videography",
 }
 
@@ -116,13 +117,13 @@ const localBusinessSchema = {
   "@type": "LocalBusiness",
   "@id": "https://g-limitstudio.com/#business",
   name: "G-Limit Studio",
-  alternateName: "Infinitech Advertising Corporation",
+  alternateName: "G-Limit Studio",
   image: "https://g-limitstudio.com/logo.png",
   logo: "https://g-limitstudio.com/logo.png",
   description:
     "Professional photography and videography studio specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and corporate events in Makati City.",
   url: "https://g-limitstudio.com",
-  telephone: "+63-XXX-XXX-XXXX",
+  telephone: "+63-945-675-4591",
   email: "info@g-limitstudio.com",
   address: {
     "@type": "PostalAddress",
@@ -149,10 +150,10 @@ const localBusinessSchema = {
   ],
   priceRange: "$$",
   currenciesAccepted: "PHP",
-  paymentAccepted: "Cash, Credit Card, Bank Transfer",
+  paymentAccepted: "Cash, Credit Card, Bank Transfer, GCash",
   sameAs: [
-    "https://facebook.com/infinitechadvertisingcorporation",
-    "https://instagram.com/glimitstudio",
+    "https://www.facebook.com/people/G-Limit-Studio/61587225507593/#",
+    "https://www.instagram.com/g.limitstudioph?igsh=MXA3YzhuaTFmNnNudA%3D%3D",
   ],
 }
 
@@ -173,7 +174,7 @@ const faqSchema = {
       name: "What photography services does G-Limit Studio offer?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "G-Limit Studio offers professional photography and videography services including weddings, pre-nuptial shoots, maternity photography, portraits, events, and corporate photography in Makati City and Metro Manila.",
+        text: "G-Limit Studio offers professional photography and videography services including weddings, pre-nuptial shoots, maternity photography (buntis), portraits, events, and corporate photography in Makati City and Metro Manila.",
       },
     },
     {
@@ -190,6 +191,22 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Yes, we offer comprehensive pre-nuptial photography packages with various locations and styling options.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What areas do you serve for photography services?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We primarily serve Makati City and Metro Manila, including Manila, Quezon City, Pasig, Taguig, Mandaluyong, and surrounding areas. We also accommodate bookings in nearby provinces.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you provide maternity photography services?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, we specialize in maternity photography (buntis photography), creating beautiful and memorable photos during your pregnancy journey. We offer studio and outdoor sessions with various styling options.",
       },
     },
   ],
@@ -235,6 +252,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="geo.placename" content="Makati City" />
         <meta name="geo.position" content="14.5547;121.0244" />
         <meta name="ICBM" content="14.5547, 121.0244" />
+
+        {/* ✅ Explicit Google verification meta tag (belt-and-suspenders with Next.js verification field) */}
+        <meta name="google-site-verification" content="pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw" />
 
         {/* All schemas in one script tag — fewer parser insertions = faster FCP */}
         <script
