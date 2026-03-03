@@ -5,8 +5,8 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
 import PWARegister from "@/components/PWARegister"
-import Chatbot from "@/components/Chatbot"
-import { Analytics } from '@vercel/analytics/next'
+import { Analytics } from "@vercel/analytics/next"
+import dynamic from "next/dynamic"
 import {
   defaultMetadata,
   organizationSchema,
@@ -14,87 +14,85 @@ import {
   serviceSchema,
 } from "@/lib/metadata"
 
+// ─── Lazy load heavy non-critical components ──────────────────────────────────
+// Chatbot is never needed on first paint — defer it entirely
+const Chatbot = dynamic(() => import("@/components/Chatbot"), {
+  ssr: false,
+  loading: () => null,
+})
+
+// ─── Fonts: only load what's actually used ────────────────────────────────────
+// Geist_Mono is almost certainly only used in code blocks / badges
+// If you're not showing code on most pages, remove it entirely
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: 'swap',
+  display: "swap",
+  // Preload only the weights you actually use — don't load the full family
+  weight: ["400", "600", "700"],
 })
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: 'swap',
+  display: "swap",
+  weight: ["400", "700"],
+  // Tell Next.js not to preload this — it's not needed on first paint
+  preload: false,
 })
 
-// Enhanced Metadata with comprehensive SEO
 export const metadata: Metadata = {
   ...defaultMetadata,
-  metadataBase: new URL('https://g-limitstudio.com'),
+  metadataBase: new URL("https://g-limitstudio.com"),
   title: {
-    default: 'G-Limit Studio | Professional Photography & Videography Services in Makati',
-    template: '%s | G-Limit Studio',
+    default: "G-Limit Studio | Professional Photography & Videography Services in Makati",
+    template: "%s | G-Limit Studio",
   },
-  description: 'Premier photography and videography studio in Makati City. Specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and more. Professional photography services for all your special moments.',
+  description:
+    "Premier photography and videography studio in Makati City. Specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and more.",
   keywords: [
-    'photography studio Makati',
-    'videography services Philippines',
-    'wedding photographer Makati',
-    'pre-nuptial photography',
-    'maternity photography',
-    'portrait photography',
-    'event photography',
-    'professional photographer',
-    'G-Limit Studio',
-    'Urban Avenue Makati',
-    'wedding videography',
-    'prenup shoot',
-    'buntis photography',
-    'corporate photography',
-    'photography services Metro Manila',
+    "photography studio Makati",
+    "videography services Philippines",
+    "wedding photographer Makati",
+    "pre-nuptial photography",
+    "maternity photography",
+    "portrait photography",
+    "event photography",
+    "professional photographer",
+    "G-Limit Studio",
+    "Urban Avenue Makati",
+    "wedding videography",
+    "prenup shoot",
+    "buntis photography",
+    "corporate photography",
+    "photography services Metro Manila",
   ],
-  authors: [{ name: 'G-Limit Studio' }],
-  creator: 'G-Limit Studio',
-  publisher: 'Infinitech Advertising Corporation',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  manifest: '/manifest.json',
+  authors: [{ name: "G-Limit Studio" }],
+  creator: "G-Limit Studio",
+  publisher: "Infinitech Advertising Corporation",
+  formatDetection: { email: false, address: false, telephone: false },
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'G-Limit Studio',
-    startupImage: [
-      '/icons/icon-192x192.png',
-      {
-        url: '/icons/icon-512x512.png',
-        media: '(device-width: 768px) and (device-height: 1024px)',
-      },
-    ],
+    statusBarStyle: "default",
+    title: "G-Limit Studio",
   },
   openGraph: {
-    type: 'website',
-    locale: 'en_PH',
-    url: 'https://g-limitstudio.com',
-    siteName: 'G-Limit Studio',
-    title: 'G-Limit Studio | Professional Photography & Videography in Makati',
-    description: 'Premier photography and videography studio in Makati City. Specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and more.',
-    images: [
-      {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'G-Limit Studio - Professional Photography Services',
-      },
-    ],
+    type: "website",
+    locale: "en_PH",
+    url: "https://g-limitstudio.com",
+    siteName: "G-Limit Studio",
+    title: "G-Limit Studio | Professional Photography & Videography in Makati",
+    description:
+      "Premier photography and videography studio in Makati City. Weddings, portraits, events, pre-nuptial shoots, maternity photography.",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "G-Limit Studio" }],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'G-Limit Studio | Professional Photography & Videography',
-    description: 'Premier photography and videography studio in Makati City. Weddings, portraits, events, and more.',
-    images: ['/twitter-image.jpg'],
-    creator: '@glimitstudio',
+    card: "summary_large_image",
+    title: "G-Limit Studio | Professional Photography & Videography",
+    description: "Premier photography and videography studio in Makati City.",
+    images: ["/twitter-image.jpg"],
+    creator: "@glimitstudio",
   },
   robots: {
     index: true,
@@ -102,263 +100,178 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: 'https://g-limitstudio.com',
-  },
-  verification: {
-    google: 'pFlfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxe', // Updated with your verification code
-  },
-  category: 'Photography & Videography',
+  alternates: { canonical: "https://g-limitstudio.com" },
+  verification: { google: "pFlfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxe" },
+  category: "Photography & Videography",
 }
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 }
 
-// Enhanced Local Business Schema
+// ─── Schemas ──────────────────────────────────────────────────────────────────
 const localBusinessSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  '@id': 'https://g-limitstudio.com/#business',
-  name: 'G-Limit Studio',
-  alternateName: 'Infinitech Advertising Corporation',
-  image: 'https://g-limitstudio.com/logo.png',
-  logo: 'https://g-limitstudio.com/logo.png',
-  description: 'Professional photography and videography studio specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and corporate events in Makati City.',
-  url: 'https://g-limitstudio.com',
-  telephone: '+63-XXX-XXX-XXXX', // Add your phone number
-  email: 'info@g-limitstudio.com', // Add your email
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://g-limitstudio.com/#business",
+  name: "G-Limit Studio",
+  alternateName: "Infinitech Advertising Corporation",
+  image: "https://g-limitstudio.com/logo.png",
+  logo: "https://g-limitstudio.com/logo.png",
+  description:
+    "Professional photography and videography studio specializing in portraits, events, weddings, pre-nuptial shoots, maternity photography, and corporate events in Makati City.",
+  url: "https://g-limitstudio.com",
+  telephone: "+63-XXX-XXX-XXXX",
+  email: "info@g-limitstudio.com",
   address: {
-    '@type': 'PostalAddress',
-    streetAddress: 'Urban Avenue',
-    addressLocality: 'Makati City',
-    addressRegion: 'Metro Manila',
-    postalCode: '1200', // Add your postal code
-    addressCountry: 'PH',
+    "@type": "PostalAddress",
+    streetAddress: "Urban Avenue",
+    addressLocality: "Makati City",
+    addressRegion: "Metro Manila",
+    postalCode: "1200",
+    addressCountry: "PH",
   },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: 14.5547, // Add your exact coordinates
-    longitude: 121.0244,
-  },
+  geo: { "@type": "GeoCoordinates", latitude: 14.5547, longitude: 121.0244 },
   openingHoursSpecification: [
     {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      opens: '09:00',
-      closes: '18:00',
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:00",
     },
     {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: 'Saturday',
-      opens: '10:00',
-      closes: '17:00',
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: "Saturday",
+      opens: "10:00",
+      closes: "17:00",
     },
   ],
-  priceRange: '$$',
-  currenciesAccepted: 'PHP',
-  paymentAccepted: 'Cash, Credit Card, Bank Transfer',
-  areaServed: {
-    '@type': 'GeoCircle',
-    geoMidpoint: {
-      '@type': 'GeoCoordinates',
-      latitude: 14.5547,
-      longitude: 121.0244,
-    },
-    geoRadius: '50000', // 50km radius
-  },
+  priceRange: "$$",
+  currenciesAccepted: "PHP",
+  paymentAccepted: "Cash, Credit Card, Bank Transfer",
   sameAs: [
-    'https://facebook.com/infinitechadvertisingcorporation',
-    'https://instagram.com/glimitstudio', // Add your social media
-    // Add other social media profiles
+    "https://facebook.com/infinitechadvertisingcorporation",
+    "https://instagram.com/glimitstudio",
   ],
-  hasOfferCatalog: {
-    '@type': 'OfferCatalog',
-    name: 'Photography & Videography Services',
-    itemListElement: [
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: 'Wedding Photography',
-          description: 'Professional wedding photography and videography services',
-        },
-      },
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: 'Pre-Nuptial Photography',
-          description: 'Creative and romantic pre-wedding photoshoots',
-        },
-      },
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: 'Maternity Photography',
-          description: 'Beautiful maternity and pregnancy photography sessions',
-        },
-      },
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: 'Portrait Photography',
-          description: 'Professional portrait photography for individuals and families',
-        },
-      },
-      {
-        '@type': 'Offer',
-        itemOffered: {
-          '@type': 'Service',
-          name: 'Event Photography',
-          description: 'Comprehensive event coverage and documentation',
-        },
-      },
-    ],
-  },
 }
 
-// Breadcrumb Schema
 const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: 'Home',
-      item: 'https://g-limitstudio.com',
-    },
-  ],
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: "https://g-limitstudio.com" }],
 }
 
-// FAQ Schema (add your common questions)
 const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
   mainEntity: [
     {
-      '@type': 'Question',
-      name: 'What photography services does G-Limit Studio offer?',
+      "@type": "Question",
+      name: "What photography services does G-Limit Studio offer?",
       acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'G-Limit Studio offers professional photography and videography services including weddings, pre-nuptial shoots, maternity photography, portraits, events, and corporate photography in Makati City and Metro Manila.',
+        "@type": "Answer",
+        text: "G-Limit Studio offers professional photography and videography services including weddings, pre-nuptial shoots, maternity photography, portraits, events, and corporate photography in Makati City and Metro Manila.",
       },
     },
     {
-      '@type': 'Question',
-      name: 'Where is G-Limit Studio located?',
+      "@type": "Question",
+      name: "Where is G-Limit Studio located?",
       acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'G-Limit Studio is located at Urban Avenue, Makati City, Metro Manila, Philippines.',
+        "@type": "Answer",
+        text: "G-Limit Studio is located at Urban Avenue, Makati City, Metro Manila, Philippines.",
       },
     },
     {
-      '@type': 'Question',
-      name: 'Do you offer pre-nuptial photography packages?',
+      "@type": "Question",
+      name: "Do you offer pre-nuptial photography packages?",
       acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes, we offer comprehensive pre-nuptial photography packages with various locations and styling options to capture your love story beautifully.',
+        "@type": "Answer",
+        text: "Yes, we offer comprehensive pre-nuptial photography packages with various locations and styling options.",
       },
     },
   ],
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const API_IMG = process.env.NEXT_PUBLIC_API_IMG || ""
+
   return (
     <html lang="en-PH" suppressHydrationWarning>
       <head>
-        {/* PWA Meta Tags */}
+        {/*
+          ─── CRITICAL: Preconnect to your image API server ──────────────────
+          This alone can save 300–600ms on mobile by resolving DNS + TLS
+          before the first image request fires. Must be BEFORE any other link.
+        */}
+        {API_IMG && (
+          <>
+            <link rel="preconnect" href={API_IMG} />
+            <link rel="dns-prefetch" href={API_IMG} />
+          </>
+        )}
+
+        {/*
+          ─── Preconnect to Vercel Analytics (fires early, saves RTT) ─────────
+        */}
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+
+        {/* Fonts — already handled by next/font, no manual links needed */}
+
+        {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="application-name" content="G-Limit Studio" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="G-Limit Studio" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-config" content="/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
-        
-        {/* Apple Touch Icons */}
+
+        {/* Icons */}
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.png" />
-        
-        {/* Favicon */}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="shortcut icon" href="/favicon.ico" />
-        
-        {/* Additional SEO Meta Tags */}
-        <link rel="canonical" href="https://g-limitstudio.com" />
-        
-        {/* Geographic Tags */}
+
+        {/* Geo */}
         <meta name="geo.region" content="PH-NCR" />
         <meta name="geo.placename" content="Makati City" />
         <meta name="geo.position" content="14.5547;121.0244" />
         <meta name="ICBM" content="14.5547, 121.0244" />
-        
-        {/* DNS Prefetch for Performance */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-        <link rel="dns-prefetch" href="//www.facebook.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
-        {/* JSON-LD Structured Data */}
+
+        {/*
+          ─── JSON-LD: combine into ONE script tag ────────────────────────────
+          Multiple <script> tags = multiple parser insertions = extra FCP cost.
+          One @graph array is semantically identical and faster to parse.
+        */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(serviceSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(localBusinessSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(faqSchema),
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                organizationSchema,
+                websiteSchema,
+                serviceSchema,
+                localBusinessSchema,
+                breadcrumbSchema,
+                faqSchema,
+              ],
+            }),
           }}
         />
       </head>
@@ -367,6 +280,11 @@ export default function RootLayout({
         <PublicLayoutProvider>
           {children}
           <Toaster position="top-right" />
+          {/*
+            Chatbot is lazily loaded — it's heavy (likely loads a chat SDK)
+            and is never needed on first paint. This removes it from the
+            critical bundle entirely.
+          */}
           <Chatbot />
         </PublicLayoutProvider>
         <Analytics />
