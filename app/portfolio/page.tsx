@@ -1,8 +1,7 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import type React from "react";
 import Image from "next/image";
-import { useState, useMemo, useCallback, useEffect, memo, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, memo, useRef, Suspense } from "react";
 import { Camera, Aperture, Focus, ZoomIn, Sparkles, AlertCircle, X, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -36,8 +35,18 @@ interface GroupedImages {
   coverImage: GalleryImage;
 }
 
+// ─── Constants outside components — never recreated ───────────────────────────
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || "http://localhost:8000";
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+// ✅ Moved outside — stable reference, never causes re-renders
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+// ✅ Moved outside — no need to recreate on every render
+function getImageUrl(path: string): string {
+  if (!path) return "/placeholder.svg";
+  if (path.startsWith("http")) return path;
+  return `${API_IMG}/${path}`;
+}
 
 const iconMap: Record<string, React.ReactNode> = {
   all: <Camera className="w-4 h-4" />,
@@ -53,17 +62,12 @@ const GalleryCard = memo(({ group, index, onClick }: {
   index: number;
   onClick: () => void;
 }) => {
-  const getImageUrl = useCallback((path: string) => {
-    if (!path) return "/placeholder.svg";
-    if (path.startsWith("http")) return path;
-    return `${API_IMG}/${path}`;
-  }, []);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.07, 0.5), duration: 0.5 }}
+      // ✅ Cap delay at 0.3s max — large grids were staggering for 3+ seconds
+      transition={{ delay: Math.min(index * 0.05, 0.3), duration: 0.4 }}
       onClick={onClick}
       className="group relative overflow-hidden cursor-pointer"
       whileHover={{ y: -4 }}
@@ -96,8 +100,11 @@ const GalleryCard = memo(({ group, index, onClick }: {
           src={getImageUrl(group.coverImage.image_path)}
           alt={group.coverImage.alt || group.title}
           fill
+          // ✅ Only eagerly load the first 4 cards; rest are lazy
+          loading={index < 4 ? "eager" : "lazy"}
+          priority={index < 4}
           className="object-cover transition-transform duration-700 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 group-hover:from-black/50 transition-all duration-500" />
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-amber-200/10 to-transparent" />
@@ -121,12 +128,7 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
   onNext: () => void;
   onThumbnailClick: (index: number) => void;
 }) => {
-  const getImageUrl = useCallback((path: string) => {
-    if (!path) return "/placeholder.svg";
-    if (path.startsWith("http")) return path;
-    return `${API_IMG}/${path}`;
-  }, []);
-
+  // ✅ Keyboard handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -137,153 +139,161 @@ const ImageModal = memo(({ selectedGroup, modalImageIndex, onClose, onPrev, onNe
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, onPrev, onNext]);
 
+  // ✅ Preload adjacent images for faster navigation
+  useEffect(() => {
+    const images = selectedGroup.images;
+    const preloadIndexes = [
+      (modalImageIndex + 1) % images.length,
+      (modalImageIndex - 1 + images.length) % images.length,
+    ];
+    preloadIndexes.forEach((i) => {
+      if (i !== modalImageIndex) {
+        const img = new window.Image();
+        img.src = getImageUrl(images[i].image_path);
+      }
+    });
+  }, [modalImageIndex, selectedGroup.images]);
+
   const currentImage = selectedGroup.images[modalImageIndex];
 
   return (
-    <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+      style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)" }}
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
-        style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(16px)" }}
-        onClick={onClose}
+        initial={{ scale: 0.93, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.93, opacity: 0, y: 12 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        className="relative flex flex-col overflow-hidden"
+        style={{
+          width: "min(94vw, 480px)",
+          background: "linear-gradient(160deg, #1c1408 0%, #0d0a04 100%)",
+          border: "1px solid rgba(212,168,67,0.28)",
+          boxShadow: "0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(212,168,67,0.06)",
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div
-          initial={{ scale: 0.93, opacity: 0, y: 12 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.93, opacity: 0, y: 12 }}
-          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex flex-col overflow-hidden"
-          style={{
-            width: "min(94vw, 480px)",
-            background: "linear-gradient(160deg, #1c1408 0%, #0d0a04 100%)",
-            border: "1px solid rgba(212,168,67,0.28)",
-            boxShadow: "0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(212,168,67,0.06)",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-200/10">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-amber-200/80 text-xs leading-none">✦</span>
-              <span className="text-white font-semibold text-sm tracking-wide truncate leading-none">
-                {selectedGroup.title}
-              </span>
-            </div>
-            <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
-              {selectedGroup.images.length > 1 && (
-                <span className="text-amber-200/45 text-xs tabular-nums">
-                  {modalImageIndex + 1} / {selectedGroup.images.length}
-                </span>
-              )}
-              <button
-                onClick={onClose}
-                className="w-6 h-6 flex items-center justify-center border border-amber-200/20 text-amber-200/60 hover:text-amber-200 hover:border-amber-200/50 hover:bg-amber-200/10 transition-all"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-200/10">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-amber-200/80 text-xs leading-none">✦</span>
+            <span className="text-white font-semibold text-sm tracking-wide truncate leading-none">
+              {selectedGroup.title}
+            </span>
           </div>
+          <div className="flex items-center gap-2.5 flex-shrink-0 ml-3">
+            {selectedGroup.images.length > 1 && (
+              <span className="text-amber-200/45 text-xs tabular-nums">
+                {modalImageIndex + 1} / {selectedGroup.images.length}
+              </span>
+            )}
+            <button
+              onClick={onClose}
+              className="w-6 h-6 flex items-center justify-center border border-amber-200/20 text-amber-200/60 hover:text-amber-200 hover:border-amber-200/50 hover:bg-amber-200/10 transition-all"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
 
-          {/* Image */}
-          <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={modalImageIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.16 }}
-                className="absolute inset-0"
+        {/* Image — ✅ No AnimatePresence per-image (was causing layout thrash on every nav) */}
+        <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
+          <Image
+            key={currentImage.id}
+            src={getImageUrl(currentImage.image_path)}
+            alt={currentImage.alt || selectedGroup.title}
+            fill
+            className="object-cover"
+            sizes="480px"
+            priority
+          />
+
+          <div className="absolute top-3 left-3 w-5 h-5 border-l border-t border-amber-200/30 pointer-events-none" />
+          <div className="absolute top-3 right-3 w-5 h-5 border-r border-t border-amber-200/30 pointer-events-none" />
+          <div className="absolute bottom-3 left-3 w-5 h-5 border-l border-b border-amber-200/30 pointer-events-none" />
+          <div className="absolute bottom-3 right-3 w-5 h-5 border-r border-b border-amber-200/30 pointer-events-none" />
+
+          {selectedGroup.images.length > 1 && (
+            <>
+              <button
+                onClick={onPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnails */}
+        {selectedGroup.images.length > 1 && (
+          <div className="flex gap-1.5 px-3 py-2 border-t border-amber-200/10 overflow-x-auto">
+            {selectedGroup.images.map((image, idx) => (
+              <button
+                key={image.id}
+                onClick={() => onThumbnailClick(idx)}
+                className="relative flex-shrink-0 w-10 h-10 overflow-hidden transition-all duration-150 focus:outline-none"
+                style={{
+                  border: idx === modalImageIndex ? "2px solid #d4a843" : "1px solid rgba(212,168,67,0.15)",
+                  opacity: idx === modalImageIndex ? 1 : 0.42,
+                }}
               >
                 <Image
-                  src={getImageUrl(currentImage.image_path)}
-                  alt={currentImage.alt || selectedGroup.title}
+                  src={getImageUrl(image.image_path)}
+                  alt={image.alt}
                   fill
                   className="object-cover"
-                  sizes="480px"
-                  priority
+                  sizes="40px"
+                  // ✅ Lazy load thumbnails — there can be many
+                  loading="lazy"
                 />
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="absolute top-3 left-3 w-5 h-5 border-l border-t border-amber-200/30 pointer-events-none" />
-            <div className="absolute top-3 right-3 w-5 h-5 border-r border-t border-amber-200/30 pointer-events-none" />
-            <div className="absolute bottom-3 left-3 w-5 h-5 border-l border-b border-amber-200/30 pointer-events-none" />
-            <div className="absolute bottom-3 right-3 w-5 h-5 border-r border-b border-amber-200/30 pointer-events-none" />
-
-            {selectedGroup.images.length > 1 && (
-              <>
-                <button
-                  onClick={onPrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={onNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center border border-amber-200/30 text-amber-200 bg-black/55 hover:bg-amber-200/15 backdrop-blur-sm transition-all"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </>
-            )}
+              </button>
+            ))}
           </div>
+        )}
 
-          {/* Thumbnails */}
-          {selectedGroup.images.length > 1 && (
-            <div className="flex gap-1.5 px-3 py-2 border-t border-amber-200/10 overflow-x-auto">
-              {selectedGroup.images.map((image, idx) => (
-                <button
-                  key={image.id}
-                  onClick={() => onThumbnailClick(idx)}
-                  className="relative flex-shrink-0 w-10 h-10 overflow-hidden transition-all duration-150 focus:outline-none"
-                  style={{
-                    border: idx === modalImageIndex
-                      ? "2px solid #d4a843"
-                      : "1px solid rgba(212,168,67,0.15)",
-                    opacity: idx === modalImageIndex ? 1 : 0.42,
-                  }}
-                >
-                  <Image src={getImageUrl(image.image_path)} alt={image.alt} fill className="object-cover" sizes="40px" />
-                </button>
-              ))}
-            </div>
+        {/* Meta footer */}
+        <div className="flex items-center gap-2 px-4 py-2 border-t border-amber-200/10">
+          <Camera className="w-3 h-3 text-amber-200/40 flex-shrink-0" />
+          {currentImage.camera && (
+            <>
+              <span className="text-amber-200/55 text-xs">{currentImage.camera}</span>
+              <span className="text-amber-200/20 text-xs">·</span>
+            </>
           )}
-
-          {/* Meta footer */}
-          <div className="flex items-center gap-2 px-4 py-2 border-t border-amber-200/10">
-            <Camera className="w-3 h-3 text-amber-200/40 flex-shrink-0" />
-            {currentImage.camera && (
-              <>
-                <span className="text-amber-200/55 text-xs">{currentImage.camera}</span>
-                <span className="text-amber-200/20 text-xs">·</span>
-              </>
-            )}
-            <span className="text-amber-200/35 text-xs uppercase tracking-widest">{currentImage.category}</span>
-            <span className="ml-auto text-amber-200/20 text-xs hidden sm:block">f/1.4 · 1/200s · ISO 100</span>
-          </div>
-        </motion.div>
+          <span className="text-amber-200/35 text-xs uppercase tracking-widest">{currentImage.category}</span>
+          <span className="ml-auto text-amber-200/20 text-xs hidden sm:block">f/1.4 · 1/200s · ISO 100</span>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 });
 ImageModal.displayName = "ImageModal";
 
-// ─── Main Portfolio Page ───────────────────────────────────────────────────────
-export default function Portfolio() {
+// ─── Inner Portfolio (data + state) ───────────────────────────────────────────
+function PortfolioInner() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("all");
   const [selectedGroup, setSelectedGroup] = useState<GroupedImages | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [page, setPage] = useState(1);
   const [allImages, setAllImages] = useState<GalleryImage[]>([]);
-  const isLoadingMore = useRef(false);
 
   const { data: categoriesData } = useSWR<{ success: boolean; data: string[] }>(
     "/api/portfolio/categories",
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 60000 }
+    { revalidateOnFocus: false, dedupingInterval: 300_000 } // ✅ 5 min — categories rarely change
   );
 
   const swrKey = selectedCategory === "all"
@@ -295,24 +305,31 @@ export default function Portfolio() {
     data: GalleryImage[];
     last_page: number;
     total: number;
-  }>(swrKey, fetcher, { revalidateOnFocus: false, dedupingInterval: 30000 });
+  }>(swrKey, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60_000, // ✅ 1 min dedup
+    keepPreviousData: true,   // ✅ Don't flash empty grid while loading next page
+  });
 
   // Reset on category change
   useEffect(() => {
     setPage(1);
     setAllImages([]);
-    isLoadingMore.current = false;
   }, [selectedCategory]);
 
-  // Append pages
+  // Append new pages
   useEffect(() => {
     if (!data?.data) return;
     if (page === 1) {
       setAllImages(data.data);
     } else {
-      setAllImages((prev) => [...prev, ...data.data]);
+      setAllImages((prev) => {
+        // ✅ Deduplicate by id in case SWR returns overlapping pages
+        const existingIds = new Set(prev.map((img) => img.id));
+        const newItems = data.data.filter((img) => !existingIds.has(img.id));
+        return [...prev, ...newItems];
+      });
     }
-    isLoadingMore.current = false;
   }, [data, page]);
 
   const categories: CategoryItem[] = useMemo(() => {
@@ -351,7 +368,7 @@ export default function Portfolio() {
   const closeModal = useCallback(() => {
     setSelectedGroup(null);
     setModalImageIndex(0);
-    document.body.style.overflow = "auto";
+    document.body.style.overflow = "";  // ✅ Use "" not "auto" — restores original value
   }, []);
 
   const handleModalPrev = useCallback(() => {
@@ -366,17 +383,13 @@ export default function Portfolio() {
     );
   }, [selectedGroup]);
 
-  const handleLoadMore = () => {
-    isLoadingMore.current = true;
-    setPage((p) => p + 1);
-  };
+  // ✅ Restore scroll on unmount in case modal is open during navigation
+  useEffect(() => {
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const hasMore = page < (data?.last_page ?? 1);
-  const isFirstLoad = isLoading && page === 1;
-
-  useEffect(() => {
-    return () => { document.body.style.overflow = "auto"; };
-  }, []);
+  const isFirstLoad = isLoading && page === 1 && allImages.length === 0;
 
   return (
     <div
@@ -513,7 +526,7 @@ export default function Portfolio() {
             {hasMore && (
               <div className="text-center mt-12">
                 <button
-                  onClick={handleLoadMore}
+                  onClick={() => setPage((p) => p + 1)}
                   disabled={isLoading}
                   className="inline-flex items-center gap-3 px-10 py-3 border border-amber-200/30 text-amber-200 text-xs font-bold tracking-widest uppercase hover:border-amber-200/60 hover:bg-amber-200/10 transition-all disabled:opacity-40"
                 >
@@ -539,16 +552,35 @@ export default function Portfolio() {
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
 
       {/* Modal */}
-      {selectedGroup && (
-        <ImageModal
-          selectedGroup={selectedGroup}
-          modalImageIndex={modalImageIndex}
-          onClose={closeModal}
-          onPrev={handleModalPrev}
-          onNext={handleModalNext}
-          onThumbnailClick={setModalImageIndex}
-        />
-      )}
+      <AnimatePresence>
+        {selectedGroup && (
+          <ImageModal
+            selectedGroup={selectedGroup}
+            modalImageIndex={modalImageIndex}
+            onClose={closeModal}
+            onPrev={handleModalPrev}
+            onNext={handleModalNext}
+            onThumbnailClick={setModalImageIndex}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Default export wrapped in Suspense (fixes prerender build error) ─────────
+export default function Portfolio() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #000 0%, #0d0a04 50%, #1a0f00 100%)" }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-amber-200/30 border-t-amber-200 rounded-full animate-spin" />
+          <p className="text-amber-200/50 text-xs tracking-widest uppercase">Loading portfolio…</p>
+        </div>
+      </div>
+    }>
+      <PortfolioInner />
+    </Suspense>
   );
 }
