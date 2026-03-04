@@ -30,6 +30,13 @@ interface Category {
   updated_at: string
 }
 
+// Merged category: all images from same-named categories combined
+interface MergedCategory {
+  name: string
+  description?: string
+  images: CategoryImage[]
+}
+
 const API_IMG = process.env.NEXT_PUBLIC_API_IMG || 'http://localhost:8000'
 const iconRotation = [Camera, Focus, Aperture, Camera]
 
@@ -43,13 +50,32 @@ const fadeInUp = {
 }
 const smoothTransition = { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }
 
+// ── Merge categories by name ───────────────────────────────────────────────
+function mergeByName(categories: Category[]): MergedCategory[] {
+  const map = new Map<string, MergedCategory>()
+  for (const cat of categories) {
+    const key = cat.name.trim().toLowerCase()
+    if (map.has(key)) {
+      // Append images to existing entry
+      map.get(key)!.images.push(...(cat.images ?? []))
+    } else {
+      map.set(key, {
+        name: cat.name,
+        description: cat.description,
+        images: [...(cat.images ?? [])],
+      })
+    }
+  }
+  return Array.from(map.values())
+}
+
 // ── Modal ──────────────────────────────────────────────────────────────────
 function CategoryModal({
   category,
   imageUrl,
   onClose,
 }: {
-  category: Category
+  category: MergedCategory
   imageUrl: string
   onClose: () => void
 }) {
@@ -57,14 +83,12 @@ function CategoryModal({
   const images = category.images ?? []
   const hasMultiple = images.length > 1
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
@@ -87,13 +111,8 @@ function CategoryModal({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/90 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
       <motion.div
         className="relative z-10 w-full max-w-4xl rounded-xl overflow-hidden"
         initial={{ scale: 0.92, opacity: 0, y: 20 }}
@@ -102,8 +121,7 @@ function CategoryModal({
         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{ background: '#0e0e0e', border: '1px solid rgba(201,168,76,0.25)' }}
       >
-        {/* Image area */}
-        <div className="relative w-full" style={{ aspectRatio: "4/3", maxHeight: "75vh" }}>
+        <div className="relative w-full" style={{ aspectRatio: '4/3', maxHeight: '75vh' }}>
           <Image
             src={currentUrl}
             alt={category.name}
@@ -113,11 +131,8 @@ function CategoryModal({
             unoptimized
             sizes="(max-width: 768px) 100vw, 900px"
           />
-
-          {/* Gold gradient overlay at bottom */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-          {/* Close */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200"
@@ -126,7 +141,6 @@ function CategoryModal({
             <X className="w-4 h-4" />
           </button>
 
-          {/* Prev / Next */}
           {hasMultiple && (
             <>
               <button
@@ -146,7 +160,6 @@ function CategoryModal({
             </>
           )}
 
-          {/* Category name overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <h3 className="text-2xl font-serif font-semibold text-white mb-1">{category.name}</h3>
             {category.description && (
@@ -155,9 +168,11 @@ function CategoryModal({
           </div>
         </div>
 
-        {/* Footer: thumbnail strip + counter */}
         {hasMultiple && (
           <div className="px-4 py-3 flex items-center gap-3" style={{ borderTop: '1px solid rgba(201,168,76,0.12)' }}>
+            <span className="text-xs font-mono" style={{ color: 'rgba(201,168,76,0.5)' }}>
+              {images.length} photos
+            </span>
             <span className="text-xs font-mono ml-auto" style={{ color: 'rgba(201,168,76,0.5)' }}>
               {imgIndex + 1} / {images.length}
             </span>
@@ -189,7 +204,7 @@ const CategoryCard = memo(({
   shouldReduceMotion,
   onClick,
 }: {
-  category: Category
+  category: MergedCategory
   index: number
   imageUrl: string
   shouldReduceMotion: boolean
@@ -220,7 +235,7 @@ const CategoryCard = memo(({
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               className="object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-75"
-              onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.png" }}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png' }}
               loading={index < 4 ? 'eager' : 'lazy'}
               quality={85}
               unoptimized
@@ -263,6 +278,12 @@ const CategoryCard = memo(({
             <h3 className="text-3xl font-serif font-light text-white mb-3 group-hover:text-[#f5d98a] transition-colors duration-300">
               {category.name}
             </h3>
+            {/* Image count badge */}
+            {category.images.length > 1 && (
+              <p className="text-xs font-mono mb-2" style={{ color: 'rgba(201,168,76,0.6)' }}>
+                {category.images.length} photos
+              </p>
+            )}
             <div className="h-1 bg-gradient-to-r from-[#f5d98a] to-transparent w-full" />
             <p className="text-[#f5d98a] text-sm font-bold mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-2">
               VIEW GALLERY <span>→</span>
@@ -285,14 +306,14 @@ CategoryCard.displayName = 'CategoryCard'
 export function CategoriesSection() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<{ category: Category; imageUrl: string } | null>(null)
+  const [selected, setSelected] = useState<{ category: MergedCategory; imageUrl: string } | null>(null)
   const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories?perPage=20', {
-          headers: { 'Accept': 'application/json' },
+        const response = await fetch('/api/categories?perPage=100', {
+          headers: { Accept: 'application/json' },
         })
         if (!response.ok) throw new Error('Failed to fetch categories')
         const json = await response.json()
@@ -314,13 +335,16 @@ export function CategoriesSection() {
     return `${API_IMG}/${path.replace(/^\//, '')}`
   }, [])
 
+  // ✅ Merge same-name categories before rendering
+  const mergedCategories = useMemo(() => mergeByName(categories), [categories])
+
   const categoryCards = useMemo(() => {
-    return categories.map((category, index) => {
+    return mergedCategories.map((category, index) => {
       const firstImage = category.images?.[0]
       const imageUrl = firstImage ? getImageUrl(firstImage.image_path) : '/placeholder.png'
       return (
         <CategoryCard
-          key={category.id}
+          key={category.name}
           category={category}
           index={index}
           imageUrl={imageUrl}
@@ -329,7 +353,7 @@ export function CategoriesSection() {
         />
       )
     })
-  }, [categories, getImageUrl, shouldReduceMotion])
+  }, [mergedCategories, getImageUrl, shouldReduceMotion])
 
   return (
     <section className="py-16 relative overflow-hidden">
@@ -369,7 +393,7 @@ export function CategoriesSection() {
           <div className="flex items-center justify-center py-16">
             <div className="text-gray-400">Loading categories...</div>
           </div>
-        ) : categories.length === 0 ? (
+        ) : mergedCategories.length === 0 ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-gray-400">No categories available</div>
           </div>
@@ -380,7 +404,6 @@ export function CategoriesSection() {
         )}
       </div>
 
-      {/* Modal */}
       <AnimatePresence>
         {selected && (
           <CategoryModal
