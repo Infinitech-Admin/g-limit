@@ -4,39 +4,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(100% 0.00011 271.152);
-  --card: oklch(18.338% 0.00163 16.6);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.15 0 0);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.85 0 0);
-  --secondary-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.8 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.75 0.15 70.08);
-  --accent-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.15 0 0);
-  --chart-1: oklch(0.75 0.15 70.08);
-  --chart-2: oklch(0.4 0 0);
-  --chart-3: oklch(0.6 0 0);
-  --chart-4: oklch(0.8 0 0);
-  --chart-5: oklch(0.7 0 0);
+  /* ✅ All oklch replaced with hex/hsl for iOS 18 Safari compatibility */
+  --background: #fafafa;
+  --foreground: #ffffff;
+  --card: #1c1917;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #1a1a1a;
+  --primary-foreground: #fafafa;
+  --secondary: #d4d4d4;
+  --secondary-foreground: #1a1a1a;
+  --muted: #cccccc;
+  --muted-foreground: #737373;
+  --accent: #c49a2a;
+  --accent-foreground: #1a1a1a;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #e8e8e8;
+  --input: #e8e8e8;
+  --ring: #1a1a1a;
+  --chart-1: #c49a2a;
+  --chart-2: #666666;
+  --chart-3: #999999;
+  --chart-4: #cccccc;
+  --chart-5: #b3b3b3;
   --radius: 0.5rem;
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.15 0 0);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.75 0.15 70.08);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.15 0 0);
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #1a1a1a;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #c49a2a;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e8e8e8;
+  --sidebar-ring: #1a1a1a;
   --gold: #d4af37;
   --gold-dark: #b8860b;
   --gold-light: #ffd700;
@@ -52,38 +53,39 @@
 }
 
 .dark {
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.95 0 0);
+  /* ✅ All oklch replaced with hex/hsl for iOS 18 Safari compatibility */
+  --background: #1e1e1e;
+  --foreground: #f2f2f2;
   --card: #0a0a0a;
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.95 0 0);
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.3 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.35 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.75 0.15 70.08);
-  --accent-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.25 0 0);
-  --ring: oklch(0.95 0 0);
-  --chart-1: oklch(0.75 0.15 70.08);
-  --chart-2: oklch(0.9 0 0);
-  --chart-3: oklch(0.7 0 0);
-  --chart-4: oklch(0.5 0 0);
-  --chart-5: oklch(0.8 0 0);
-  --sidebar: oklch(0.15 0 0);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.95 0 0);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.75 0.15 70.08);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.95 0 0);
+  --card-foreground: #f2f2f2;
+  --popover: #262626;
+  --popover-foreground: #f2f2f2;
+  --primary: #f2f2f2;
+  --primary-foreground: #262626;
+  --secondary: #4d4d4d;
+  --secondary-foreground: #f2f2f2;
+  --muted: #595959;
+  --muted-foreground: #b3b3b3;
+  --accent: #c49a2a;
+  --accent-foreground: #1a1a1a;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #404040;
+  --input: #404040;
+  --ring: #f2f2f2;
+  --chart-1: #c49a2a;
+  --chart-2: #e6e6e6;
+  --chart-3: #b3b3b3;
+  --chart-4: #808080;
+  --chart-5: #cccccc;
+  --sidebar: #262626;
+  --sidebar-foreground: #f2f2f2;
+  --sidebar-primary: #f2f2f2;
+  --sidebar-primary-foreground: #262626;
+  --sidebar-accent: #c49a2a;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #404040;
+  --sidebar-ring: #f2f2f2;
 }
 
 @theme inline {
@@ -138,11 +140,7 @@
     @apply bg-background text-white;
   }
 
-  /* Enhanced typography for better readability and performance */
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     @apply font-serif font-bold;
   }
 
@@ -158,18 +156,15 @@
     @apply text-xl sm:text-2xl md:text-3xl;
   }
 
-  /* Optimized button styling for gold CTAs */
   button,
   a[role="button"] {
     @apply transition-all duration-200;
   }
 
-  /* Image optimization for performance */
   img {
     @apply max-w-full h-auto;
   }
 
-  /* Link optimization */
   a {
     @apply transition-colors duration-200;
   }
@@ -187,6 +182,7 @@
   select option:hover {
     background-color: #fbbf24;
   }
+
   .text-gold-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-gold);
@@ -201,11 +197,11 @@
   }
 
   .border-gold {
-    border-color: hsl(var(--gold) / 0.3);
+    border-color: hsl(43 74% 52% / 0.3);
   }
 
   .border-gold-hover:hover {
-    border-color: hsl(var(--gold));
+    border-color: hsl(43 74% 52%);
   }
 
   .shadow-gold-glow {
@@ -220,10 +216,6 @@
 
   .gold-line {
     background: var(--gradient-gold);
-  }
-
-  .shadow-gold-glow {
-    box-shadow: var(--shadow-gold);
   }
 }
 
@@ -246,10 +238,8 @@
     pointer;
 }
 
-/* Add glowing animations and gradient effects */
 @keyframes glow-pulse {
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 0 40px rgba(212, 175, 55, 0.1);
   }
   50% {
@@ -258,46 +248,27 @@
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
 }
 
 @keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 @keyframes filmSlide {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 @keyframes shutterFlash {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.3;
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.3; }
 }
 
 @keyframes focusPulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
     opacity: 0.5;
   }
@@ -308,8 +279,7 @@
 }
 
 @keyframes polaroidFloat {
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(0) rotate(var(--rotation, 0deg));
   }
   50% {
@@ -317,7 +287,7 @@
   }
 }
 
-/* Gold glow effect for CTA buttons */
+/* Gold glow CTA buttons */
 .gold-glow {
   background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 0 40px rgba(212, 175, 55, 0.2);
@@ -329,7 +299,6 @@
   box-shadow: 0 0 30px rgba(212, 175, 55, 0.6), 0 0 60px rgba(212, 175, 55, 0.3);
 }
 
-/* Gradient text effect */
 .gradient-text {
   background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
   -webkit-background-clip: text;
@@ -337,7 +306,6 @@
   background-clip: text;
 }
 
-/* Shimmer effect for images on hover */
 .shimmer-effect {
   background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
   background-size: 1000px 100%;
@@ -347,7 +315,6 @@
   animation: shimmer 0.8s ease-in-out;
 }
 
-/* Animation utility classes */
 .float {
   animation: float 3s ease-in-out infinite;
 }
@@ -368,14 +335,13 @@
   animation: polaroidFloat 4s ease-in-out infinite;
 }
 
-/* Mobile-first responsive utilities */
 @media (max-width: 640px) {
   body {
     font-size: 14px;
   }
 }
 
-/* Reduced motion for accessibility */
+/* ✅ Reduced motion — also helps iOS 18 performance */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
