@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    formats: ['image/avif', 'image/webp'],
-    // ✅ Added mobile-first sizes: 390, 414 cover iPhone/Android viewports
-    // These were missing — Next.js was serving 640px images to 390px screens
+    // ✅ webp FIRST — iOS 15 and below doesn't support avif
+    // Swapped order to prevent white screen on older iPhones
+    formats: ['image/webp', 'image/avif'],
     deviceSizes: [390, 414, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
@@ -33,18 +33,16 @@ const nextConfig: NextConfig = {
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // ✅ Relaxed CSP slightly — strict sandbox was blocking iOS Safari image rendering
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox; img-src 'self' data: blob:;",
     unoptimized: false,
   },
-
   compress: true,
   generateEtags: true,
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   poweredByHeader: false,
-
   serverExternalPackages: ['sharp'],
-
   async headers() {
     return [
       {
@@ -55,10 +53,18 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy',         value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy',      value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'X-DNS-Prefetch-Control',  value: 'on' },
+          // ✅ Added crossorigin fix for iOS Safari font/resource loading
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
+          },
+          // ✅ Removed unsafe COEP that was blocking iOS subresource loading
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'unsafe-none',
+          },
           {
             key: 'Link',
-            // ✅ Preconnect to BOTH your API server AND Next.js image optimizer endpoint
-            // This tells mobile browsers to open the TCP connection before they need it
             value: [
               '<https://infinitech-api15.site>; rel=preconnect; crossorigin',
               '<https://infinitech-api15.site>; rel=dns-prefetch',
@@ -83,9 +89,6 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
-        // ✅ Removed immutable from /_next/image — Next.js image responses vary by
-        // query params (w, q, url). immutable here was causing stale image serving
-        // when images were updated on the backend.
         source: '/_next/image/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000' }],
       },
@@ -95,13 +98,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
       ? { exclude: ['error', 'warn'] }
       : false,
   },
-
   experimental: {
     optimizePackageImports: [
       'lucide-react',
@@ -110,8 +111,6 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-icons',
     ],
     optimizeCss: true,
-    // ✅ Inline critical CSS for above-the-fold content — reduces FCP
-    // Next.js will inline the CSS needed for the first paint, removing a render-blocking request
     inlineCss: true,
   },
 };
