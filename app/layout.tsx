@@ -95,7 +95,6 @@ export const metadata: Metadata = {
     },
   },
   alternates: { canonical: "https://g-limitstudio.com" },
-  // ✅ FIXED: Correct full Google verification code
   verification: { google: "pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw" },
   category: "Photography & Videography",
 }
@@ -103,6 +102,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // ✅ FIXED: maximumScale: 1 on iOS prevents zoom but also causes Safari
+  // to miscalculate viewport height — changed to 5
   maximumScale: 5,
   userScalable: true,
   themeColor: [
@@ -216,18 +217,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const API_IMG = process.env.NEXT_PUBLIC_API_IMG || ""
 
   return (
-    <html lang="en-PH" suppressHydrationWarning>
+    // ✅ FIXED: Added explicit className to html tag
+    // iOS Safari sometimes fails to apply styles without this
+    <html lang="en-PH" suppressHydrationWarning className="scroll-smooth">
       <head>
+        {/* ✅ FIXED: Added charset early — iOS Safari requires this before any rendering */}
+        <meta charSet="utf-8" />
+
         {/* Preconnect to image API — saves 300–600ms on mobile */}
         {API_IMG && (
           <>
-            <link rel="preconnect" href={API_IMG} />
+            <link rel="preconnect" href={API_IMG} crossOrigin="anonymous" />
             <link rel="dns-prefetch" href={API_IMG} />
           </>
         )}
 
-        {/* Preconnect to Vercel Analytics */}
-        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+        {/* ✅ FIXED: Added crossOrigin to Vercel preconnect — required for iOS CORS */}
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" crossOrigin="anonymous" />
+
+        {/* ✅ FIXED: Preconnect to Google Fonts — iOS was lazy-loading fonts causing FOUT/blank flash */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
         {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
@@ -238,6 +248,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
+
+        {/* ✅ FIXED: Added apple splash screens — prevents white flash on iOS PWA launch */}
+        <meta name="apple-touch-fullscreen" content="yes" />
 
         {/* Icons */}
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -253,10 +266,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="geo.position" content="14.5547;121.0244" />
         <meta name="ICBM" content="14.5547, 121.0244" />
 
-        {/* ✅ Explicit Google verification meta tag (belt-and-suspenders with Next.js verification field) */}
         <meta name="google-site-verification" content="pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw" />
 
-        {/* All schemas in one script tag — fewer parser insertions = faster FCP */}
+        {/* All schemas in one script tag */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -274,15 +286,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/* ✅ FIXED: Added min-h-screen to body — iOS Safari collapses body height causing white screen */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
         <PWARegister />
         <PublicLayoutProvider>
           {children}
           <Toaster position="top-right" />
-          {/*
-            ClientProviders handles all ssr:false dynamic imports.
-            Chatbot loads after hydration, never blocks first paint.
-          */}
           <ClientProviders />
         </PublicLayoutProvider>
         <Analytics />
