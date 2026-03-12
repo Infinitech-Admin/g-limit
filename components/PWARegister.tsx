@@ -1,33 +1,33 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export default function PWARegister() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((registration) => {
-            console.log('Service Worker registered successfully:', registration.scope);
-            
-            // Check for updates periodically
-            setInterval(() => {
-              registration.update();
-            }, 60000); // Check every minute
-          })
-          .catch((error) => {
-            console.log('Service Worker registration failed:', error);
-          });
-      });
+    if (
+      typeof window !== 'undefined' &&
+      'serviceWorker' in navigator &&
+      process.env.NODE_ENV === 'production'
+    ) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered:', registration.scope)
 
-      // Listen for service worker updates
+          // Check for updates every 1 hour instead of every minute
+          setInterval(() => {
+            registration.update().catch(() => {})
+          }, 60 * 60 * 1000)
+        })
+        .catch((error) => {
+          console.error('SW registration failed:', error)
+        })
+
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('New service worker activated');
-        // Optionally show a notification to the user
-      });
+        console.log('New service worker activated')
+      })
     }
-  }, []);
+  }, [])
 
-  return null;
+  return null
 }
