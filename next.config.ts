@@ -50,30 +50,12 @@ const nextConfig: NextConfig = withPWA({
           },
         ],
       },
-      {
-        source: "/photo/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
-      {
-        source: "/:all*(svg|jpg|jpeg|png|gif|webp|avif|ico)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
-      {
-        source: "/:all*(woff|woff2|ttf|otf)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
-      {
-        source: "/_next/static/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
-      {
-        source: "/_next/image/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000" }],
-      },
-      {
-        source: "/api/:path*",
-        headers: [{ key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" }],
-      },
+      { source: "/photo/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/:all*(svg|jpg|jpeg|png|gif|webp|avif|ico)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/:all*(woff|woff2|ttf|otf)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/_next/static/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/_next/image/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000" }] },
+      { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" }] },
     ];
   },
 
@@ -95,6 +77,9 @@ const nextConfig: NextConfig = withPWA({
     skipWaiting: true,   // immediately activate new SW
     clientsClaim: true,  // control all pages immediately
   },
+
+  // ─── FORCE WEBPACK ──────────────────────────────────
+  turbopack: {},  // prevents Turbopack from running -> avoids "Call retries were exceeded"
 });
 
 export default nextConfig;
