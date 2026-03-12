@@ -34,7 +34,8 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     // ✅ Relaxed CSP slightly — strict sandbox was blocking iOS Safari image rendering
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox; img-src 'self' data: blob:;",
+    contentSecurityPolicy:
+"default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:;",
     unoptimized: false,
   },
   compress: true,
