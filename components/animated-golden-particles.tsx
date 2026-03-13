@@ -16,12 +16,11 @@ interface FloatingParticlesProps {
 
 // ✅ Safe polyfill — requestIdleCallback is not supported on ANY iOS Safari
 const requestIdle = (cb: IdleRequestCallback, opts?: IdleRequestOptions): number => {
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    return window.requestIdleCallback(cb, opts)
+  if (typeof requestIdleCallback !== "undefined") {
+    return requestIdleCallback(cb, opts)
   }
-  // Fallback: use setTimeout with a small delay
   const start = Date.now()
-  return window.setTimeout(() => {
+  return setTimeout(() => {
     cb({
       didTimeout: false,
       timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
@@ -30,8 +29,8 @@ const requestIdle = (cb: IdleRequestCallback, opts?: IdleRequestOptions): number
 }
 
 const cancelIdle = (id: number): void => {
-  if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
-    window.cancelIdleCallback(id)
+  if (typeof cancelIdleCallback !== "undefined") {
+    cancelIdleCallback(id)
   } else {
     clearTimeout(id)
   }
