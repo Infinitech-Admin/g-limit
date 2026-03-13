@@ -1,16 +1,6 @@
 import type { NextConfig } from 'next';
 import withPWA from '@ducanh2912/next-pwa';
 
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  disable: process.env.NODE_ENV === 'development',
-});
-
 const nextConfig: NextConfig = {
   // ─── TRANSPILE PACKAGES FOR iOS 13 ────────────
   transpilePackages: [
@@ -85,4 +75,10 @@ const nextConfig: NextConfig = {
   turbopack: {},
 };
 
-export default pwaConfig(nextConfig);
+export default withPWA({
+  dest: 'public',
+  register: true,
+  cacheOnFrontEndNav: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+})(nextConfig);
