@@ -14,12 +14,34 @@ interface FloatingParticlesProps {
   count?: number
 }
 
+// ✅ Safe polyfill — requestIdleCallback is not supported on ANY iOS Safari
+const requestIdle = (cb: IdleRequestCallback, opts?: IdleRequestOptions): number => {
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    return window.requestIdleCallback(cb, opts)
+  }
+  // Fallback: use setTimeout with a small delay
+  const start = Date.now()
+  return window.setTimeout(() => {
+    cb({
+      didTimeout: false,
+      timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+    })
+  }, 1) as unknown as number
+}
+
+const cancelIdle = (id: number): void => {
+  if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(id)
+  } else {
+    clearTimeout(id)
+  }
+}
+
 export default function FloatingParticles({ count = 40 }: FloatingParticlesProps) {
   const [particles, setParticles] = useState<Particle[]>([])
 
   useEffect(() => {
-    // Defer generation until the browser is idle — never blocks LCP or TTI
-    const id = requestIdleCallback(
+    const id = requestIdle(
       () => {
         setParticles(
           Array.from({ length: count }, () => ({
@@ -34,17 +56,11 @@ export default function FloatingParticles({ count = 40 }: FloatingParticlesProps
       },
       { timeout: 3000 }
     )
-    return () => cancelIdleCallback(id)
+    return () => cancelIdle(id)
   }, [count])
 
   return (
     <>
-      {/*
-        All animation is CSS keyframes — runs on the compositor thread,
-        zero JS per frame, zero Framer Motion overhead.
-        opacity + transform are the only two GPU-composited properties,
-        so no paint is triggered after the first render.
-      */}
       <style>{`
         @keyframes particle-float {
           0%   { opacity: 0; transform: translateY(0px)   translateX(0px)   scale(0); }
@@ -67,11 +83,8 @@ export default function FloatingParticles({ count = 40 }: FloatingParticlesProps
               height: `${p.size}px`,
               borderRadius: "50%",
               background: "radial-gradient(circle, #FFD700, #FFA500)",
-              // boxShadow removed — was forcing repaint on every frame
-              // Use a CSS variable for the x offset per particle
               "--x-move": `${p.xMove}px`,
               animation: `particle-float ${p.duration}s ease-in-out ${p.delay}s infinite`,
-              // opacity + transform only — both compositor-only, no layout, no paint
               willChange: "transform, opacity",
             } as React.CSSProperties}
           />
