@@ -1,9 +1,30 @@
 import type { NextConfig } from 'next';
-import withPWA from 'next-pwa';
+import withPWA from '@ducanh2912/next-pwa';
 
-const nextConfig: NextConfig = withPWA({
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+});
+
+const nextConfig: NextConfig = {
   // ─── TRANSPILE PACKAGES FOR iOS 13 ────────────
-  transpilePackages: ['motion', 'react-router-dom', '@radix-ui/react-icons'],
+  transpilePackages: [
+    'motion',
+    'react-router-dom',
+    '@radix-ui/react-icons',
+    '@radix-ui/react-accordion',
+    '@radix-ui/react-dialog',
+    '@radix-ui/react-dropdown-menu',
+    '@radix-ui/react-navigation-menu',
+    '@radix-ui/react-select',
+    '@radix-ui/react-tabs',
+    '@radix-ui/react-toast',
+  ],
 
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -60,63 +81,8 @@ const nextConfig: NextConfig = withPWA({
     ],
   },
 
-  // ─── PWA CONFIG ─────────────────────────────
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    clientsClaim: true,
-  },
-
-  // ─── FORCE WEBPACK (disable Turbopack) ────────
+  // ─── TURBOPACK (Next.js 16 default bundler) ───
   turbopack: {},
+};
 
-  // ─── TRANSPILE PROBLEMATIC LIBS FOR iOS 13 ────
-  webpack(config, { isServer }) {
-    if (!isServer) {
-      const es5Packages = [
-        'motion',
-        'react-router-dom',
-        '@radix-ui/react-icons',
-        '@radix-ui/react-accordion',
-        '@radix-ui/react-dialog',
-        '@radix-ui/react-dropdown-menu',
-        '@radix-ui/react-navigation-menu',
-        '@radix-ui/react-select',
-        '@radix-ui/react-tabs',
-        '@radix-ui/react-toast',
-      ];
-
-      es5Packages.forEach((pkg) => {
-        config.module.rules.push({
-          test: /\.js$/,
-          include: new RegExp(`node_modules[\\/]${pkg.replace('/', '[\\/]')}`),
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: [
-                [
-                  'next/babel',
-                  {
-                    'preset-env': {
-                      targets: {
-                        ios: '13',
-                      },
-                      useBuiltIns: 'usage',
-                      corejs: 3,
-                    },
-                  },
-                ],
-              ],
-              compact: false,
-            },
-          },
-        });
-      });
-    }
-
-    return config;
-  },
-});
-
-export default nextConfig;
+export default pwaConfig(nextConfig);
