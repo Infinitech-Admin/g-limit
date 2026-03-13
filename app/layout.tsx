@@ -218,10 +218,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-PH" suppressHydrationWarning className="scroll-smooth">
       <head>
-        {/* ⚠️ TEMPORARY DEBUG — REMOVE AFTER FINDING THE ERROR */}
-        <script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js" async />
-        <script dangerouslySetInnerHTML={{ __html: 'window.addEventListener("load",function(){eruda.init()})' }} />
-        {/* ⚠️ END TEMPORARY DEBUG */}
+        {/* ✅ POLYFILL: requestIdleCallback — not supported on ANY iOS Safari version */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if (!window.requestIdleCallback) {
+              window.requestIdleCallback = function(cb, options) {
+                var start = Date.now();
+                return setTimeout(function() {
+                  cb({
+                    didTimeout: false,
+                    timeRemaining: function() {
+                      return Math.max(0, 50 - (Date.now() - start));
+                    }
+                  });
+                }, options && options.timeout ? Math.min(options.timeout, 1) : 1);
+              };
+              window.cancelIdleCallback = function(id) {
+                clearTimeout(id);
+              };
+            }
+          `
+        }} />
 
         <meta charSet="utf-8" />
 
