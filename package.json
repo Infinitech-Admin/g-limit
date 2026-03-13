@@ -38,6 +38,7 @@
     "core-js": "^3.38.0",
     "critters": "^0.0.23",
     "date-fns": "^4.1.0",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^0.553.0",
     "motion": "^11.18.2",
     "next": "^16.1.6",
