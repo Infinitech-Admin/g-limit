@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = withPWA({
+  // ─── TRANSPILE PACKAGES FOR iOS 13 ────────────
+  transpilePackages: ['motion', 'react-router-dom', '@radix-ui/react-icons'],
+
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [390, 414, 640, 750, 828, 1080, 1200, 1920],
@@ -44,11 +47,17 @@ const nextConfig: NextConfig = withPWA({
   },
 
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+    removeConsole:
+      process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
   experimental: {
-    optimizePackageImports: ['lucide-react', 'react-icons', 'framer-motion', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      'motion',
+      '@radix-ui/react-icons',
+    ],
   },
 
   // ─── PWA CONFIG ─────────────────────────────
@@ -62,22 +71,50 @@ const nextConfig: NextConfig = withPWA({
   // ─── FORCE WEBPACK (disable Turbopack) ────────
   turbopack: {},
 
-  // ─── Transpile problematic libs for older Safari ──
+  // ─── TRANSPILE PROBLEMATIC LIBS FOR iOS 13 ────
   webpack(config, { isServer }) {
-    const es5Packages = ['react-router-dom', 'framer-motion', '@radix-ui/react-icons'];
-    es5Packages.forEach((pkg) => {
-      config.module.rules.push({
-        test: /\.js$/,
-        include: /node_modules\/${pkg}/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['next/babel'],
-            compact: false,
+    if (!isServer) {
+      const es5Packages = [
+        'motion',
+        'react-router-dom',
+        '@radix-ui/react-icons',
+        '@radix-ui/react-accordion',
+        '@radix-ui/react-dialog',
+        '@radix-ui/react-dropdown-menu',
+        '@radix-ui/react-navigation-menu',
+        '@radix-ui/react-select',
+        '@radix-ui/react-tabs',
+        '@radix-ui/react-toast',
+      ];
+
+      es5Packages.forEach((pkg) => {
+        config.module.rules.push({
+          test: /\.js$/,
+          include: new RegExp(`node_modules[\\/]${pkg.replace('/', '[\\/]')}`),
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                [
+                  'next/babel',
+                  {
+                    'preset-env': {
+                      targets: {
+                        ios: '13',
+                      },
+                      useBuiltIns: 'usage',
+                      corejs: 3,
+                    },
+                  },
+                ],
+              ],
+              compact: false,
+            },
           },
-        },
+        });
       });
-    });
+    }
+
     return config;
   },
 });
