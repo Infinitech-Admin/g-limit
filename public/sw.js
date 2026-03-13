@@ -1,67 +1,72 @@
-// ─── IMPORTANT: Change this version string on EVERY deploy ───────────────────
-// This forces the old cache to be deleted and rebuilt fresh
-const CACHE_VERSION = 'v2'; // ← increment this each time you deploy
+// ─── VERSION: Change this on EVERY deploy to kill old caches ─────────────────
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `g-limit-studio-${CACHE_VERSION}`;
 
-// Only cache the bare minimum — NOT JS bundles (Next.js handles those)
-const STATIC_CACHE = [
-  '/offline',
-];
+const STATIC_CACHE = ['/offline'];
 
-// ─── Install: cache only offline page ────────────────────────────────────────
+// ─── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(STATIC_CACHE))
-      .catch((err) => console.warn('[SW] Install cache failed:', err))
+      .catch((err) => console.warn('[SW] Install failed:', err))
   );
+  // Take over immediately — don't wait for old SW to die naturally
   self.skipWaiting();
 });
 
-// ─── Activate: delete ALL old caches ─────────────────────────────────────────
+// ─── Activate: nuke ALL old caches immediately ────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => {
-            console.log('[SW] Deleting old cache:', name);
-            return caches.delete(name);
-          })
-      )
-    )
+    Promise.all([
+      // Delete all old caches
+      caches.keys().then((names) =>
+        Promise.all(
+          names
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => {
+              console.log('[SW] Nuking old cache:', name);
+              return caches.delete(name);
+            })
+        )
+      ),
+      // Take control of ALL open tabs immediately without reload
+      self.clients.claim(),
+    ])
   );
-  self.clients.claim();
+
+  // Tell all open clients to reload so they get the fresh SW immediately
+  self.clients.matchAll({ type: 'window' }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'SW_UPDATED' });
+    });
+  });
 });
 
-// ─── Fetch: Network first for HTML/JS/CSS, cache fallback for images ─────────
+// ─── Fetch ────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Skip non-GET requests
+  // Skip non-GET
   if (request.method !== 'GET') return;
 
-  // 2. Skip cross-origin API requests entirely — let them go straight to network
+  // Skip cross-origin (API calls go straight to network)
   if (url.origin !== self.location.origin) return;
 
-  // 3. Skip Next.js build chunks — NEVER cache these, Next.js manages them
+  // ⚠️ NEVER cache Next.js JS/CSS chunks — they change every deploy
   if (url.pathname.startsWith('/_next/')) return;
 
-  // 4. For HTML pages: Network first, fallback to offline page
+  // HTML pages: always network first
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(request)
-        .catch(() => caches.match('/offline'))
+      fetch(request).catch(() => caches.match('/offline'))
     );
     return;
   }
 
-  // 5. For static assets (images, fonts, icons): Cache first, then network
-  if (
-    url.pathname.match(/\.(png|jpg|jpeg|webp|avif|gif|svg|ico|woff|woff2|ttf)$/)
-  ) {
+  // Static assets only (images, fonts, icons)
+  if (url.pathname.match(/\.(png|jpg|jpeg|webp|avif|gif|svg|ico|woff|woff2|ttf)$/)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
@@ -76,7 +81,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 6. Everything else: network only
+  // Everything else: network only
 });
 
 // ─── Push notifications ───────────────────────────────────────────────────────
@@ -93,7 +98,6 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow('/'));
