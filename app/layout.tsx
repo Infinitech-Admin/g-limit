@@ -4,9 +4,9 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
-import PWARegister from "@/components/PWARegister"
 import { Analytics } from "@vercel/analytics/next"
 import ClientProviders from "@/components/ClientProviders"
+import { ServiceWorkerUpdater } from "@/components/sw-register"
 import {
   defaultMetadata,
   organizationSchema,
@@ -102,8 +102,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // ✅ FIXED: maximumScale: 1 on iOS prevents zoom but also causes Safari
-  // to miscalculate viewport height — changed to 5
   maximumScale: 5,
   userScalable: true,
   themeColor: [
@@ -217,14 +215,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const API_IMG = process.env.NEXT_PUBLIC_API_IMG || ""
 
   return (
-    // ✅ FIXED: Added explicit className to html tag
-    // iOS Safari sometimes fails to apply styles without this
     <html lang="en-PH" suppressHydrationWarning className="scroll-smooth">
       <head>
-        {/* ✅ FIXED: Added charset early — iOS Safari requires this before any rendering */}
         <meta charSet="utf-8" />
 
-        {/* Preconnect to image API — saves 300–600ms on mobile */}
         {API_IMG && (
           <>
             <link rel="preconnect" href={API_IMG} crossOrigin="anonymous" />
@@ -232,10 +226,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
 
-        {/* ✅ FIXED: Added crossOrigin to Vercel preconnect — required for iOS CORS */}
         <link rel="preconnect" href="https://vitals.vercel-insights.com" crossOrigin="anonymous" />
-
-        {/* ✅ FIXED: Preconnect to Google Fonts — iOS was lazy-loading fonts causing FOUT/blank flash */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
@@ -248,8 +239,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
-
-        {/* ✅ FIXED: Added apple splash screens — prevents white flash on iOS PWA launch */}
         <meta name="apple-touch-fullscreen" content="yes" />
 
         {/* Icons */}
@@ -268,7 +257,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <meta name="google-site-verification" content="pFIfpGXFgh-F0fXiy-8Yd8KqjlbJq_dcbzrNUNxexlw" />
 
-        {/* All schemas in one script tag */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -286,9 +274,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      {/* ✅ FIXED: Added min-h-screen to body — iOS Safari collapses body height causing white screen */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
-        <PWARegister />
+        {/* ✅ REMOVED: <PWARegister /> — was conflicting with sw.js causing double SW registration */}
+        {/* ✅ ADDED: ServiceWorkerUpdater — auto-reloads page when new SW activates */}
+        <ServiceWorkerUpdater />
         <PublicLayoutProvider>
           {children}
           <Toaster position="top-right" />
