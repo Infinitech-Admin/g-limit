@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { PublicLayoutProvider } from "./providers/layout-context"
 import { Analytics } from "@vercel/analytics/next"
 import ClientProviders from "@/components/ClientProviders"
+import PWARegister from "@/components/PWARegister"
 import { ServiceWorkerUpdater } from "@/components/sw-register"
 import {
   defaultMetadata,
@@ -275,8 +276,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
-        {/* ✅ REMOVED: <PWARegister /> — was conflicting with sw.js causing double SW registration */}
-        {/* ✅ ADDED: ServiceWorkerUpdater — auto-reloads page when new SW activates */}
+        <PWARegister />
         <ServiceWorkerUpdater />
         <PublicLayoutProvider>
           {children}
