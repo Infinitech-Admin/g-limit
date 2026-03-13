@@ -218,6 +218,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-PH" suppressHydrationWarning className="scroll-smooth">
       <head>
+        {/* ⚠️ TEMPORARY DEBUG — REMOVE AFTER FINDING THE ERROR */}
+        <script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js" async />
+        <script dangerouslySetInnerHTML={{ __html: 'window.addEventListener("load",function(){eruda.init()})' }} />
+        {/* ⚠️ END TEMPORARY DEBUG */}
+
         <meta charSet="utf-8" />
 
         {API_IMG && (
