@@ -1,108 +1,100 @@
-const CACHE_NAME = 'g-limit-studio-v1';
-const urlsToCache = [
-  '/',
+// ─── IMPORTANT: Change this version string on EVERY deploy ───────────────────
+// This forces the old cache to be deleted and rebuilt fresh
+const CACHE_VERSION = 'v2'; // ← increment this each time you deploy
+const CACHE_NAME = `g-limit-studio-${CACHE_VERSION}`;
+
+// Only cache the bare minimum — NOT JS bundles (Next.js handles those)
+const STATIC_CACHE = [
   '/offline',
 ];
 
-// Install event - cache essential resources
+// ─── Install: cache only offline page ────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.log('Cache installation failed:', error);
-      })
+      .then((cache) => cache.addAll(STATIC_CACHE))
+      .catch((err) => console.warn('[SW] Install cache failed:', err))
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// ─── Activate: delete ALL old caches ─────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
+      )
+    )
   );
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// ─── Fetch: Network first for HTML/JS/CSS, cache fallback for images ─────────
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // 1. Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // 2. Skip cross-origin API requests entirely — let them go straight to network
+  if (url.origin !== self.location.origin) return;
+
+  // 3. Skip Next.js build chunks — NEVER cache these, Next.js manages them
+  if (url.pathname.startsWith('/_next/')) return;
+
+  // 4. For HTML pages: Network first, fallback to offline page
+  if (request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .catch(() => caches.match('/offline'))
+    );
+    return;
+  }
+
+  // 5. For static assets (images, fonts, icons): Cache first, then network
+  if (
+    url.pathname.match(/\.(png|jpg|jpeg|webp|avif|gif|svg|ico|woff|woff2|ttf)$/)
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (!response || response.status !== 200) return response;
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
-        }
-
-        return fetch(event.request).then(
-          (response) => {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        ).catch(() => {
-          // If both cache and network fail, show offline page
-          return caches.match('/offline');
         });
       })
-  );
-});
-
-// Handle background sync (optional)
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-data') {
-    event.waitUntil(
-      // Your sync logic here
-      Promise.resolve()
     );
+    return;
   }
+
+  // 6. Everything else: network only
 });
 
-// Handle push notifications (optional)
+// ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New notification',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
+    data: { dateOfArrival: Date.now(), primaryKey: 1 },
   };
-
   event.waitUntil(
     self.registration.showNotification('G-Limit Studio', options)
   );
 });
 
-// Handle notification clicks
+// ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('/')
-  );
+  event.waitUntil(clients.openWindow('/'));
 });
