@@ -27,7 +27,8 @@ import {
   Eye, 
   ListIcon, 
   X,
-  Loader2
+  Loader2,
+  MapPin,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DataTable } from "@/components/admin/data-table"
@@ -42,13 +43,15 @@ interface Reservation {
   email: string
   phone: string
   facebook?: string
-  referred_by?: string | null  // fixed typo: was reffered_by
+  referred_by?: string | null
   preferred_date: string
   preferred_time: string
   package: string
   service_type: string[]
   shoot_type: string
   shoot_type_other?: string
+  location?: string           // ← new
+  location_address?: string   // ← new
   message?: string
   addons?: string[]
   addons_other?: string
@@ -57,6 +60,22 @@ interface Reservation {
   status: "pending" | "confirmed" | "cancelled" | "completed"
   created_at: string
   updated_at: string
+}
+
+// ── Location helpers ────────────────────────────────────────────────────
+const LOCATION_LABELS: Record<string, string> = {
+  studio: "Studio",
+  outdoor: "Outdoor",
+  "clients-venue": "Client's Venue",
+}
+
+const formatLocation = (location?: string, locationAddress?: string): string => {
+  if (!location) return "—"
+  const label = LOCATION_LABELS[location] ?? location
+  if ((location === "outdoor" || location === "clients-venue") && locationAddress) {
+    return `${label} — ${locationAddress}`
+  }
+  return label
 }
 
 const AdminReservations = () => {
@@ -210,7 +229,6 @@ const AdminReservations = () => {
       accessorKey: "phone", 
       header: "Phone" 
     },
-    // ── NEW: Referred By column ──
     {
       accessorKey: "referred_by",
       header: "Referred By",
@@ -246,6 +264,24 @@ const AdminReservations = () => {
         return shootType === 'other' && shootTypeOther 
           ? shootTypeOther 
           : shootType.charAt(0).toUpperCase() + shootType.slice(1)
+      },
+    },
+    // ── NEW: Location column ────────────────────────────────────────────
+    {
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }) => {
+        const loc = row.original.location
+        const addr = row.original.location_address
+        if (!loc) return <span className="text-muted-foreground text-xs">—</span>
+        return (
+          <div className="flex items-center gap-1.5 max-w-[180px]">
+            <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="truncate text-sm" title={formatLocation(loc, addr)}>
+              {formatLocation(loc, addr)}
+            </span>
+          </div>
+        )
       },
     },
     {
@@ -367,7 +403,6 @@ const AdminReservations = () => {
 
       {/* Filters */}
       <div className="flex gap-4">
-        
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -453,7 +488,6 @@ const AdminReservations = () => {
                       </p>
                     </div>
                   )}
-                  {/* ── NEW: Referred By ── */}
                   <div>
                     <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
                       Referred By
@@ -507,6 +541,37 @@ const AdminReservations = () => {
                       <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
                         {selectedItem.addons.join(', ')}
                         {selectedItem.addons_other && ` - ${selectedItem.addons_other}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── NEW: Location ─────────────────────────────────────── */}
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
+                  Location
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Location Type
+                    </Label>
+                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                      {LOCATION_LABELS[selectedItem.location ?? ""] ?? (
+                        <span className="text-gray-400 italic text-sm">Not specified</span>
+                      )}
+                    </p>
+                  </div>
+                  {(selectedItem.location === "outdoor" || selectedItem.location === "clients-venue") && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {selectedItem.location === "clients-venue" ? "Venue Address" : "Outdoor Location"}
+                      </Label>
+                      <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                        {selectedItem.location_address || (
+                          <span className="text-gray-400 italic text-sm">Not specified</span>
+                        )}
                       </p>
                     </div>
                   )}
