@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
       service_type:     serviceType,
       shoot_type:       (formData.get('shoot_type')       as string) || '',
       shoot_type_other: (formData.get('shoot_type_other') as string) || '',
+      location:         (formData.get('location')         as string) || '',
+      location_address: (formData.get('location_address') as string) || '',
       message:          (formData.get('message')          as string) || '',
       addons,
       addons_other:     (formData.get('addons_other')     as string) || '',
