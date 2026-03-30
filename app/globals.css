@@ -7,7 +7,7 @@
   /* ✅ All oklch replaced with hex/hsl for iOS 18 Safari compatibility */
   --background: #fafafa;
   --foreground: #ffffff;
-  --card: #1c1917;
+  --card: #fafafa;
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
