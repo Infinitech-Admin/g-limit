@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Calendar, Clock, User, Mail, Phone, MessageSquare,
@@ -39,10 +39,12 @@ export default function BookingForm() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [showPackages, setShowPackages] = useState(false)
+  const packagesRef = useRef<HTMLDivElement>(null)
 
-  const packages = [
+  const studio_packages = [
     {
-      id: "basic",
+      id: "studio_basic",
       name: "Basic Studio Session",
       price: "₱1,000",
       duration: "1 hour",
@@ -59,7 +61,7 @@ export default function BookingForm() {
       ],
     },
     {
-      id: "standard",
+      id: "studio_standard",
       name: "Standard Studio Session",
       price: "₱1,500",
       duration: "1 hour",
@@ -76,7 +78,7 @@ export default function BookingForm() {
       ],
     },
     {
-      id: "premium",
+      id: "studio_premium",
       name: "G-Limitless Premium Studio Session",
       price: "₱3,500",
       duration: "1 hour",
@@ -90,6 +92,70 @@ export default function BookingForm() {
       addons: ["Extended session — ₱1,000 per additional hour"],
     },
   ]
+
+  const outdoor_packages = [
+    {
+      id: "outdoor_basic",
+      name: "Basic Outdoor Session",
+      price: "₱2,500",
+      duration: "Minimum 2 hours",
+      photos: "20 professionally edited photos",
+      features: [
+        "Basic studio setup",
+        "Choose additional 2 backdrop shoot",
+        "FREE use of costumes & accessories",
+      ],
+      addons: [
+        "Extra edited photo — ₱100 every 5 photos",
+        "Extended session — ₱1,500 per additional hour",
+        "Hair & Make Up Services — ₱1,999+ only",
+        "Transportation — depends on the location",
+      ],
+    },
+    {
+      id: "outdoor_standard",
+      name: "Standard Outdoor Session",
+      price: "₱5,500",
+      duration: "Minimum 4-5 hours",
+      photos: "30 professionally edited photos",
+      features: [
+        "Basic studio setup",
+        "Choose additional 5 backdrop shoot",
+        "FREE use of costumes & accessories",
+      ],
+      addons: [
+        "Extra edited photo — ₱100 every 5 photos",
+        "Extended session — ₱1,500 per additional hour",
+        "Hair & Make Up Services — ₱1,999+ only",
+        "Transportation — depends on the location",
+      ],
+    },
+    {
+      id: "outdoor_premium",
+      name: "G-Limitless Premium Outdoor Session",
+      price: "₱8,000",
+      duration: "Up to 8 Hours",
+      photos: "Professionally edited digital photos with hair and make up services",
+      features: [
+        "Basic studio setup",
+        "FREE use of 12 backdrop shoot",
+        "FREE use of costumes & accessories",
+        "FREE Hair & Make Up Services for 1 additional person",
+      ],
+      addons: [
+        "Extended session — ₱1,000 per additional hour",
+        "Transportation — depends on the location",
+      ],
+    },
+  ]
+
+  const allPackages = [
+    { id: studio_packages, name: "Studio Packages" },
+    { id: outdoor_packages, name: "Outdoor Packages" },
+  ]
+
+  // Flatten all packages for dropdown and display
+  const packages = [...studio_packages, ...outdoor_packages]
 
   const serviceTypes = [
     { id: "photoshoot", label: "Photoshoot" },
@@ -167,7 +233,25 @@ export default function BookingForm() {
       ...prev,
       location: locationId,
       locationAddress: locationId === "studio" ? "" : prev.locationAddress,
+      package: "", // Reset package selection when location changes
     }))
+    setShowPackages(Boolean(locationId))
+
+    if (locationId) {
+      setTimeout(() => {
+        packagesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 500);
+    }
+  }
+
+  // Filter packages based on selected location
+  const getFilteredPackages = () => {
+    if (formData.location === "studio" || formData.location === "clients-venue") {
+      return studio_packages
+    } else if (formData.location === "outdoor") {
+      return outdoor_packages
+    }
+    return []
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,9 +269,18 @@ export default function BookingForm() {
     setPreviewUrl(null)
   }
 
+  const handlePackageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPackageId = e.target.value
+
+    setFormData((prev) => ({
+      ...prev,
+      package: selectedPackageId,
+    }))
+  }
+
   const getPackagePrice = () => {
     const pkg = packages.find((p) => p.id === formData.package)
-    return pkg ? parseInt(pkg.price.replace(/[₱,]/g, "")) : 0
+    return pkg ? Number(pkg.price.replace(/[₱,]/g, "")) : 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,10 +372,9 @@ export default function BookingForm() {
 
   /* Chip for service / shoot / location / addon selectors */
   const chipBase = (active: boolean) =>
-    `flex items-center gap-3 p-3.5 border cursor-pointer transition-all ${
-      active
-        ? `bg-[${cardBgLLt}] border-[${goldMid}] text-[${goldBright}] shadow-[0_0_12px_rgba(200,160,60,0.15)]`
-        : `bg-[${cardBgLt}] border-[${goldDim}]/30 text-[${textSub}] hover:border-[${goldDim}]/70 hover:text-[${textPrimary}]`
+    `flex items-center gap-3 p-3.5 border cursor-pointer transition-all ${active
+      ? `bg-[${cardBgLLt}] border-[${goldMid}] text-[${goldBright}] shadow-[0_0_12px_rgba(200,160,60,0.15)]`
+      : `bg-[${cardBgLt}] border-[${goldDim}]/30 text-[${textSub}] hover:border-[${goldDim}]/70 hover:text-[${textPrimary}]`
     }`
 
   return (
@@ -396,7 +488,7 @@ export default function BookingForm() {
             className="text-base md:text-lg max-w-lg mx-auto leading-relaxed"
             style={{ color: textSub }}
           >
-            Let's capture your special moments together. Fill in the form below and we'll confirm within 24 hours.
+            Let&apos;s capture your special moments together. Fill in the form below and we&apos;ll confirm within 24 hours.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
@@ -432,104 +524,108 @@ export default function BookingForm() {
         </AnimatePresence>
 
         {/* ══ Packages ══════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.7 }} className="mb-16">
+        <AnimatePresence>
+          {showPackages && (
+            <motion.div ref={packagesRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }} transition={{ duration: 0.5 }} className="mb-16">
 
-          <div className="flex items-center gap-4 mb-10">
-            <div className="h-px flex-1"
-              style={{ background: `linear-gradient(to right, transparent, ${goldDim})` }} />
-            <span className="font-black tracking-[0.2em] text-xs" style={{ color: goldMid }}>
-              OUR PACKAGES
-            </span>
-            <div className="h-px flex-1"
-              style={{ background: `linear-gradient(to left, transparent, ${goldDim})` }} />
-          </div>
+              <div className="flex items-center gap-4 mb-10">
+                <div className="h-px flex-1"
+                  style={{ background: `linear-gradient(to right, transparent, ${goldDim})` }} />
+                <span className="font-black tracking-[0.2em] text-xs" style={{ color: goldMid }}>
+                  OUR PACKAGES
+                </span>
+                <div className="h-px flex-1"
+                  style={{ background: `linear-gradient(to left, transparent, ${goldDim})` }} />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {packages.map((pkg, index) => (
-              <motion.div key={pkg.id}
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                style={{
-                  background: pkg.id === "premium"
-                    ? `linear-gradient(145deg, #221c12 0%, #2c2210 100%)`
-                    : cardBg,
-                  border: pkg.id === "premium"
-                    ? `1px solid ${goldMid}`
-                    : `1px solid ${goldDim}/25`,
-                  boxShadow: pkg.id === "premium"
-                    ? `0 0 40px rgba(200,160,60,0.12), 0 4px 16px rgba(0,0,0,0.4)`
-                    : `0 4px 16px rgba(0,0,0,0.3)`,
-                }}
-              >
-                {/* Corner brackets */}
-                {["tl","tr","bl","br"].map((pos) => (
-                  <div key={pos} className="absolute w-4 h-4"
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {getFilteredPackages().map((pkg, index) => (
+                  <motion.div key={pkg.id}
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
                     style={{
-                      top: pos.startsWith("t") ? "10px" : "auto",
-                      bottom: pos.startsWith("b") ? "10px" : "auto",
-                      left: pos.endsWith("l") ? "10px" : "auto",
-                      right: pos.endsWith("r") ? "10px" : "auto",
-                      borderTop: pos.startsWith("t") ? `1.5px solid ${goldDim}` : undefined,
-                      borderBottom: pos.startsWith("b") ? `1.5px solid ${goldDim}` : undefined,
-                      borderLeft: pos.endsWith("l") ? `1.5px solid ${goldDim}` : undefined,
-                      borderRight: pos.endsWith("r") ? `1.5px solid ${goldDim}` : undefined,
+                      background: pkg.id === "premium"
+                        ? `linear-gradient(145deg, #221c12 0%, #2c2210 100%)`
+                        : cardBg,
+                      border: pkg.id === "premium"
+                        ? `1px solid ${goldMid}`
+                        : `1px solid ${goldDim}/25`,
+                      boxShadow: pkg.id === "premium"
+                        ? `0 0 40px rgba(200,160,60,0.12), 0 4px 16px rgba(0,0,0,0.4)`
+                        : `0 4px 16px rgba(0,0,0,0.3)`,
                     }}
-                  />
-                ))}
+                  >
+                    {/* Corner brackets */}
+                    {["tl", "tr", "bl", "br"].map((pos) => (
+                      <div key={pos} className="absolute w-4 h-4"
+                        style={{
+                          top: pos.startsWith("t") ? "10px" : "auto",
+                          bottom: pos.startsWith("b") ? "10px" : "auto",
+                          left: pos.endsWith("l") ? "10px" : "auto",
+                          right: pos.endsWith("r") ? "10px" : "auto",
+                          borderTop: pos.startsWith("t") ? `1.5px solid ${goldDim}` : undefined,
+                          borderBottom: pos.startsWith("b") ? `1.5px solid ${goldDim}` : undefined,
+                          borderLeft: pos.endsWith("l") ? `1.5px solid ${goldDim}` : undefined,
+                          borderRight: pos.endsWith("r") ? `1.5px solid ${goldDim}` : undefined,
+                        }}
+                      />
+                    ))}
 
-                <div className="p-7 relative">
-                  {pkg.id === "premium" && (
-                    <div className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 mb-4 tracking-[0.15em] uppercase"
-                      style={{ background: `linear-gradient(to right, ${goldBright}, ${goldMid})`, color: "#0e0c08" }}>
-                      <Sparkles className="w-3 h-3" /> Most Popular
-                    </div>
-                  )}
-
-                  <h3 className="font-semibold text-base mb-2 leading-snug" style={{ color: textPrimary }}>
-                    {pkg.name}
-                  </h3>
-                  <p className="text-3xl font-serif font-light mb-1" style={{ color: goldBright }}>
-                    {pkg.price}
-                  </p>
-                  <p className="text-xs mb-5" style={{ color: textMuted }}>
-                    {pkg.duration} · {pkg.photos}
-                  </p>
-
-                  <div className="h-px mb-4"
-                    style={{ background: `linear-gradient(to right, ${goldDim}/50, transparent)` }} />
-
-                  <p className="text-xs font-bold tracking-[0.15em] uppercase mb-3" style={{ color: goldMid }}>
-                    Inclusions
-                  </p>
-                  <div className="space-y-2 mb-5">
-                    {pkg.features.map((f, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ border: `1px solid ${goldDim}`, background: "rgba(200,160,60,0.08)" }}>
-                          <Check className="w-2.5 h-2.5" style={{ color: goldMid }} />
+                    <div className="p-7 relative">
+                      {pkg.id === "premium" && (
+                        <div className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 mb-4 tracking-[0.15em] uppercase"
+                          style={{ background: `linear-gradient(to right, ${goldBright}, ${goldMid})`, color: "#0e0c08" }}>
+                          <Sparkles className="w-3 h-3" /> Most Popular
                         </div>
-                        <span className="text-xs leading-relaxed" style={{ color: textSub }}>{f}</span>
+                      )}
+
+                      <h3 className="font-semibold text-base mb-2 leading-snug" style={{ color: textPrimary }}>
+                        {pkg.name}
+                      </h3>
+                      <p className="text-3xl font-serif font-light mb-1" style={{ color: goldBright }}>
+                        {pkg.price}
+                      </p>
+                      <p className="text-xs mb-5" style={{ color: textMuted }}>
+                        {pkg.duration} · {pkg.photos}
+                      </p>
+
+                      <div className="h-px mb-4"
+                        style={{ background: `linear-gradient(to right, ${goldDim}/50, transparent)` }} />
+
+                      <p className="text-xs font-bold tracking-[0.15em] uppercase mb-3" style={{ color: goldMid }}>
+                        Inclusions
+                      </p>
+                      <div className="space-y-2 mb-5">
+                        {pkg.features.map((f, i) => (
+                          <div key={i} className="flex items-start gap-2.5">
+                            <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 mt-0.5"
+                              style={{ border: `1px solid ${goldDim}`, background: "rgba(200,160,60,0.08)" }}>
+                              <Check className="w-2.5 h-2.5" style={{ color: goldMid }} />
+                            </div>
+                            <span className="text-xs leading-relaxed" style={{ color: textSub }}>{f}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="h-px mb-4"
-                    style={{ background: `linear-gradient(to right, ${goldDim}/50, transparent)` }} />
+                      <div className="h-px mb-4"
+                        style={{ background: `linear-gradient(to right, ${goldDim}/50, transparent)` }} />
 
-                  <p className="text-xs font-bold tracking-[0.15em] uppercase mb-3" style={{ color: goldMid }}>
-                    Add-Ons Available
-                  </p>
-                  <div className="space-y-1.5">
-                    {pkg.addons.map((a, i) => (
-                      <p key={i} className="text-xs" style={{ color: textMuted }}>· {a}</p>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+                      <p className="text-xs font-bold tracking-[0.15em] uppercase mb-3" style={{ color: goldMid }}>
+                        Add-Ons Available
+                      </p>
+                      <div className="space-y-1.5">
+                        {pkg.addons.map((a, i) => (
+                          <p key={i} className="text-xs" style={{ color: textMuted }}>· {a}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ══ Booking Form ══════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
@@ -542,7 +638,7 @@ export default function BookingForm() {
           }}
         >
           {/* Corner brackets */}
-          {["tl","tr","bl","br"].map((pos) => (
+          {["tl", "tr", "bl", "br"].map((pos) => (
             <div key={pos} className="absolute w-12 h-12 z-10"
               style={{
                 top: pos.startsWith("t") ? "-1px" : "auto",
@@ -786,18 +882,26 @@ export default function BookingForm() {
 
                   <AnimatePresence>
                     {(formData.location === "outdoor" || formData.location === "clients-venue") && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }} className="mt-3.5 overflow-hidden">
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, y: 20 }}   // start slightly below
+                        animate={{ opacity: 1, height: "auto", y: 0 }} // slide up to position
+                        exit={{ opacity: 0, height: 0, y: 20 }}      // slide down on exit
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="mt-3.5 overflow-hidden"
+                      >
                         <label className="block text-xs font-bold tracking-[0.15em] uppercase mb-2" style={{ color: textSub }}>
                           {formData.location === "clients-venue" ? "Venue Address" : "Outdoor Location"}{" "}
                           <span style={{ color: goldBright }}>*</span>
                         </label>
                         <div className="relative">
                           <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: goldDim }} />
-                          <input type="text" name="locationAddress"
+                          <input
+                            type="text"
+                            name="locationAddress"
                             placeholder={formData.location === "clients-venue" ? "Enter full venue address" : "Enter outdoor location / area"}
                             required={formData.location === "outdoor" || formData.location === "clients-venue"}
-                            value={formData.locationAddress} onChange={handleChange}
+                            value={formData.locationAddress}
+                            onChange={handleChange}
                             className="w-full border py-3.5 pl-11 pr-4 text-sm transition-all outline-none"
                             style={{ background: cardBgLt, borderColor: `${goldDim}50`, color: textPrimary }}
                             onFocus={e => { e.target.style.borderColor = goldMid; e.target.style.boxShadow = `0 0 0 2px ${goldMid}15` }}
@@ -866,7 +970,12 @@ export default function BookingForm() {
                   <label className="block text-xs font-bold tracking-[0.15em] uppercase mb-2" style={{ color: textSub }}>
                     Chosen Package <span style={{ color: goldBright }}>*</span>
                   </label>
-                  <select name="package" required value={formData.package} onChange={handleChange}
+                  <select
+                    name="package"
+                    required
+                    value={formData.package}
+                    onChange={handlePackageChange}
+                    disabled={!formData.location}
                     className="w-full border py-3.5 px-4 text-sm transition-all outline-none appearance-none cursor-pointer"
                     style={{
                       background: cardBgLt,
@@ -880,13 +989,28 @@ export default function BookingForm() {
                     onBlur={e => { e.target.style.borderColor = `${goldDim}50`; e.target.style.boxShadow = "none" }}
                   >
                     <option value="" disabled style={{ background: "#1c1812", color: textMuted }}>
-                      Choose your package
+                      {formData.location ? "Choose your package" : "Select location first"}
                     </option>
-                    {packages.map((p) => (
-                      <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
-                        {p.name} — {p.price}
-                      </option>
-                    ))}
+
+                    {(formData.location === "studio" || formData.location === "clients-venue") && (
+                      <optgroup label="Studio Packages">
+                        {studio_packages.map((p) => (
+                          <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
+                            {p.name} — {p.price}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+
+                    {formData.location === "outdoor" && (
+                      <optgroup label="Outdoor Packages">
+                        {outdoor_packages.map((p) => (
+                          <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
+                            {p.name} — {p.price}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
 
@@ -962,7 +1086,7 @@ export default function BookingForm() {
                     border: `1px solid ${goldDim}/50`,
                   }}
                 >
-                  {["tl","tr","bl","br"].map((pos) => (
+                  {["tl", "tr", "bl", "br"].map((pos) => (
                     <div key={pos} className="absolute w-5 h-5"
                       style={{
                         top: pos.startsWith("t") ? 0 : "auto", bottom: pos.startsWith("b") ? 0 : "auto",
