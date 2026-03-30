@@ -568,11 +568,11 @@ export default function CashVoucher() {
               <img 
                 src={formData.logo || "/placeholder.svg"} 
                 alt="Company Logo" 
-                className="h-24 w-auto object-contain" 
+                className="h-40 w-auto object-contain" 
                 crossOrigin="anonymous"
                 style={{
-                  minHeight: "100px",
-                  minWidth: "100px",
+                  minHeight: "160px",
+                  minWidth: "160px",
                   filter: "drop-shadow(0 0 0 rgba(0,0,0,0.1))"
                 }}
               />
