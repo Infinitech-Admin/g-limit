@@ -171,9 +171,12 @@ export default function CashVoucher() {
         bgcolor: "#ffffff",
         width: 1800,
         height: node.offsetHeight,
+        scale: 2,
+        pixelRatio: 2,
         style: {
           backgroundColor: "#ffffff",
           boxSizing: "border-box",
+          WebkitFontSmoothing: "antialiased",
         },
       })
 
@@ -562,7 +565,17 @@ export default function CashVoucher() {
         >
           <div className="flex items-start justify-between mb-6">
             <div className="flex-shrink-0">
-              <img src={formData.logo || "/placeholder.svg"} alt="Company Logo" className="max-h-[180px] max-w-[320px]" crossOrigin="anonymous" />
+              <img 
+                src={formData.logo || "/placeholder.svg"} 
+                alt="Company Logo" 
+                className="h-24 w-auto object-contain" 
+                crossOrigin="anonymous"
+                style={{
+                  minHeight: "100px",
+                  minWidth: "100px",
+                  filter: "drop-shadow(0 0 0 rgba(0,0,0,0.1))"
+                }}
+              />
             </div>
             <div className="text-center flex-grow">
               <h2 className="text-5xl font-bold underline mr-60">CASH VOUCHER</h2>
