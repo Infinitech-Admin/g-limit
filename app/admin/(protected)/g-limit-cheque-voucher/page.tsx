@@ -155,11 +155,14 @@ export default function ChequeVoucher() {
         bgcolor: "#ffffff",
         width: 1800,
         height: node.offsetHeight,
+        scale: 2,
+        pixelRatio: 2,
         style: {
           backgroundColor: "#ffffff",
           boxSizing: "border-box",
           fontFamily: "Arial, sans-serif",
           fontSize: "14px", // Updated base font size
+          WebkitFontSmoothing: "antialiased",
         },
         filter: (domNode: any) => {
           // Ensure all text elements maintain their font sizes
@@ -629,7 +632,17 @@ export default function ChequeVoucher() {
           {/* Header with Logo and Title */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex-shrink-0">
-              <img src={formData.logo || "/placeholder.svg"} alt="Company Logo" className="max-h-[180px] max-w-[320px]" crossOrigin="anonymous" />
+              <img 
+                src={formData.logo || "/placeholder.svg"} 
+                alt="Company Logo" 
+                className="h-32 w-auto object-contain" 
+                crossOrigin="anonymous"
+                style={{
+                  minHeight: "120px",
+                  minWidth: "120px",
+                  filter: "drop-shadow(0 0 0 rgba(0,0,0,0.1))"
+                }}
+              />
             </div>
             <div className="text-center flex-grow">
               <h2 className="text-5xl font-bold underline mr-60">CHEQUE VOUCHER</h2>
