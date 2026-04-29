@@ -2,10 +2,32 @@
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Camera, Users, PartyPopper, Package, Building2, User, Clock, Sparkles, Check, Aperture, Film, Zap, MapPin, Crown, Star } from "lucide-react"
+import {
+  Camera,
+  Users,
+  PartyPopper,
+  Package,
+  Building2,
+  User,
+  Clock,
+  Sparkles,
+  Check,
+  Aperture,
+  Film,
+  Zap,
+  MapPin,
+  Video,
+  Videotape,
+  FileEdit,
+  Calendar,
+  PictureInPicture,
+  Cake,
+  BellRing,
+  GraduationCap,
+  Gem,
+} from "lucide-react"
 import { useBookingStore } from "@/store/useBookingStore"
 import { useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
 
 const apertureBlades = 8
 const ACCENT = "#f5d98a"
@@ -14,164 +36,52 @@ const ACCENT_DIM = "rgba(245,217,138,0.12)"
 
 const photographyServices = [
   {
-    title: "Starter Package 1 Hour Photoshoot",
-    description: "Weekdays Promo Price (Monday to Friday)",
-    price: "P1,388.00",
-    promo: "weekdays",
+    title: "Portrait Photography",
+    description: "Capture timeless and expressive portraits suited for personal, professional, or creative use.",
+    features: ["Studio or outdoor sessions", "Guided posing assistance", "High-quality edited images", "Flexible shoot concepts"],
     icon: <Camera className="w-5 h-5" />,
-    features: [
-      "FREE One (1) Makeup service (Light Makeup)",
-      "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-      "Two (2) pcs SOLO printed edited photos",
-      "One (1) pc COLLAGE printed photo",
-      "1 Hour professional-grade photoshoot by G-limit Photographer",
-      "FREE Fifteen (15) pcs edited professional-grade photos",
-      "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-      "Within 24 hours output (edited photos) release",
-    ],
+    shootTypes: "portrait",
+    tag: "Most Popular",
   },
   {
-    title: "Starter Package 1 Hour Photoshoot",
-    description: "Weekend Promo Price (Saturday & Sunday)",
-    price: "P1,588.00",
-    promo: "weekend",
-    icon: <Camera className="w-5 h-5" />,
-    features: [
-      "FREE One (1) Makeup service (Light Makeup)",
-      "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-      "Two (2) pcs SOLO printed edited photos",
-      "One (1) pc COLLAGE printed photo",
-      "1 Hour professional-grade photoshoot by G-limit Photographer",
-      "FREE Fifteen (15) pcs edited professional-grade photos",
-      "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-      "Within 24 hours output (edited photos) release",
-    ],
+    title: "Birthday Photography",
+    description: "Document fun and memorable birthday celebrations of all ages.",
+    features: ["Event coverage", "Candid and highlight shots", "On-site or venue setup coverage", "Edited photo collection"],
+    icon: <Cake className="w-5 h-5" />,
+    shootTypes: "birthday",
+    tag: null,
   },
   {
-    title: "Premium Package 1h & 30mins Photoshoot",
-    description: "Weekdays Promo Price (Monday to Friday)",
-    price: "P1,588.00",
-    promo: "weekdays",
+    title: "Debut Photography",
+    description: "Capture elegant and meaningful debut celebrations with a creative touch.",
+    features: ["Full event documentation", "Themed shoot coordination", "Portrait and candid coverage", "Highlight photo selection"],
     icon: <Sparkles className="w-5 h-5" />,
-    features: [
-      "FREE One (1) Hair & Makeup service (Light Makeup)",
-      "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-      "FOUR (4) pcs SOLO printed edited photos",
-      "Two (2) pcs COLLAGE printed photo",
-      "FREE 1h & 30mins professional-grade photoshoot",
-      "FREE Twenty (20) pcs edited professional-grade photos",
-      "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-      "One (1) Spin the wheel game",
-      "Within 24 hours output (edited photos) release",
-    ],
+    shootTypes: "debut",
+    tag: null,
   },
   {
-    title: "Premium Package 1h & 30mins Photoshoot",
-    description: "Weekend Promo Price (Saturday & Sunday)",
-    price: "P1,788.00",
-    promo: "weekend",
-    icon: <Sparkles className="w-5 h-5" />,
-    features: [
-      "FREE One (1) Hair & Makeup service (Light Makeup)",
-      "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-      "FOUR (4) pcs SOLO printed edited photos",
-      "Two (2) pcs COLLAGE printed photo",
-      "FREE 1h & 30mins professional-grade photoshoot",
-      "FREE Twenty (20) pcs edited professional-grade photos",
-      "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-      "One (1) Spin the wheel game",
-      "2 days output (edited photos) release",
-    ],
+    title: "Wedding Photography",
+    description: "Preserve every special moment of your wedding day with storytelling visuals.",
+    features: ["Pre-wedding to reception coverage", "Candid emotional moments", "Detail-focused shots", "Professional editing and retouching"],
+    icon: <Gem className="w-5 h-5" />,
+    shootTypes: "wedding",
+    tag: null,
   },
   {
-    title: "VIP Package 1h & 30mins Photoshoot",
-    description: "Weekdays Promo Price (Monday to Friday)",
-    price: "P1,888.00",
-    promo: "weekdays",
-    icon: <Crown className="w-5 h-5" />,
-    features: [
-      "FREE One (1) pc Contact Lens",
-      "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-      "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-      "FREE SIX (6) pcs SOLO printed edited photos",
-      "FREE Four (4) pcs COLLAGE printed photo",
-      "FREE Unlimited professional-grade photoshoot",
-      "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-      "FREE Thirty (30) pcs edited professional-grade photos",
-      "FREE Unlimited makeup retouch",
-      "FREE Unlimited use of attire/costumes/wardrobe",
-      "One (1) Spin the wheel game",
-      "Within 24 hours output (edited photos) release",
-    ],
+    title: "Graduation Photography",
+    description: "Celebrate academic milestones with professional graduation photo coverage.",
+    features: ["Ceremony and portrait coverage", "Cap and gown shoots", "Solo or group sessions", "Clean and polished edits"],
+    icon: <GraduationCap className="w-5 h-5" />,
+    shootTypes: "graduation",
+    tag: null,
   },
   {
-    title: "VIP Package 1h & 30mins Photoshoot",
-    description: "Weekend Promo Price (Saturday & Sunday)",
-    price: "P2,088.00",
-    promo: "weekend",
-    icon: <Crown className="w-5 h-5" />,
-    features: [
-      "FREE One (1) pc Contact Lens",
-      "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-      "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-      "FREE SIX (6) pcs SOLO printed edited photos",
-      "FREE Four (4) pcs COLLAGE printed photo",
-      "FREE Unlimited professional-grade photoshoot",
-      "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-      "FREE Thirty (30) pcs edited professional-grade photos",
-      "FREE Unlimited makeup retouch",
-      "FREE Unlimited use of attire/costumes/wardrobe",
-      "One (1) Spin the wheel game",
-      "Within 24 hours output (edited photos) release",
-    ],
-  },
-  {
-    title: "VVIP Package Unlimited (No Limit) Photoshoot",
-    description: "Weekdays Promo Price (Monday to Friday)",
-    price: "P2,488.00",
-    promo: "weekdays",
-    icon: <Star className="w-5 h-5" />,
-    features: [
-      "FREE Two (2) pcs Contact Lens",
-      "FREE Personal Assistant (PA) - One (1) person",
-      "One (1) pc FREE VOUCHER - EMSCULPT (Tummy)",
-      "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-      'FREE Edited "Behind the Scene" BTS video (makeup to photoshoot)',
-      "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-      "TEN (10) pcs SOLO printed edited photos",
-      "Four (4) pcs COLLAGE printed photo",
-      "FREE Unlimited professional-grade photoshoot (with concept setup)",
-      "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-      "FREE Unlimited edited professional-grade photos",
-      "FREE Unlimited makeup retouch",
-      "FREE Unlimited use of attire/costumes/wardrobe",
-      "FREE BTR & Set Card photoshoot",
-      "Two (2) Spin the wheel game",
-    ],
-  },
-  {
-    title: "VVIP Package Unlimited (No Limit) Photoshoot",
-    description: "Weekend Promo Price (Saturday & Sunday)",
-    price: "P2,688.00",
-    promo: "weekend",
-    icon: <Star className="w-5 h-5" />,
-    features: [
-      "FREE Two (2) pcs Contact Lens",
-      "FREE Personal Assistant (PA) - One (1) person",
-      "One (1) pc FREE VOUCHER - EMSCULPT (Tummy)",
-      "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-      'FREE Edited "Behind the Scene" BTS video (makeup to photoshoot)',
-      "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-      "TEN (10) pcs SOLO printed edited photos",
-      "Four (4) pcs COLLAGE printed photo",
-      "FREE Unlimited professional-grade photoshoot (with concept setup)",
-      "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-      "FREE Unlimited edited professional-grade photos",
-      "FREE Unlimited makeup retouch",
-      "FREE Unlimited use of attire/costumes/wardrobe",
-      "FREE BTR & Set Card photoshoot",
-      "Two (2) Spin the wheel game",
-    ],
+    title: "Product & Brand Photography",
+    description: "Showcase products and brands with clean, appealing, and market-ready visuals.",
+    features: ["Studio product shots", "Brand-focused styling", "E-commerce ready images", "Creative composition options"],
+    icon: <Package className="w-5 h-5" />,
+    shootTypes: "product",
+    tag: null,
   },
 ]
 
@@ -208,15 +118,11 @@ const amenities = [
 ]
 
 export default function ServicesPage() {
+  const setSelectedService = useBookingStore((state) => state.setSelectedService)
   const router = useRouter()
-  const [promoFilter, setPromoFilter] = useState<"all" | "weekdays" | "weekend">("all")
 
-  const filteredServices = useMemo(() => {
-    if (promoFilter === "all") return photographyServices
-    return photographyServices.filter((service) => service.promo === promoFilter)
-  }, [promoFilter, photographyServices])
-
-  const handleBooking = () => {
+  const handleBooking = (serviceType: string) => {
+    setSelectedService(serviceType)
     router.push("/booking-form")
   }
 
@@ -344,37 +250,12 @@ export default function ServicesPage() {
                 Packages
               </span>
             </h2>
-            <div className="mt-6 flex flex-wrap gap-3 mb-6">
-              {[
-                { label: "All Promos", value: "all" },
-                { label: "Weekdays Promo", value: "weekdays" },
-                { label: "Weekend Promo", value: "weekend" },
-              ].map((btn) => {
-                const active = promoFilter === btn.value
-
-                return (
-                  <button
-                    key={btn.value}
-                    onClick={() => setPromoFilter(btn.value as any)}
-                    className="px-5 py-2 rounded-xl font-sans font-bold text-xs tracking-widest uppercase transition-all duration-300"
-                    style={{
-                      background: active ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})` : ACCENT_DIM,
-                      border: `1px solid ${active ? "transparent" : `${ACCENT}30`}`,
-                      color: active ? "#000" : ACCENT,
-                      boxShadow: active ? `0 0 24px ${ACCENT}40` : "none",
-                    }}
-                  >
-                    {btn.label}
-                  </button>
-                )
-              })}
-            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
-            {filteredServices.map((service, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {photographyServices.map((service, index) => (
               <motion.div
-                key={`${service.title}-${service.promo}`}
+                key={service.title}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
@@ -418,12 +299,12 @@ export default function ServicesPage() {
                       >
                         {service.icon}
                       </div>
-                      {service.price && (
+                      {service.tag && (
                         <span
                           className="text-[10px] font-sans font-black tracking-widest uppercase px-3 py-1 rounded-full"
                           style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`, color: "#000" }}
                         >
-                          {service.price}
+                          {service.tag}
                         </span>
                       )}
                     </div>
@@ -453,7 +334,7 @@ export default function ServicesPage() {
 
                     <div className="mt-auto pt-2">
                       <button
-                        onClick={() => handleBooking()}
+                        onClick={() => handleBooking(service.shootTypes)}
                         className="w-full py-3 rounded-xl font-sans font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300"
                         style={{ background: ACCENT_DIM, border: `1px solid ${ACCENT}30`, color: ACCENT }}
                         onMouseEnter={(e) => {
