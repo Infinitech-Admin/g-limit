@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
       email:            (formData.get('email')            as string) || '',
       phone:            (formData.get('phone')            as string) || '',
       facebook:         (formData.get('facebook')         as string) || '',
-      referred_by:      (formData.get('referred_by')      as string) || null,
-      preferred_date:   (formData.get('date')             as string) || '',
-      preferred_time:   (formData.get('time')             as string) || '',
+      referred_by:      (formData.get('referred_by')      as string) || '',
+      date:             (formData.get('date')             as string) || '',
+      time:             (formData.get('time')             as string) || '',
       package:          (formData.get('package')          as string) || '',
       service_type:     serviceType,
       shoot_type:       (formData.get('shoot_type')       as string) || '',
@@ -30,10 +30,13 @@ export async function POST(request: NextRequest) {
       message:          (formData.get('message')          as string) || '',
       addons,
       addons_other:     (formData.get('addons_other')     as string) || '',
+      hmu_avail:        (formData.get('hmu_avail')        as string) || '',
+      hmu_package:      (formData.get('hmu_package')      as string) || '',
       payment_method:   (formData.get('payment_method')   as string) || '',
     }
 
     console.log('📋 Snapshot before forwarding:', JSON.stringify(snapshot, null, 2))
+    console.log('📦 Package value from formData:', formData.get('package'))
 
     // ── Forward to Laravel ────────────────────────────────────────────────────
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -47,6 +50,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
+      console.error('❌ Laravel validation failed:', data)
       return NextResponse.json(
         {
           success: false,
