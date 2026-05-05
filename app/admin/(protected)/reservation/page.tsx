@@ -3,11 +3,11 @@ import { useEffect, useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -19,13 +19,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-  Plus, 
-  MoreHorizontal, 
-  Pencil, 
-  Trash2, 
-  Eye, 
-  ListIcon, 
+import {
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye,
+  ListIcon,
   X,
   Loader2,
   MapPin,
@@ -50,11 +50,13 @@ interface Reservation {
   service_type: string[]
   shoot_type: string
   shoot_type_other?: string
-  location?: string           // ← new
-  location_address?: string   // ← new
+  location?: string
+  location_address?: string
   message?: string
   addons?: string[]
   addons_other?: string
+  hmu_avail: boolean
+  hmu_package: string
   payment_method: string
   payment_proof: string
   status: "pending" | "confirmed" | "cancelled" | "completed"
@@ -113,7 +115,7 @@ const AdminReservations = () => {
       }
 
       const json = await res.json()
-      
+
       if (json.success && json.data) {
         const reservations = json.data.data || json.data
         setData(Array.isArray(reservations) ? reservations : [])
@@ -149,8 +151,8 @@ const AdminReservations = () => {
       const responseData = await res.json()
 
       if (!res.ok || !responseData.success) {
-        toast.error("Error", { 
-          description: responseData.message || "Failed to delete reservation" 
+        toast.error("Error", {
+          description: responseData.message || "Failed to delete reservation"
         })
         return
       }
@@ -187,15 +189,15 @@ const AdminReservations = () => {
 
       // Check email status
       if (responseData.emailSent) {
-        toast.success("Success", { 
-          description: "Status updated and email notification sent to customer" 
+        toast.success("Success", {
+          description: "Status updated and email notification sent to customer"
         })
       } else {
-        toast.success("Success", { 
-          description: "Status updated successfully (email notification failed)" 
+        toast.success("Success", {
+          description: "Status updated successfully (email notification failed)"
         })
       }
-      
+
       await fetchData()
     } catch (err) {
       console.error(err)
@@ -215,28 +217,28 @@ const AdminReservations = () => {
   }
 
   const columns: ColumnDef<Reservation>[] = [
-    { 
-      accessorKey: "name", 
-      header: "Name", 
-      enableSorting: true 
-    },
-    { 
-      accessorKey: "email", 
-      header: "Email", 
-      enableSorting: true 
-    },
-    { 
-      accessorKey: "phone", 
-      header: "Phone" 
+    {
+      accessorKey: "name",
+      header: "Name",
+      enableSorting: true
     },
     {
-      accessorKey: "referred_by",
-      header: "Referred By",
-      cell: ({ row }) => row.original.referred_by || <span className="text-muted-foreground text-xs">—</span>,
+      accessorKey: "email",
+      header: "Email",
+      enableSorting: true
     },
-    { 
-      accessorKey: "package", 
-      header: "Package", 
+    {
+      accessorKey: "phone",
+      header: "Phone"
+    },
+    {
+      accessorKey: "hmu_package",
+      header: "HMU Package",
+      cell: ({ row }) => row.original.hmu_package || <span className="text-muted-foreground text-xs">—</span>,
+    },
+    {
+      accessorKey: "package",
+      header: "Package",
       enableSorting: true,
       cell: ({ row }) => {
         const pkg = row.getValue("package") as string
@@ -261,8 +263,8 @@ const AdminReservations = () => {
       cell: ({ row }) => {
         const shootType = row.getValue("shoot_type") as string
         const shootTypeOther = row.original.shoot_type_other
-        return shootType === 'other' && shootTypeOther 
-          ? shootTypeOther 
+        return shootType === 'other' && shootTypeOther
+          ? shootTypeOther
           : shootType.charAt(0).toUpperCase() + shootType.slice(1)
       },
     },
@@ -349,21 +351,21 @@ const AdminReservations = () => {
               View Details
             </DropdownMenuItem>
             {row.original.status === "pending" && (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleStatusUpdate(row.original.id, "confirmed")}
               >
                 Confirm Reservation
               </DropdownMenuItem>
             )}
             {row.original.status === "confirmed" && (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleStatusUpdate(row.original.id, "completed")}
               >
                 Mark as Completed
               </DropdownMenuItem>
             )}
             {row.original.status !== "cancelled" && (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleStatusUpdate(row.original.id, "cancelled")}
               >
                 Cancel Reservation
@@ -436,240 +438,204 @@ const AdminReservations = () => {
 
       {/* View Dialog - Inline with Fixed Styling */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
-              Reservation Details
-            </DialogTitle>
-            <DialogDescription className="text-gray-600 dark:text-gray-400">
-              View complete reservation information
-            </DialogDescription>
+        <DialogContent className="w-full max-w-3xl lg:max-w-5xl max-h-[85vh] overflow-y-auto bg-white border border-gray-200 p-0">
+
+          {/* HEADER */}
+          <DialogHeader className="border-b border-gray-100 px-6 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DialogTitle className="text-lg font-medium text-gray-900">
+                  Reservation details
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-400 mt-1">
+                  View complete reservation information
+                </DialogDescription>
+              </div>
+
+              {selectedItem && (
+                <span
+                  className={`
+              mt-1 shrink-0 text-[11px] font-medium uppercase tracking-wider px-3 py-1 rounded-full border
+              ${selectedItem.status === "confirmed"
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : selectedItem.status === "completed"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : selectedItem.status === "cancelled"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"}
+            `}
+                >
+                  {selectedItem.status}
+                </span>
+              )}
+            </div>
           </DialogHeader>
-          
+
+          {/* BODY */}
           {selectedItem && (
-            <div className="space-y-6 py-4">
-              {/* Client Information */}
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                  Client Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Name
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {selectedItem.name}
-                    </p>
+            <div className="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* CLIENT */}
+              <div className="md:col-span-2 bg-gray-50 border border-gray-100 rounded-lg p-5">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
+                  Client
+                </p>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-sm font-medium text-blue-600 shrink-0">
+                    {selectedItem.name
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Email
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {selectedItem.email}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Phone
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {selectedItem.phone}
-                    </p>
-                  </div>
-                  {selectedItem.facebook && (
+
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Facebook/Instagram
-                      </Label>
-                      <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                        {selectedItem.facebook}
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedItem.name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {selectedItem.referred_by
+                          ? `Referred by: ${selectedItem.referred_by}`
+                          : "No referral"}
                       </p>
                     </div>
-                  )}
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Referred By
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {selectedItem.referred_by || (
-                        <span className="text-gray-400 italic text-sm">Not specified</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Service Details */}
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                  Service Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Package
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white capitalize">
-                      {selectedItem.package}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Shoot Type
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white capitalize">
-                      {selectedItem.shoot_type === 'other' && selectedItem.shoot_type_other 
-                        ? selectedItem.shoot_type_other 
-                        : selectedItem.shoot_type}
-                    </p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Service Types
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {getServiceTypesDisplay(selectedItem.service_type)}
-                    </p>
-                  </div>
-                  {selectedItem.addons && selectedItem.addons.length > 0 && (
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Add-ons
-                      </Label>
-                      <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                        {selectedItem.addons.join(', ')}
-                        {selectedItem.addons_other && ` - ${selectedItem.addons_other}`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── NEW: Location ─────────────────────────────────────── */}
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                  Location
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Location Type
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                      {LOCATION_LABELS[selectedItem.location ?? ""] ?? (
-                        <span className="text-gray-400 italic text-sm">Not specified</span>
-                      )}
-                    </p>
-                  </div>
-                  {(selectedItem.location === "outdoor" || selectedItem.location === "clients-venue") && (
                     <div>
-                      <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        {selectedItem.location === "clients-venue" ? "Venue Address" : "Outdoor Location"}
-                      </Label>
-                      <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
-                        {selectedItem.location_address || (
-                          <span className="text-gray-400 italic text-sm">Not specified</span>
-                        )}
+                      <p className="text-[11px] text-gray-300 mb-1">Email</p>
+                      <p className="text-sm text-gray-900 break-words">
+                        {selectedItem.email}
                       </p>
                     </div>
-                  )}
+
+                    <div>
+                      <p className="text-[11px] text-gray-300 mb-1">Phone</p>
+                      <p className="text-sm text-gray-900">
+                        {selectedItem.phone}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Schedule */}
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                  Schedule
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Date
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+              {/* SERVICE */}
+              <div className="bg-white border border-gray-100 rounded-lg p-5">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
+                  Service
+                </p>
+
+                <div className="space-y-3">
+                  {[
+                    { label: "Package", value: selectedItem.package },
+                    {
+                      label: "Shoot type",
+                      value:
+                        selectedItem.shoot_type === "other" &&
+                          selectedItem.shoot_type_other
+                          ? selectedItem.shoot_type_other
+                          : selectedItem.shoot_type,
+                    },
+                    {
+                      label: "Services",
+                      value: getServiceTypesDisplay(selectedItem.service_type),
+                    },
+                    { label: "HMU package", value: selectedItem.hmu_package },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between gap-4">
+                      <span className="text-xs text-gray-400">{label}</span>
+                      <span className="text-sm font-medium text-gray-900 text-right">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SCHEDULE */}
+              <div className="bg-white border border-gray-100 rounded-lg p-5">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
+                  Schedule & location
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-400">Date</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatMonthDayYear(selectedItem.preferred_date)}
-                    </p>
+                    </span>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Time
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">
+
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-400">Time</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatDisplayTime(selectedItem.preferred_time)}
-                    </p>
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-400">Location</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {LOCATION_LABELS[selectedItem.location ?? ""] ?? "—"}
+                      </span>
+                    </div>
+
+                    {selectedItem.location_address && (
+                      <p className="text-sm text-gray-900 mt-2 break-words">
+                        {selectedItem.location_address}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Payment Information */}
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                  Payment Information
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Payment Method
-                    </Label>
-                    <p className="mt-1 text-base font-medium text-gray-900 dark:text-white uppercase">
+              {/* PAYMENT */}
+              <div className="bg-white border border-gray-100 rounded-lg p-5">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
+                  Payment
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-400">Method</span>
+                    <span className="text-sm font-medium text-gray-900 uppercase">
                       {selectedItem.payment_method}
-                    </p>
+                    </span>
                   </div>
+
                   {selectedItem.payment_proof && (
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 block">
-                        Payment Proof
-                      </Label>
-                      <div className="mt-2 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                        <img 
-                          src={getPaymentProofUrl(selectedItem.payment_proof)} 
-                          alt="Payment Proof"
-                          className="max-w-full h-auto rounded border border-gray-300 dark:border-gray-600"
-                        />
-                      </div>
-                    </div>
+                    <img
+                      src={getPaymentProofUrl(selectedItem.payment_proof)}
+                      alt="Payment proof"
+                      className="rounded border border-gray-200 mt-2"
+                    />
                   )}
                 </div>
               </div>
 
-              {/* Additional Information */}
+              {/* MESSAGE */}
               {selectedItem.message && (
-                <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
-                    Additional Requests
-                  </h3>
-                  <p className="text-base text-gray-700 dark:text-gray-300">
+                <div className="md:col-span-2 bg-gray-50 border border-gray-100 rounded-lg p-5">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-2">
+                    Additional requests
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed break-words">
                     {selectedItem.message}
                   </p>
                 </div>
               )}
-
-              {/* Status */}
-              <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 block">
-                  Status
-                </Label>
-                <Badge
-                  className={
-                    selectedItem.status === "confirmed"
-                      ? "bg-green-100 text-green-800 border border-green-200"
-                      : selectedItem.status === "completed"
-                        ? "bg-blue-100 text-blue-800 border border-blue-200"
-                        : selectedItem.status === "cancelled"
-                          ? "bg-red-100 text-red-800 border border-red-200"
-                          : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                  }
-                >
-                  {selectedItem.status}
-                </Badge>
-              </div>
             </div>
           )}
 
-          <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <Button variant="outline" onClick={() => setIsViewOpen(false)}>
+          {/* FOOTER */}
+          <DialogFooter className="border-t border-gray-100 px-6 py-4">
+            <Button
+              variant="outline"
+              className="text-sm border-gray-200 text-gray-700 hover:bg-gray-50"
+              onClick={() => setIsViewOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -687,7 +653,7 @@ const AdminReservations = () => {
               Are you sure you want to delete this reservation? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedItem && (
             <div className="py-4 space-y-2">
               <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -703,15 +669,15 @@ const AdminReservations = () => {
           )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteOpen(false)}
               disabled={loading}
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
               disabled={loading}
             >
