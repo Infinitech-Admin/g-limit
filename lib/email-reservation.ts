@@ -22,8 +22,10 @@ interface Reservation {
   phone: string;
   facebook?: string;
   referred_by?: string | null;
-  preferred_date: string;
-  preferred_time: string;
+  preferred_date?: string;
+  preferred_time?: string;
+  date?: string;
+  time?: string;
   package: string;
   service_type: string[];
   shoot_type: string;
@@ -33,6 +35,8 @@ interface Reservation {
   message?: string;
   addons?: string[];
   addons_other?: string;
+  hmu_avail?: string;
+  hmu_package?: string;
   payment_method: string;
   status: string;
   _overrideAdminEmail?: string;
@@ -47,6 +51,7 @@ const formatLocation = (location?: string, locationAddress?: string): string => 
     studio: 'Studio',
     outdoor: 'Outdoor',
     'clients-venue': "Client's Venue",
+    'studio-rental': 'Studio Rental',
   };
   const label = labels[location] ?? location;
   if ((location === 'outdoor' || location === 'clients-venue') && locationAddress) {
@@ -154,11 +159,20 @@ const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
                           ${detailRow('Location', locationDisplay)}
                           ${detailRow(
                             'Date',
-                            new Date(reservation.preferred_date).toLocaleDateString('en-US', {
+                            `<strong>${new Date(reservation.preferred_date || reservation.date || new Date().toISOString()).toLocaleDateString('en-US', {
                               year: 'numeric', month: 'long', day: 'numeric',
-                            })
+                            })}</strong>`
                           )}
-                          ${detailRow('Time', reservation.preferred_time)}
+                          ${detailRow('Time', `${(() => {
+                            const rawTime = reservation.preferred_time || reservation.time || '';
+                            const timeMatch = rawTime.match(/(\d{1,2}):(\d{2})/);
+                            if (!timeMatch) return `<strong>N/A</strong>`;
+                            const [, hours, minutes] = timeMatch;
+                            const h = parseInt(hours);
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            const h12 = h % 12 || 12;
+                            return `<strong>${h12}:${minutes} ${ampm}</strong>`;
+                          })()}`)}
                           ${detailRow(
                             'Payment Method',
                             `<span style="text-transform:uppercase">${reservation.payment_method}</span>`
@@ -168,6 +182,12 @@ const getCustomerEmailTemplate = (reservation: Reservation, status: string) => {
                                 'Add-ons',
                                 reservation.addons.join(', ') +
                                   (reservation.addons_other ? ` — ${reservation.addons_other}` : '')
+                              )
+                            : ''}
+                          ${reservation.hmu_avail === '1' || reservation.hmu_avail === 'true'
+                            ? detailRow(
+                                'Hair & Makeup',
+                                `<span style="text-transform:capitalize">${reservation.hmu_package || 'Yes'}</span>`
                               )
                             : ''}
                           ${reservation.referred_by
@@ -305,11 +325,20 @@ const getAdminNewBookingEmailTemplate = (reservation: Reservation) => {
                           ${detailRow('Location', locationDisplay)}
                           ${detailRow(
                             'Date',
-                            `<strong>${new Date(reservation.preferred_date).toLocaleDateString('en-US', {
+                            `<strong>${new Date(reservation.preferred_date || reservation.date || new Date().toISOString()).toLocaleDateString('en-US', {
                               year: 'numeric', month: 'long', day: 'numeric',
                             })}</strong>`
                           )}
-                          ${detailRow('Time', `<strong>${reservation.preferred_time}</strong>`)}
+                          ${detailRow('Time', `${(() => {
+                            const rawTime = reservation.preferred_time || reservation.time || '';
+                            const timeMatch = rawTime.match(/(\d{1,2}):(\d{2})/);
+                            if (!timeMatch) return `<strong>N/A</strong>`;
+                            const [, hours, minutes] = timeMatch;
+                            const h = parseInt(hours);
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            const h12 = h % 12 || 12;
+                            return `<strong>${h12}:${minutes} ${ampm}</strong>`;
+                          })()}`)}
                           ${detailRow(
                             'Payment Method',
                             `<span style="text-transform:uppercase">${reservation.payment_method}</span>`
@@ -433,8 +462,8 @@ export const sendNewBookingAdminEmail = async (reservation: Reservation) => {
       from: `"Studio Reservations" <${fromAddress}>`,
       to: adminEmail,
       subject: `🎉 New Reservation: ${cleanReservation.name} — ${new Date(
-        cleanReservation.preferred_date
-      ).toLocaleDateString()}`,
+        cleanReservation.preferred_date || cleanReservation.date || new Date().toISOString()
+      ).toLocaleDateString()}`, 
       html: getAdminNewBookingEmailTemplate(cleanReservation as Reservation),
     });
 
