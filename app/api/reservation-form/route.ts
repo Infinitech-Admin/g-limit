@@ -13,29 +13,17 @@ export async function POST(request: NextRequest) {
     try { serviceType = JSON.parse((formData.get('service_type') as string) || '[]') } catch { serviceType = [] }
     try { addons = JSON.parse((formData.get('addons') as string) || '[]') } catch { addons = [] }
 
-    // Get raw values
-    const rawPackage = (formData.get('package') as string) || ''
-    const rawHmuAvail = (formData.get('hmu_avail') as string) || ''
-    const rawHmuPackage = (formData.get('hmu_package') as string) || ''
-
-    // Transform package ID to Laravel format (remove _weekdays/_weekends suffixes)
-    const packageValue = rawPackage.replace(/_(weekdays|weekends)$/, '')
-
-    // Transform hmu_avail to tinyint (1/0) for database
-    const hmuAvailValue = rawHmuAvail === 'yes' ? '1' : (rawHmuAvail === 'no' ? '0' : '')
-
-    // Transform hmu_package similarly
-    const hmuPackageValue = rawHmuPackage.replace(/_(weekdays|weekends)$/, '')
-
     const snapshot = {
       name:             (formData.get('name')             as string) || '',
       email:            (formData.get('email')            as string) || '',
       phone:            (formData.get('phone')            as string) || '',
       facebook:         (formData.get('facebook')         as string) || '',
-      referred_by:      (formData.get('referred_by')      as string) || '',
+      referred_by:      (formData.get('referred_by')      as string) || null,
+      preferred_date:   (formData.get('preferred_date')   as string) || (formData.get('date') as string) || '',
+      preferred_time:   (formData.get('preferred_time')   as string) || (formData.get('time') as string) || '',
       date:             (formData.get('date')             as string) || '',
       time:             (formData.get('time')             as string) || '',
-      package:          packageValue,
+      package:          (formData.get('package')          as string) || '',
       service_type:     serviceType,
       shoot_type:       (formData.get('shoot_type')       as string) || '',
       shoot_type_other: (formData.get('shoot_type_other') as string) || '',
@@ -44,15 +32,10 @@ export async function POST(request: NextRequest) {
       message:          (formData.get('message')          as string) || '',
       addons,
       addons_other:     (formData.get('addons_other')     as string) || '',
-      hmu_avail:        hmuAvailValue,
-      hmu_package:      hmuPackageValue,
       payment_method:   (formData.get('payment_method')   as string) || '',
     }
 
-    // Update formData with transformed values before forwarding to Laravel
-    formData.set('package', packageValue)
-    if (hmuAvailValue) formData.set('hmu_avail', hmuAvailValue)
-    if (hmuPackageValue) formData.set('hmu_package', hmuPackageValue)
+    console.log('📋 Snapshot before forwarding:', JSON.stringify(snapshot, null, 2))
 
     // ── Forward to Laravel ────────────────────────────────────────────────────
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -66,7 +49,6 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('❌ Laravel validation failed:', data)
       return NextResponse.json(
         {
           success: false,
@@ -124,6 +106,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Reservation submitted successfully!',
       data,
+      adminEmailsSent,
+      ...(Object.keys(adminEmailErrors).length && { adminEmailErrors }),
     })
 
   } catch (error) {
