@@ -55,8 +55,6 @@ interface Reservation {
   message?: string
   addons?: string[]
   addons_other?: string
-  hmu_avail: boolean
-  hmu_package: string
   payment_method: string
   payment_proof: string
   status: "pending" | "confirmed" | "cancelled" | "completed"
@@ -232,11 +230,6 @@ const AdminReservations = () => {
       header: "Phone"
     },
     {
-      accessorKey: "hmu_package",
-      header: "HMU Package",
-      cell: ({ row }) => row.original.hmu_package || <span className="text-muted-foreground text-xs">—</span>,
-    },
-    {
       accessorKey: "package",
       header: "Package",
       enableSorting: true,
@@ -404,7 +397,7 @@ const AdminReservations = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -416,283 +409,346 @@ const AdminReservations = () => {
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
         </select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchData}
+          disabled={loading}
+          className="gap-2"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={data}
-        pageCount={totalPages}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={(pi, ps) => {
-          setPageIndex(pi)
-          setPageSize(ps)
-        }}
-        searchFields={["name" as keyof Reservation, "email" as keyof Reservation]}
-        searchPlaceholder="Search by name or email..."
-        search={search}
-        onSearchChange={setSearch}
-        onSortingChange={setSorting}
-      />
+      <div className="relative">
+        <DataTable
+          columns={columns}
+          data={data}
+          pageCount={totalPages}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          onPageChange={(pi, ps) => {
+            setPageIndex(pi)
+            setPageSize(ps)
+          }}
+          searchFields={["name" as keyof Reservation, "email" as keyof Reservation]}
+          searchPlaceholder="Search by name or email..."
+          search={search}
+          onSearchChange={setSearch}
+          onSortingChange={setSorting}
+        />
+        {loading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <div className="flex items-center gap-3 px-4 py-3 bg-white border border-[#e0dbd2] rounded-md shadow-lg">
+              <Loader2 className="w-5 h-5 animate-spin text-[#a07c2e]" />
+              <span className="text-sm text-[#5c5044] font-medium">Loading reservations...</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* View Dialog - Inline with Fixed Styling */}
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="w-full max-w-3xl lg:max-w-5xl max-h-[85vh] overflow-y-auto bg-white border border-gray-200 p-0">
+    {/* View Dialog */}
+    <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+      <DialogContent className="text-gray-500 w-full max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto p-0 border border-[#e0dbd2] bg-white">
+        {/* Gold accent line top */}
+        <div className="h-[3px] bg-gradient-to-r from-transparent via-[#c9a84c] via-[#e8c96a] via-[#c9a84c] to-transparent" />
 
-          {/* HEADER */}
-          <DialogHeader className="border-b border-gray-100 px-6 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <DialogTitle className="text-lg font-medium text-gray-900">
-                  Reservation details
-                </DialogTitle>
-                <DialogDescription className="text-sm text-gray-400 mt-1">
-                  View complete reservation information
-                </DialogDescription>
-              </div>
+        {selectedItem && (
+          <div className="bg-white">
+            {/* HEADER */}
+            <DialogHeader className="px-8 pt-8 pb-6 border-b border-[#e0dbd2]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  {/* Brand pill */}
+                  <div className="inline-flex items-center px-3 py-1.5 bg-[rgba(201,168,76,0.08)] border border-[#c9a84c] rounded mb-4">
+                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#a07c2e]">
+                      G-LIMIT STUDIO
+                    </span>
+                  </div>
+                  <DialogTitle className="text-2xl font-normal text-[#1a1612] tracking-wide">
+                    Reservation Details
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-[#7a6e5e] mt-2">
+                    Reference: #{selectedItem.id?.toString().padStart(6, '0') || '000000'}
+                  </DialogDescription>
+                </div>
 
-              {selectedItem && (
                 <span
                   className={`
-              mt-1 shrink-0 text-[11px] font-medium uppercase tracking-wider px-3 py-1 rounded-full border
-              ${selectedItem.status === "confirmed"
-                      ? "bg-green-50 text-green-700 border-green-200"
+                    shrink-0 text-[11px] font-medium uppercase tracking-[0.15em] px-4 py-2 border rounded-sm
+                    ${selectedItem.status === "confirmed"
+                      ? "bg-[#edfaf4] text-[#1a7a4a] border-[#7ed9ae]"
                       : selectedItem.status === "completed"
-                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        ? "bg-[#eff6ff] text-[#1d4ed8] border-[#93c5fd]"
                         : selectedItem.status === "cancelled"
-                          ? "bg-red-50 text-red-700 border-red-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200"}
-            `}
+                          ? "bg-[#fef2f2] text-[#b91c1c] border-[#fca5a5]"
+                          : "bg-[#fffbeb] text-[#a07c2e] border-[#c9a84c]"}
+                  `}
                 >
                   {selectedItem.status}
                 </span>
-              )}
-            </div>
-          </DialogHeader>
+              </div>
+            </DialogHeader>
 
-          {/* BODY */}
-          {selectedItem && (
-            <div className="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              {/* CLIENT */}
-              <div className="md:col-span-2 bg-gray-50 border border-gray-100 rounded-lg p-5">
-                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
-                  Client
-                </p>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-sm font-medium text-blue-600 shrink-0">
-                    {selectedItem.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
-                  </div>
-
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {selectedItem.name}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {selectedItem.referred_by
-                          ? `Referred by: ${selectedItem.referred_by}`
-                          : "No referral"}
-                      </p>
+            {/* BODY */}
+            <div className="px-8 py-8 bg-[#faf9f6]">
+              {/* CLIENT SECTION - Full Width */}
+              <div className="mb-6 bg-white border border-[#e0dbd2] rounded-sm shadow-sm">
+                <div className="px-6 py-4 border-b border-[#e0dbd2] bg-[#faf9f6]">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#a07c2e]">
+                    Client Information
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-start gap-5">
+                    {/* Avatar */}
+                    <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-[#c9a84c] to-[#a07c2e] flex items-center justify-center text-lg font-medium text-white shrink-0">
+                      {selectedItem.name
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
                     </div>
 
-                    <div>
-                      <p className="text-[11px] text-gray-300 mb-1">Email</p>
-                      <p className="text-sm text-gray-900 break-words">
-                        {selectedItem.email}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[11px] text-gray-300 mb-1">Phone</p>
-                      <p className="text-sm text-gray-900">
-                        {selectedItem.phone}
-                      </p>
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Name</p>
+                        <p className="text-base font-medium text-[#1a1612]">{selectedItem.name}</p>
+                        {selectedItem.referred_by && (
+                          <p className="text-xs text-[#b4a898] mt-1">
+                            Referred by: {selectedItem.referred_by}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Email</p>
+                        <p className="text-sm text-[#1a1612] break-all">{selectedItem.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Phone</p>
+                        <p className="text-sm text-[#1a1612]">{selectedItem.phone}</p>
+                        {selectedItem.facebook && (
+                          <p className="text-xs text-[#9c8e7e] mt-1">FB: {selectedItem.facebook}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* SERVICE */}
-              <div className="bg-white border border-gray-100 rounded-lg p-5">
-                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
-                  Service
-                </p>
-
-                <div className="space-y-3">
-                  {[
-                    { label: "Package", value: selectedItem.package },
-                    {
-                      label: "Shoot type",
-                      value:
-                        selectedItem.shoot_type === "other" &&
-                          selectedItem.shoot_type_other
+              {/* 3-Column Grid for Service, Schedule, Payment */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+                {/* SERVICE */}
+                <div className="bg-white border border-[#e0dbd2] rounded-sm shadow-sm">
+                  <div className="px-5 py-3 border-b border-[#e0dbd2] bg-[#faf9f6]">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#a07c2e]">
+                      Service
+                    </h3>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Package</p>
+                      <p className="text-sm font-medium text-[#1a1612] capitalize">{selectedItem.package?.replace(/_/g, ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Shoot Type</p>
+                      <p className="text-sm text-[#1a1612] capitalize">
+                        {selectedItem.shoot_type === "other" && selectedItem.shoot_type_other
                           ? selectedItem.shoot_type_other
-                          : selectedItem.shoot_type,
-                    },
-                    {
-                      label: "Services",
-                      value: getServiceTypesDisplay(selectedItem.service_type),
-                    },
-                    { label: "HMU package", value: selectedItem.hmu_package },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between gap-4">
-                      <span className="text-xs text-gray-400">{label}</span>
-                      <span className="text-sm font-medium text-gray-900 text-right">
-                        {value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* SCHEDULE */}
-              <div className="bg-white border border-gray-100 rounded-lg p-5">
-                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
-                  Schedule & location
-                </p>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-gray-400">Date</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatMonthDayYear(selectedItem.preferred_date)}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-xs text-gray-400">Time</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatDisplayTime(selectedItem.preferred_time)}
-                    </span>
-                  </div>
-
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-gray-400">Location</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {LOCATION_LABELS[selectedItem.location ?? ""] ?? "—"}
-                      </span>
-                    </div>
-
-                    {selectedItem.location_address && (
-                      <p className="text-sm text-gray-900 mt-2 break-words">
-                        {selectedItem.location_address}
+                          : selectedItem.shoot_type}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Services</p>
+                      <p className="text-sm text-[#1a1612]">{getServiceTypesDisplay(selectedItem.service_type)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SCHEDULE */}
+                <div className="bg-white border border-[#e0dbd2] rounded-sm shadow-sm">
+                  <div className="px-5 py-3 border-b border-[#e0dbd2] bg-[#faf9f6]">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#a07c2e]">
+                      Schedule & Location
+                    </h3>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-sm bg-[rgba(201,168,76,0.15)] flex items-center justify-center">
+                        <span className="text-[#a07c2e] text-xs">📅</span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e]">Date</p>
+                        <p className="text-sm font-medium text-[#a07c2e]">{formatMonthDayYear(selectedItem.preferred_date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-sm bg-[rgba(201,168,76,0.15)] flex items-center justify-center">
+                        <span className="text-[#a07c2e] text-xs">🕐</span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e]">Time</p>
+                        <p className="text-sm font-medium text-[#a07c2e]">{formatDisplayTime(selectedItem.preferred_time)}</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-[#e0dbd2]">
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Location</p>
+                      <p className="text-sm text-[#1a1612]">
+                        {LOCATION_LABELS[selectedItem.location ?? ""] ?? "—"}
+                      </p>
+                      {selectedItem.location_address && (
+                        <p className="text-xs text-[#7a6e5e] mt-1 break-words">{selectedItem.location_address}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* PAYMENT */}
+                <div className="bg-white border border-[#e0dbd2] rounded-sm shadow-sm">
+                  <div className="px-5 py-3 border-b border-[#e0dbd2] bg-[#faf9f6]">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#a07c2e]">
+                      Payment
+                    </h3>
+                  </div>
+                  <div className="p-5">
+                    <div className="mb-4">
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-1">Method</p>
+                      <p className="text-lg font-medium text-[#1a1612] uppercase tracking-wider">{selectedItem.payment_method}</p>
+                    </div>
+                    {selectedItem.payment_proof && (
+                      <div className="mt-4">
+                        <p className="text-[11px] uppercase tracking-[0.1em] text-[#9c8e7e] mb-2">Proof of Payment</p>
+                        <a
+                          href={getPaymentProofUrl(selectedItem.payment_proof)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block relative group"
+                        >
+                          <img
+                            src={getPaymentProofUrl(selectedItem.payment_proof)}
+                            alt="Payment proof"
+                            className="w-full h-32 object-cover rounded-sm border border-[#e0dbd2] group-hover:border-[#c9a84c] transition-colors"
+                          />
+                          <div className="absolute inset-0 bg-[rgba(26,22,18,0.5)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-sm">
+                            <span className="text-white text-sm">Click to view full size</span>
+                          </div>
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* PAYMENT */}
-              <div className="bg-white border border-gray-100 rounded-lg p-5">
-                <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-4">
-                  Payment
-                </p>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-gray-400">Method</span>
-                    <span className="text-sm font-medium text-gray-900 uppercase">
-                      {selectedItem.payment_method}
-                    </span>
+              {/* ADD-ONS */}
+              {selectedItem.addons && selectedItem.addons.length > 0 && (
+                <div className="mb-6 bg-white border border-[#e0dbd2] rounded-sm shadow-sm">
+                  <div className="px-5 py-3 border-b border-[#e0dbd2] bg-[#faf9f6]">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#a07c2e]">
+                      Selected Add-ons
+                    </h3>
                   </div>
-
-                  {selectedItem.payment_proof && (
-                    <img
-                      src={getPaymentProofUrl(selectedItem.payment_proof)}
-                      alt="Payment proof"
-                      className="rounded border border-gray-200 mt-2"
-                    />
-                  )}
+                  <div className="p-5">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedItem.addons.map((addon) => (
+                        <span
+                          key={addon}
+                          className="px-3 py-1.5 bg-[rgba(201,168,76,0.1)] border border-[#c9a84c] rounded-sm text-xs text-[#a07c2e] uppercase tracking-wider"
+                        >
+                          {addon.replace(/-/g, ' ')}
+                        </span>
+                      ))}
+                      {selectedItem.addons_other && (
+                        <span className="px-3 py-1.5 bg-[#f5f3ef] border border-[#e0dbd2] rounded-sm text-xs text-[#7a6e5e]">
+                          Other: {selectedItem.addons_other}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* MESSAGE */}
               {selectedItem.message && (
-                <div className="md:col-span-2 bg-gray-50 border border-gray-100 rounded-lg p-5">
-                  <p className="text-[11px] font-medium uppercase tracking-widest text-gray-300 mb-2">
-                    Additional requests
+                <div className="bg-[rgba(201,168,76,0.08)] border-l-[3px] border-[#c9a84c] rounded-r-sm p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#a07c2e] mb-2">
+                    Additional Requests
                   </p>
-                  <p className="text-sm text-gray-600 leading-relaxed break-words">
-                    {selectedItem.message}
+                  <p className="text-sm text-[#5c5044] leading-relaxed italic">
+                    &ldquo;{selectedItem.message}&rdquo;
                   </p>
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* FOOTER */}
-          <DialogFooter className="border-t border-gray-100 px-6 py-4">
-            <Button
-              variant="outline"
-              className="text-sm border-gray-200 text-gray-700 hover:bg-gray-50"
-              onClick={() => setIsViewOpen(false)}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Gold accent line bottom */}
+        <div className="h-[3px] bg-gradient-to-r from-transparent via-[#c9a84c] via-[#e8c96a] via-[#c9a84c] to-transparent" />
+      </DialogContent>
+    </Dialog>
 
-      {/* Delete Dialog - Inline */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="bg-white dark:bg-gray-900">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-white">
-              Delete Reservation
-            </DialogTitle>
-            <DialogDescription className="text-gray-600 dark:text-gray-400">
-              Are you sure you want to delete this reservation? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
+    {/* Delete Dialog */}
+    <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      <DialogContent className="bg-white dark:bg-gray-900">
+        <DialogHeader>
+          <DialogTitle className="text-gray-900 dark:text-white">
+            Delete Reservation
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            Are you sure you want to delete this reservation? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
 
-          {selectedItem && (
-            <div className="py-4 space-y-2">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <strong className="text-gray-900 dark:text-white">Name:</strong> {selectedItem.name}
-              </p>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <strong className="text-gray-900 dark:text-white">Email:</strong> {selectedItem.email}
-              </p>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <strong className="text-gray-900 dark:text-white">Date:</strong> {formatMonthDayYear(selectedItem.preferred_date)}
-              </p>
-            </div>
-          )}
+        {selectedItem && (
+          <div className="py-4 space-y-2">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong className="text-gray-900 dark:text-white">Name:</strong> {selectedItem.name}
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong className="text-gray-900 dark:text-white">Email:</strong> {selectedItem.email}
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong className="text-gray-900 dark:text-white">Date:</strong> {formatMonthDayYear(selectedItem.preferred_date)}
+            </p>
+          </div>
+        )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsDeleteOpen(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Delete'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </div>
   )
 }
