@@ -594,8 +594,8 @@ export default function BookingForm() {
       id: "gcash",
       name: "GCash",
       value: "gcash",
-      details: "Number: 0969 053 7370",
-      accountname: "Jhoanna Mae M. Papio",
+      details: "Number: 0945 675 4591",
+      accountname: "Justin De Castro",
     },
   ]
 
