@@ -5,6 +5,7 @@ import AboutSection from "@/components/home/about-section"
 import { TestimonialsSection } from "@/components/home/testimonials-section"
 import { CTASection } from "@/components/home/cta-section"
 import { ErrorBoundary } from "@/components/error-boundary"
+import PriceList from "@/components/home/price"
 
 export default function Home() {
   return (
@@ -20,6 +21,9 @@ export default function Home() {
       </ErrorBoundary>
       <ErrorBoundary>
         <AboutSection />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <PriceList />
       </ErrorBoundary>
       <ErrorBoundary>
         <TestimonialsSection />
