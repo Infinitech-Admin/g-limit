@@ -4,7 +4,10 @@ import TestimonialsForm from "./testimonials-form";
 
 export function TestimonialsSection() {
   return (
-    <section className="py-10 md:py-14 bg-black overflow-hidden relative">
+    <section
+      id="testimonials"
+      className="pt-24 pb-10 md:pt-32 md:pb-14 bg-black overflow-hidden relative scroll-mt-24"
+    >
       <div className="container mx-auto px-6 relative z-10">
         {/* Header */}
         <motion.div
@@ -14,9 +17,9 @@ export function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-6 md:mb-8"
         >
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white leading-tight">
             How was your{" "}
-            <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic">
+            <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic pr-1">
               G-Limit Studio
             </span>{" "}
             experience?
