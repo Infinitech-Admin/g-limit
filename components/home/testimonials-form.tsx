@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 import { ChevronDown, Check, Sparkles } from "lucide-react";
 
 type Pkg = {
@@ -221,6 +222,13 @@ const borderClass = (hasError?: string) =>
     ? "border border-red-500"
     : "border border-amber-500/30 focus:border-amber-500";
 
+// Glow keyframes for the sparkle (handled by framer-motion, no globals.css needed)
+const SPARKLE_GLOW = [
+  "drop-shadow(0 0 4px rgba(255,215,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.7)) drop-shadow(0 0 20px rgba(255,200,0,0.5))",
+  "drop-shadow(0 0 6px rgba(255,235,120,1)) drop-shadow(0 0 16px rgba(255,215,0,0.9)) drop-shadow(0 0 32px rgba(255,200,0,0.7))",
+  "drop-shadow(0 0 4px rgba(255,215,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.7)) drop-shadow(0 0 20px rgba(255,200,0,0.5))",
+];
+
 const TestimonialsForm = () => {
   const [formData, setFormData] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -317,9 +325,24 @@ const TestimonialsForm = () => {
             className="flex items-center justify-center gap-4"
             aria-hidden="true"
           >
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d4a574]/70 to-[#d4a574]" />
-            <Sparkles className="h-6 w-6 shrink-0 text-[#d4a574] animate-pulse drop-shadow-[0_0_8px_rgba(212,165,116,0.9)]" />
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[#d4a574]/70 to-[#d4a574]" />
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#FFD700]/70 to-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.6)]" />
+            <motion.div
+              className="shrink-0"
+              animate={{ filter: SPARKLE_GLOW }}
+              transition={{
+                duration: 2.5,
+                ease: "easeInOut",
+                repeat: Infinity,
+              }}
+            >
+              <Sparkles
+                className="h-8 w-8 text-[#FFD700]"
+                strokeWidth={2.25}
+                fill="#FFD700"
+                fillOpacity={0.35}
+              />
+            </motion.div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[#FFD700]/70 to-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.6)]" />
           </div>
 
           {/* Name */}
