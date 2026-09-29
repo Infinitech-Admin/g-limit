@@ -1,137 +1,154 @@
-"use client"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
-import { useState, useEffect, useCallback, memo } from "react"
-import Image from "next/image"
-import { Quote, ChevronLeft, ChevronRight, Star, Camera } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import dynamic from 'next/dynamic'
-import TestimonialsForm from "./testimonials-form"
-import { Testimonial } from "@/lib/types/types"
+"use client";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useState, useEffect, useCallback, memo } from "react";
+import Image from "next/image";
+import { Quote, ChevronLeft, ChevronRight, Star, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import dynamic from "next/dynamic";
+import TestimonialsForm from "./testimonials-form";
+import { Testimonial } from "@/lib/types/types";
 
 // Lazy load particles
 const FloatingParticles = dynamic(
   () => import("../animated-golden-particles"),
-  { ssr: false }
-)
+  { ssr: false },
+);
 
 // Memoized star rating component
-const StarRating = memo(({ rating, shouldReduceMotion }: { rating: number; shouldReduceMotion: boolean }) => {
-  return (
-    <div className="flex justify-center gap-1.5 mb-6 sm:mb-8">
-      {[...Array(rating)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: shouldReduceMotion ? 0 : 0.1 + i * 0.05, duration: 0.3 }}
-        >
-          <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-[#d4a574] text-[#d4a574]" />
-        </motion.div>
-      ))}
-    </div>
-  )
-})
+const StarRating = memo(
+  ({
+    rating,
+    shouldReduceMotion,
+  }: {
+    rating: number;
+    shouldReduceMotion: boolean;
+  }) => {
+    return (
+      <div className="flex justify-center gap-1.5 mb-6 sm:mb-8">
+        {[...Array(rating)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              delay: shouldReduceMotion ? 0 : 0.1 + i * 0.05,
+              duration: 0.3,
+            }}
+          >
+            <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-[#d4a574] text-[#d4a574]" />
+          </motion.div>
+        ))}
+      </div>
+    );
+  },
+);
 
-StarRating.displayName = 'StarRating'
+StarRating.displayName = "StarRating";
 
 // Memoized dot navigation component
-const DotNavigation = memo(({ 
-  currentIndex, 
-  totalCount,
-  onDotClick,
-  shouldReduceMotion
-}: { 
-  currentIndex: number;
-  totalCount: number;
-  onDotClick: (index: number, direction: number) => void;
-  shouldReduceMotion: boolean;
-}) => {
-  const maxDots = 5
-  const half = Math.floor(maxDots / 2)
-  let start = currentIndex - half
-  let end = currentIndex + half
+const DotNavigation = memo(
+  ({
+    currentIndex,
+    totalCount,
+    onDotClick,
+    shouldReduceMotion,
+  }: {
+    currentIndex: number;
+    totalCount: number;
+    onDotClick: (index: number, direction: number) => void;
+    shouldReduceMotion: boolean;
+  }) => {
+    const maxDots = 5;
+    const half = Math.floor(maxDots / 2);
+    let start = currentIndex - half;
+    let end = currentIndex + half;
 
-  if (start < 0) {
-    start = 0
-    end = Math.min(maxDots - 1, totalCount - 1)
-  }
-  if (end >= totalCount) {
-    end = totalCount - 1
-    start = Math.max(0, totalCount - maxDots)
-  }
+    if (start < 0) {
+      start = 0;
+      end = Math.min(maxDots - 1, totalCount - 1);
+    }
+    if (end >= totalCount) {
+      end = totalCount - 1;
+      start = Math.max(0, totalCount - maxDots);
+    }
 
-  const indices = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+    const indices = Array.from(
+      { length: end - start + 1 },
+      (_, i) => start + i,
+    );
 
-  return (
-    <div className="flex gap-2 items-center px-2 sm:px-4">
-      {indices.map((index) => (
-        <button
-          key={index}
-          onClick={() => onDotClick(index, index > currentIndex ? 1 : -1)}
-          className={`transition-all duration-300 rounded-full ${
-            index === currentIndex
-              ? "w-8 sm:w-10 h-2.5 sm:h-3 bg-gradient-to-r from-[#d4a574] to-[#c9944a]"
-              : "w-2.5 sm:w-3 h-2.5 sm:h-3 bg-[#d4a574]/30 hover:bg-[#d4a574]/60"
-          }`}
-          aria-label={`Go to testimonial ${index + 1}`}
-        />
-      ))}
-    </div>
-  )
-})
+    return (
+      <div className="flex gap-2 items-center px-2 sm:px-4">
+        {indices.map((index) => (
+          <button
+            key={index}
+            onClick={() => onDotClick(index, index > currentIndex ? 1 : -1)}
+            className={`transition-all duration-300 rounded-full ${
+              index === currentIndex
+                ? "w-8 sm:w-10 h-2.5 sm:h-3 bg-gradient-to-r from-[#d4a574] to-[#c9944a]"
+                : "w-2.5 sm:w-3 h-2.5 sm:h-3 bg-[#d4a574]/30 hover:bg-[#d4a574]/60"
+            }`}
+            aria-label={`Go to feedback ${index + 1}`}
+          />
+        ))}
+      </div>
+    );
+  },
+);
 
-DotNavigation.displayName = 'DotNavigation'
+DotNavigation.displayName = "DotNavigation";
 
 export function TestimonialsSection() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [direction, setDirection] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const shouldReduceMotion = useReducedMotion()
+  const [feedback, setFeedback] = useState<Testimonial[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
-    async function fetchTestimonials() {
+    async function fetchFeedback() {
       try {
-        const res = await fetch("/api/testimonials", {
-          next: { revalidate: 3600 } // Cache for 1 hour
-        })
-        const data = await res.json()
-        setTestimonials(data)
+        const res = await fetch("/api/feedback", {
+          next: { revalidate: 3600 }, // Cache for 1 hour
+        });
+        const json = await res.json();
+        // Laravel returns { data: [...] }
+        setFeedback(Array.isArray(json) ? json : (json?.data ?? []));
       } catch (e) {
-        console.error("Failed to load testimonials", e)
+        console.error("Failed to load feedback", e);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchTestimonials()
-  }, [])
+    fetchFeedback();
+  }, []);
 
   useEffect(() => {
-    if (!testimonials.length || shouldReduceMotion) return
+    if (!feedback.length || shouldReduceMotion) return;
 
     const timer = setInterval(() => {
-      setDirection(1)
-      setCurrentIndex((prev) => (prev + 1) % testimonials.length)
-    }, 7000)
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % feedback.length);
+    }, 7000);
 
-    return () => clearInterval(timer)
-  }, [testimonials, shouldReduceMotion])
+    return () => clearInterval(timer);
+  }, [feedback, shouldReduceMotion]);
 
   const next = useCallback(() => {
-    setDirection(1)
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length)
-  }, [testimonials.length])
+    setDirection(1);
+    setCurrentIndex((prev) => (prev + 1) % feedback.length);
+  }, [feedback.length]);
 
   const prev = useCallback(() => {
-    setDirection(-1)
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
-  }, [testimonials.length])
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + feedback.length) % feedback.length);
+  }, [feedback.length]);
 
   const handleDotClick = useCallback((index: number, dir: number) => {
-    setDirection(dir)
-    setCurrentIndex(index)
-  }, [])
+    setDirection(dir);
+    setCurrentIndex(index);
+  }, []);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -149,7 +166,7 @@ export function TestimonialsSection() {
       opacity: 0,
       scale: 0.95,
     }),
-  }
+  };
 
   // Show loading state
   if (loading) {
@@ -157,24 +174,24 @@ export function TestimonialsSection() {
       <section className="py-20 md:py-28 bg-black overflow-hidden relative">
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex items-center justify-center py-20">
-            <div className="text-gray-400">Loading testimonials...</div>
+            <div className="text-gray-400">Loading feedback...</div>
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   // Show empty state
-  if (!testimonials.length) {
+  if (!feedback.length) {
     return (
       <section className="py-20 md:py-28 bg-black overflow-hidden relative">
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex items-center justify-center py-20">
-            <div className="text-gray-400">No testimonials available</div>
+            <div className="text-gray-400">No feedback available</div>
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -195,26 +212,29 @@ export function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div
-            className="inline-flex items-center gap-2 bg-[#d4a574]/10 border border-[#d4a574]/30 text-[#d4a574] px-5 py-2.5 rounded-full mb-6 backdrop-blur-sm"
-          >
+          <div className="inline-flex items-center gap-2 bg-[#d4a574]/10 border border-[#d4a574]/30 text-[#d4a574] px-5 py-2.5 rounded-full mb-6 backdrop-blur-sm">
             <Camera className="w-4 h-4" />
-            <span className="text-sm font-medium tracking-wider uppercase">Client Stories</span>
+            <span className="text-sm font-medium tracking-wider uppercase">
+              Client Stories
+            </span>
           </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-4">
             What Our Clients{" "}
-            <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic">Say</span>
+            <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic">
+              Say
+            </span>
           </h2>
 
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            Real experiences from clients who trusted us to capture their most precious moments
+            Real experiences from clients who trusted us to capture their most
+            precious moments
           </p>
         </motion.div>
 
-        {/* Main testimonial display */}
+        {/* Main feedback display */}
         <div className="flex flex-col lg:flex-row w-full min-h-screen gap-6">
-          {/* Testimonials */}
+          {/* Feedback */}
           <div className="lg:w-1/2 flex flex-col items-center justify-center">
             <div className="relative w-full overflow-hidden">
               <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -237,18 +257,25 @@ export function TestimonialsSection() {
                     </div>
 
                     {/* Rating stars */}
-                    <StarRating rating={testimonials[currentIndex]?.rating || 5} shouldReduceMotion={!!shouldReduceMotion} />
+                    <StarRating
+                      rating={feedback[currentIndex]?.rating || 5}
+                      shouldReduceMotion={!!shouldReduceMotion}
+                    />
 
-                    {/* Testimonial Content */}
+                    {/* Feedback Content */}
                     <blockquote className="text-lg sm:text-xl md:text-2xl text-gray-200 leading-relaxed text-center mb-8 sm:mb-10 max-w-3xl mx-auto font-light relative z-10 px-2">
-                      &ldquo;{testimonials[currentIndex]?.message}&rdquo;
+                      &ldquo;{feedback[currentIndex]?.message}&rdquo;
                     </blockquote>
 
                     {/* Client Info */}
                     <div className="flex flex-col items-center gap-5 sm:gap-6">
                       <div className="text-center mb-2 sm:mb-4">
-                        <p className="font-serif text-xl sm:text-2xl text-white mb-1">{testimonials[currentIndex]?.name}</p>
-                        <p className="text-gray-400 text-xs sm:text-sm">{testimonials[currentIndex]?.title}</p>
+                        <p className="font-serif text-xl sm:text-2xl text-white mb-1">
+                          {feedback[currentIndex]?.name}
+                        </p>
+                        <p className="text-gray-400 text-xs sm:text-sm">
+                          {feedback[currentIndex]?.title}
+                        </p>
                       </div>
                     </div>
 
@@ -270,15 +297,15 @@ export function TestimonialsSection() {
                 size="icon"
                 onClick={prev}
                 className="rounded-full w-10 h-10 sm:w-12 sm:h-12 border-2 border-[#d4a574]/40 hover:bg-[#d4a574]/20 hover:border-[#d4a574] bg-black/50 backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-110"
-                aria-label="Previous testimonial"
+                aria-label="Previous feedback"
               >
                 <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#d4a574]" />
               </Button>
 
               {/* Dots */}
-              <DotNavigation 
+              <DotNavigation
                 currentIndex={currentIndex}
-                totalCount={testimonials.length}
+                totalCount={feedback.length}
                 onDotClick={handleDotClick}
                 shouldReduceMotion={!!shouldReduceMotion}
               />
@@ -289,7 +316,7 @@ export function TestimonialsSection() {
                 size="icon"
                 onClick={next}
                 className="rounded-full w-10 h-10 sm:w-12 sm:h-12 border-2 border-[#d4a574]/40 hover:bg-[#d4a574]/20 hover:border-[#d4a574] bg-black/50 backdrop-blur-sm shadow-lg transition-all duration-300 hover:scale-110"
-                aria-label="Next testimonial"
+                aria-label="Next feedback"
               >
                 <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-[#d4a574]" />
               </Button>
@@ -303,5 +330,5 @@ export function TestimonialsSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
