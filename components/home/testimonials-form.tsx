@@ -312,16 +312,6 @@ const TestimonialsForm = () => {
     <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="space-y-6 animate-fadeIn">
-          <div>
-            <h2 className="text-3xl font-serif font-bold mb-6 text-white">
-              Share Your Feedback
-            </h2>
-            <div className="h-1 w-24 bg-gradient-to-r from-yellow-600 to-yellow-500 mb-8" />
-            <p className="text-gray-300 mb-8">
-              We’d love to hear your feedback.
-            </p>
-          </div>
-
           {/* Name */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-white">
