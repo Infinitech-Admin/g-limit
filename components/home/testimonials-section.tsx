@@ -220,10 +220,11 @@ export function TestimonialsSection() {
           </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-4">
-            What Our Clients{" "}
+            How was your{" "}
             <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic">
-              Say
-            </span>
+              G-Limit Studio
+            </span>{" "}
+            experience?
           </h2>
 
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
