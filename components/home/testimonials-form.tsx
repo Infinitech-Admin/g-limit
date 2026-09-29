@@ -6,7 +6,6 @@ import { ChevronDown, Check } from "lucide-react";
 
 type Pkg = {
   title: string;
-  price: string;
   subtitle?: string;
   inclusions: string[];
 };
@@ -63,7 +62,6 @@ const CATEGORIES: Category[] = [
     packages: [
       {
         title: "Solo Premium Package",
-        price: "₱1,988",
         inclusions: [
           "1 to 2 Concepts / Layouts",
           "1 Hour (60mins) Professional photoshoot",
@@ -73,7 +71,6 @@ const CATEGORIES: Category[] = [
       },
       {
         title: "Solo VIP Package",
-        price: "₱2,888",
         inclusions: [
           "2 to 3 Concepts / Layouts",
           "1 & 1/2 Hour (90mins) Professional photoshoot",
@@ -85,7 +82,6 @@ const CATEGORIES: Category[] = [
       },
       {
         title: "Solo VVIP Package",
-        price: "₱3,888",
         inclusions: [
           "Unlimited Concepts / Layouts",
           "2 Hours (120mins) Professional photoshoot",
@@ -112,7 +108,6 @@ const CATEGORIES: Category[] = [
     packages: [
       {
         title: "Couple Premium Package",
-        price: "₱3,888",
         inclusions: [
           "1 to 2 Concepts / Layouts",
           "1 Hour (60mins) Professional photoshoot",
@@ -123,7 +118,6 @@ const CATEGORIES: Category[] = [
       },
       {
         title: "Couple VIP Package",
-        price: "₱4,888",
         inclusions: [
           "2 to 3 Concepts / Layouts",
           "1 & 1/2 Hour (90mins) Professional photoshoot",
@@ -136,7 +130,6 @@ const CATEGORIES: Category[] = [
       },
       {
         title: "Couple VVIP Package",
-        price: "₱5,888",
         inclusions: [
           "Unlimited Concepts / Layout",
           "2 Hours (120mins) Professional photoshoot",
@@ -164,19 +157,16 @@ const CATEGORIES: Category[] = [
     packages: [
       {
         title: "Barkada Premium Package",
-        price: "₱3,888",
         subtitle: "Group of 3",
         inclusions: GROUP_PREMIUM,
       },
       {
         title: "Barkada VIP Package",
-        price: "₱6,888",
         subtitle: "Group of 4",
         inclusions: GROUP_VIP,
       },
       {
         title: "Barkada VVIP Party Package",
-        price: "₱9,888",
         subtitle: "Group of 5",
         inclusions: GROUP_VVIP,
       },
@@ -187,19 +177,16 @@ const CATEGORIES: Category[] = [
     packages: [
       {
         title: "Family Premium Package",
-        price: "₱3,888",
         subtitle: "Group of 3",
         inclusions: GROUP_PREMIUM,
       },
       {
         title: "Family VIP Package",
-        price: "₱6,888",
         subtitle: "Group of 4",
         inclusions: GROUP_VIP,
       },
       {
         title: "Family VVIP Party Package",
-        price: "₱9,888",
         subtitle: "Group of 5",
         inclusions: GROUP_VVIP,
       },
@@ -424,10 +411,11 @@ const TestimonialsForm = () => {
                           <span className="block text-white font-semibold">
                             {pkg.title}
                           </span>
-                          <span className="block text-xs text-gray-400">
-                            {pkg.price}
-                            {pkg.subtitle ? ` • ${pkg.subtitle}` : ""}
-                          </span>
+                          {pkg.subtitle && (
+                            <span className="block text-xs text-gray-400">
+                              {pkg.subtitle}
+                            </span>
+                          )}
                         </span>
                       </button>
 
