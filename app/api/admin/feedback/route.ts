@@ -1,21 +1,19 @@
 // Place at: app/api/admin/feedback/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function upstreamHeaders(req: Request) {
+function upstreamHeaders(req: NextRequest) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
-  const authorization = req.headers.get("authorization");
-  const cookie = req.headers.get("cookie");
-  if (authorization) headers.Authorization = authorization;
-  if (cookie) headers.Cookie = cookie;
+  const token = req.cookies.get("admin_token")?.value;
+  if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { search } = new URL(req.url);
 
@@ -35,7 +33,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 

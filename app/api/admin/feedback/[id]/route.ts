@@ -1,23 +1,21 @@
 // Place at: app/api/admin/feedback/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 type Context = { params: Promise<{ id: string }> };
 
-function upstreamHeaders(req: Request) {
+function upstreamHeaders(req: NextRequest) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
-  const authorization = req.headers.get("authorization");
-  const cookie = req.headers.get("cookie");
-  if (authorization) headers.Authorization = authorization;
-  if (cookie) headers.Cookie = cookie;
+  const token = req.cookies.get("admin_token")?.value;
+  if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
-export async function PUT(req: Request, { params }: Context) {
+export async function PUT(req: NextRequest, { params }: Context) {
   try {
     const { id } = await params;
     const body = await req.json();
@@ -39,7 +37,7 @@ export async function PUT(req: Request, { params }: Context) {
   }
 }
 
-export async function DELETE(req: Request, { params }: Context) {
+export async function DELETE(req: NextRequest, { params }: Context) {
   try {
     const { id } = await params;
 
