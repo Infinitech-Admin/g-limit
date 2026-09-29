@@ -4,7 +4,7 @@ import TestimonialsForm from "./testimonials-form";
 
 export function TestimonialsSection() {
   return (
-    <section className="py-20 md:py-28 bg-black overflow-hidden relative">
+    <section className="py-10 md:py-14 bg-black overflow-hidden relative">
       <div className="container mx-auto px-6 relative z-10">
         {/* Header */}
         <motion.div
@@ -12,9 +12,9 @@ export function TestimonialsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-6 md:mb-8"
         >
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-4">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white">
             How was your{" "}
             <span className="bg-gradient-to-r from-[#d4a574] via-[#e0b584] to-[#d4a574] bg-clip-text text-transparent italic">
               G-Limit Studio

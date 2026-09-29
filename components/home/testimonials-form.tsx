@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Sparkles } from "lucide-react";
 
 type Pkg = {
   title: string;
@@ -312,6 +312,16 @@ const TestimonialsForm = () => {
     <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="space-y-6 animate-fadeIn">
+          {/* Sparkle divider */}
+          <div
+            className="flex items-center justify-center gap-4"
+            aria-hidden="true"
+          >
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#d4a574]/70 to-[#d4a574]" />
+            <Sparkles className="h-6 w-6 shrink-0 text-[#d4a574] animate-pulse drop-shadow-[0_0_8px_rgba(212,165,116,0.9)]" />
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[#d4a574]/70 to-[#d4a574]" />
+          </div>
+
           {/* Name */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-white">
