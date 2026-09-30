@@ -206,6 +206,11 @@ type FormData = {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
+type TestimonialsFormProps = {
+  /** Called after a successful submit (used by the home page to refresh the list) */
+  onSubmitted?: () => void;
+};
+
 const initialData: FormData = {
   name: "",
   service: "",
@@ -229,7 +234,7 @@ const SPARKLE_GLOW = [
   "drop-shadow(0 0 4px rgba(255,215,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.7)) drop-shadow(0 0 20px rgba(255,200,0,0.5))",
 ];
 
-const TestimonialsForm = () => {
+const TestimonialsForm = ({ onSubmitted }: TestimonialsFormProps) => {
   const [formData, setFormData] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -299,6 +304,8 @@ const TestimonialsForm = () => {
         position: "top-right",
         duration: 4000,
       });
+
+      onSubmitted?.(); // refresh ng list sa home page (no-op sa /testimonials)
 
       setTimeout(() => {
         setFormData(initialData);
