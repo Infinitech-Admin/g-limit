@@ -27,10 +27,81 @@ export interface Package {
     addons?: string[];
 }
 
+export interface FeeItem {
+    label: string;
+    price: string;
+}
+
 // ============================================
-// STUDIO PACKAGES — WEEKDAYS
+// STUDIO PACKAGES (new pricelist - single price, no weekday/weekend split)
 // ============================================
 
+export const studioPackageList: Package[] = [
+    {
+        id: "premium_studio",
+        title: "Premium Package",
+        duration: "1 hour",
+        price: "1,988.00",
+        category: "studio",
+        features: [
+            "1 to 2 Concepts / Layouts",
+            "1 Hour (60mins) Professional photoshoot",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free One (1) Printed Photo",
+        ],
+    },
+
+    {
+        id: "vip_studio",
+        title: "VIP Package",
+        duration: "1 Hour and 30 Minutes",
+        price: "2,888.00",
+        category: "studio",
+        popular: true,
+        features: [
+            "2 to 3 Concepts / Layouts",
+            "1 & 1/2 Hour (90mins) Professional photoshoot",
+            "HMUA - Hair & Makeup Artist",
+            "One (1) pc Solo or Collage Printed Photo",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free One (1) Printed Photo",
+        ],
+    },
+
+    {
+        id: "vvip_studio",
+        title: "VVIP Package",
+        duration: "2 hours",
+        price: "3,888.00",
+        category: "studio",
+        features: [
+            "Unlimited Concepts / Layouts",
+            "2 Hours (120mins) Professional photoshoot",
+            "HMUA - Hair & Makeup Artist",
+            "Four (4) pcs Solo or Collage Printed Photo",
+            "BTS - Edited behind the scene video reels",
+            "One (1) pc Contact lens",
+            "Photoshoot Personal Assistant",
+            "Unlimited Hair & Makeup retouch",
+            "Unlimited use of wardrobe",
+            "Free additional 30mins photoshoot extension",
+            "Free creative concepts materials",
+            "10% Off on the next visit",
+            "One (1) pc Le Luxe Facial Gift Certificate - worth P1,500",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free Two (2) Printed Photos",
+            "Free 30mins Set card / VTR shot",
+        ],
+    },
+];
+
+// ============================================
+// REMOVED (old pricelist) — kept as comments for reference
+// Replaced by studioPackageList above.
+// Starter Package no longer exists; weekday/weekend pricing no longer applies.
+// ============================================
+
+/*
 export const studioWeekdays: Package[] = [
     {
         id: "starter_weekday",
@@ -129,10 +200,6 @@ export const studioWeekdays: Package[] = [
         ],
     },
 ];
-
-// ============================================
-// STUDIO PACKAGES — WEEKENDS
-// ============================================
 
 export const studioWeekends: Package[] = [
     {
@@ -233,6 +300,26 @@ export const studioWeekends: Package[] = [
         ],
     },
 ];
+*/
+
+// ============================================
+// STUDIO FEES & ADD-ONS (apply to studio packages)
+// ============================================
+
+export const lateFees: FeeItem[] = [
+    { label: "30mins", price: "300" },
+    { label: "60mins", price: "500" },
+];
+
+export const timeExtensions: FeeItem[] = [
+    { label: "30mins", price: "500" },
+    { label: "60mins", price: "1,000" },
+];
+
+export const studioAddonsInfo: string[] = [
+    "Creative Materials -- upon request",
+    "Full production setup -- upon request",
+];
 
 // ============================================
 // OUTDOOR PACKAGES
@@ -301,7 +388,7 @@ export const outdoorPackages: Package[] = [
 ];
 
 // ============================================
-// STUDIO RENTAL — WEEKDAYS
+// STUDIO RENTAL — WEEKDAYS (unchanged)
 // ============================================
 
 export const studioRentalWeekdays: Package[] = [
@@ -427,7 +514,7 @@ export const studioRentalWeekdays: Package[] = [
 ];
 
 // ============================================
-// STUDIO RENTAL — WEEKENDS
+// STUDIO RENTAL — WEEKENDS (unchanged)
 // ============================================
 
 export const studioRentalWeekends: Package[] = [
@@ -557,8 +644,9 @@ export const studioRentalWeekends: Package[] = [
 // ============================================
 
 export const packages: Package[] = [
-    ...studioWeekdays,
-    ...studioWeekends,
+    // REMOVED: ...studioWeekdays,
+    // REMOVED: ...studioWeekends,
+    ...studioPackageList,
     ...outdoorPackages,
     ...studioRentalWeekdays,
     ...studioRentalWeekends,

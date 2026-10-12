@@ -32,6 +32,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+// NEW: studio packages now come from the shared packages data file (new pricelist)
+// Adjust this path to wherever packages.ts lives in your project
+import { studioPackageList } from "@/data/packages"
 
 const FloatingParticles = dynamic(() => import("@/components/animated-golden-particles"), { ssr: false })
 
@@ -74,6 +77,12 @@ export default function BookingForm() {
       shootType: selectedService,
     }))
   }, [selectedService])
+
+  /* ──────────────────────────────────────────────────────────────────
+   * REMOVED (old studio pricelist) — replaced by studioPackageList
+   * imported from packages.ts. Starter Package no longer exists and
+   * studio prices no longer differ between weekdays and weekends.
+   * ──────────────────────────────────────────────────────────────────
 
   const studio_weekdays = [
     {
@@ -259,6 +268,8 @@ export default function BookingForm() {
       ],
     },
   ]
+
+  * ── end of removed studio arrays ─────────────────────────────────── */
 
   const outdoor_packages = [
     {
@@ -532,6 +543,7 @@ export default function BookingForm() {
   ]
 
   // Helper function to check if selected date is a weekend
+  // (still used for studio rental pricing)
   const isWeekend = (dateString: string): boolean => {
     if (!dateString) return false
     const date = new Date(dateString)
@@ -539,11 +551,13 @@ export default function BookingForm() {
     return day === 0 || day === 6 // Sunday = 0, Saturday = 6
   }
 
-  // Get appropriate studio packages based on selected date
-  const studioPackages = formData.date && isWeekend(formData.date) ? studio_weekends : studio_weekdays
+  // Studio packages: new pricelist, same price every day
+  // OLD: const studioPackages = formData.date && isWeekend(formData.date) ? studio_weekends : studio_weekdays
+  const studioPackages = studioPackageList
 
   // All packages combined for price lookup
-  const allPackages = [...studio_weekdays, ...studio_weekends, ...outdoor_packages, ...studio_rental_weekdays, ...studio_rental_weekends]
+  // OLD: const allPackages = [...studio_weekdays, ...studio_weekends, ...outdoor_packages, ...studio_rental_weekdays, ...studio_rental_weekends]
+  const allPackages = [...studioPackageList, ...outdoor_packages, ...studio_rental_weekdays, ...studio_rental_weekends]
 
   const getStudioRentalPackages = () => {
     if (!formData.date) return studio_rental_weekdays
@@ -602,8 +616,9 @@ export default function BookingForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => {
-      // Reset package when date changes (as studio packages differ for weekdays/weekends)
-      if (name === "date" && prev.location !== "outdoor" && prev.location !== "clients-venue") {
+      // Reset package when date changes (only studio rental prices differ for weekdays/weekends now)
+      // OLD: if (name === "date" && prev.location !== "outdoor" && prev.location !== "clients-venue") {
+      if (name === "date" && prev.location === "studio-rental") {
         const wasWeekend = isWeekend(prev.date)
         const isNowWeekend = isWeekend(value)
         if (wasWeekend !== isNowWeekend) {
@@ -1463,7 +1478,8 @@ export default function BookingForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {getFilteredPackages().map((pkg, index) => {
                       const isSelected = formData.package === pkg.id
-                      const isPopular = pkg.id === "premium_weekday" || pkg.id === "premium_weekend" || pkg.id === "rental_platinum_weekdays" || pkg.id === "rental_platinum_weekends"
+                      // OLD: const isPopular = pkg.id === "premium_weekday" || pkg.id === "premium_weekend" || pkg.id === "rental_platinum_weekdays" || pkg.id === "rental_platinum_weekends"
+                      const isPopular = !!(pkg as any).popular
                       return (
                       <motion.div
                         key={pkg.id}
@@ -1639,7 +1655,8 @@ export default function BookingForm() {
                     </option>
 
                     {(formData.location === "studio" || formData.location === "clients-venue") && (
-                      <optgroup label={formData.date && isWeekend(formData.date) ? "Studio Packages (Weekend)" : "Studio Packages (Weekday)"}>
+                      // OLD: <optgroup label={formData.date && isWeekend(formData.date) ? "Studio Packages (Weekend)" : "Studio Packages (Weekday)"}>
+                      <optgroup label="Studio Packages">
                         {studioPackages.map((p) => (
                           <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
                             {p.title} - ₱{p.price}
@@ -2031,7 +2048,8 @@ export default function BookingForm() {
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.1em] text-[#8a6e30] mb-1">Package</p>
                       <p className="text-base text-[#f0e8d5] capitalize font-medium">
-                        {submittedData.package?.replace(/_/g, ' ')}
+                        {/* OLD: {submittedData.package?.replace(/_/g, ' ')} */}
+                        {allPackages.find((p) => p.id === submittedData.package)?.title || submittedData.package?.replace(/_/g, ' ')}
                       </p>
                     </div>
                     <div>
