@@ -32,6 +32,9 @@ import { useBookingStore } from "@/store/useBookingStore"
 import { useRouter } from "next/navigation"
 import {
   packages,
+  lateFees,
+  timeExtensions,
+  studioAddonsInfo,
   type Package as PricePackage,
   type PackageCategory,
 } from "@/lib/packages-data"
@@ -144,7 +147,8 @@ const categoryTabs: { key: ViewCategory; label: string; sub: string }[] = [
   { key: "outdoor", label: "Outdoor Sessions", sub: "On-location shoots" },
 ]
 
-// promo keys differ in plurality between categories, normalize here
+// Studio + outdoor: no weekday/weekend split (new pricelist = one price every day)
+// Studio rental: still filtered by weekday/weekend
 function getDayFilteredPackages(
   all: PricePackage[],
   category: ViewCategory,
@@ -153,6 +157,17 @@ function getDayFilteredPackages(
   if (category === "outdoor") {
     return all.filter((p) => p.category === "outdoor")
   }
+
+  // NEW: studio packages have no promo field anymore, so don't filter by day
+  if (category === "studio") {
+    return all.filter((p) => p.category === "studio")
+  }
+
+  // studio-rental still has weekday / weekend prices
+  const promoTarget = isWeekend ? "weekends" : "weekdays"
+  return all.filter((p) => p.category === category && p.promo === promoTarget)
+
+  /* OLD (broke the studio tab because new studio packages have no promo):
   const promoTarget =
     category === "studio"
       ? isWeekend
@@ -163,6 +178,7 @@ function getDayFilteredPackages(
         : "weekdays"
 
   return all.filter((p) => p.category === category && p.promo === promoTarget)
+  */
 }
 
 export default function ServicesPage() {
@@ -178,7 +194,9 @@ export default function ServicesPage() {
     [activeCategory, isWeekend],
   )
 
-  const showDayToggle = activeCategory !== "outdoor"
+  // OLD: const showDayToggle = activeCategory !== "outdoor"
+  // Only studio rentals still have weekday/weekend rates
+  const showDayToggle = activeCategory === "studio-rental"
 
   const handleBooking = (serviceType: string) => {
     setSelectedService(serviceType)
@@ -698,7 +716,7 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* ── DAY TOGGLE ── */}
+        {/* ── DAY TOGGLE (studio rentals only) ── */}
         {showDayToggle && (
           <section className="px-4 sm:px-6 md:px-10 relative z-10 mb-10">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-3">
@@ -746,7 +764,8 @@ export default function ServicesPage() {
           <div className="max-w-7xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${activeCategory}-${isWeekend}`}
+                // OLD: key={`${activeCategory}-${isWeekend}`}
+                key={`${activeCategory}-${showDayToggle ? isWeekend : "all"}`}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
@@ -963,6 +982,64 @@ export default function ServicesPage() {
               >
                 No packages found for this selection.
               </div>
+            )}
+
+            {/* ── NEW: Late fee / Time extension / Add-ons (studio sessions only) ── */}
+            {activeCategory === "studio" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5"
+              >
+                {[
+                  {
+                    title: "Late Fee",
+                    rows: lateFees.map((f) => ({ label: f.label, value: `₱${f.price}` })),
+                  },
+                  {
+                    title: "Time Extension",
+                    rows: timeExtensions.map((f) => ({ label: f.label, value: `₱${f.price}` })),
+                  },
+                  {
+                    title: "Add-ons",
+                    rows: studioAddonsInfo.map((a) => ({ label: a, value: "" })),
+                  },
+                ].map((block) => (
+                  <div
+                    key={block.title}
+                    className="rounded-xl overflow-hidden"
+                    style={{
+                      background: "linear-gradient(135deg, #1c1810 0%, #141008 60%, #1a1510 100%)",
+                      border: "1px solid rgba(245,217,138,0.1)",
+                      boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${ACCENT}50, transparent)` }} />
+                    <div className="p-6">
+                      <p className="font-sans text-[11px] font-bold tracking-widest uppercase mb-4" style={{ color: ACCENT }}>
+                        {block.title}
+                      </p>
+                      <ul className="space-y-3">
+                        {block.rows.map((row, i) => (
+                          <li
+                            key={i}
+                            className="flex items-center justify-between gap-3 font-sans text-sm"
+                            style={{ color: "rgba(245,217,138,0.65)" }}
+                          >
+                            <span>{row.label}</span>
+                            {row.value && (
+                              <span className="font-black" style={{ color: ACCENT }}>
+                                {row.value}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
             )}
           </div>
         </section>
