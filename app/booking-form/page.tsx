@@ -33,8 +33,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 // NEW: studio packages now come from the shared packages data file (new pricelist)
-// Adjust this path to wherever packages.ts lives in your project
-import { studioPackageList } from "@/data/packages"
+import { studioPackageList } from "@/lib/packages-data"
 
 const FloatingParticles = dynamic(() => import("@/components/animated-golden-particles"), { ssr: false })
 
