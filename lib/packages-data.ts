@@ -2,16 +2,11 @@
 // TYPES
 // ============================================
 
-export type PackagePromo =
-    | "weekday"
-    | "weekend"
-    | "weekdays"
-    | "weekends";
+export type PackagePromo = "weekday" | "weekend" | "weekdays" | "weekends";
 
-export type PackageCategory =
-    | "studio"
-    | "outdoor"
-    | "studio-rental";
+export type PackageCategory = "studio" | "outdoor" | "studio-rental";
+
+export type StudioGroup = "solo" | "couple" | "barkada" | "family";
 
 export interface Package {
     id: string;
@@ -20,6 +15,8 @@ export interface Package {
     price: string;
     promo?: PackagePromo;
     category: PackageCategory;
+    studioGroup?: StudioGroup; // only for category "studio"
+    groupSize?: string; // e.g. "Group of 3"
     description?: string;
     popular?: boolean;
     photos?: string;
@@ -32,17 +29,125 @@ export interface FeeItem {
     price: string;
 }
 
+export interface StudioGroupInfo {
+    key: StudioGroup;
+    label: string;
+    sub: string;
+    lateFees: FeeItem[];
+    timeExtensions: FeeItem[];
+    addons: string[];
+}
+
 // ============================================
-// STUDIO PACKAGES (new pricelist - single price, no weekday/weekend split)
+// STUDIO FEES & ADD-ONS (differ per group)
+// ============================================
+
+export const studioAddonsInfo: string[] = [
+    "Creative Materials -- upon request",
+    "Full production setup -- upon request",
+];
+
+const soloFees = {
+    lateFees: [
+        { label: "30mins", price: "300" },
+        { label: "60mins", price: "500" },
+    ],
+    timeExtensions: [
+        { label: "30mins", price: "500" },
+        { label: "60mins", price: "1,000" },
+    ],
+};
+
+const groupFees = {
+    lateFees: [
+        { label: "30mins", price: "500" },
+        { label: "60mins", price: "1,000" },
+    ],
+    timeExtensions: [
+        { label: "30mins", price: "1,000" },
+        { label: "60mins", price: "1,500" },
+    ],
+};
+
+export const studioGroups: StudioGroupInfo[] = [
+    { key: "solo", label: "Solo", sub: "1 person", ...soloFees, addons: studioAddonsInfo },
+    { key: "couple", label: "Couple", sub: "2 people", ...groupFees, addons: studioAddonsInfo },
+    { key: "barkada", label: "Barkada", sub: "Group of 3 to 5", ...groupFees, addons: studioAddonsInfo },
+    { key: "family", label: "Family", sub: "Group of 3 to 5", ...groupFees, addons: studioAddonsInfo },
+];
+
+export function getStudioGroupInfo(key: StudioGroup): StudioGroupInfo {
+    return studioGroups.find((g) => g.key === key)!;
+}
+
+// Kept for backwards compatibility (Solo fees)
+export const lateFees: FeeItem[] = soloFees.lateFees;
+export const timeExtensions: FeeItem[] = soloFees.timeExtensions;
+
+// ============================================
+// SHARED INCLUSIONS (Barkada & Family are identical)
+// ============================================
+
+const groupPremiumFeatures = [
+    "Unlimited Concepts / Layout",
+    "1 & 1/2 Hour (90mins) Professional photoshoot",
+    "Complimentary coffee & water",
+    "Birthday Shoot - Free One (1) Printed Photo",
+    "Anniversary Shoot - Free One (1) Printed Photo",
+];
+
+const groupVipFeatures = [
+    "Unlimited Concepts / Layout",
+    "2 Hours (120mins) Professional photoshoot",
+    "1pc Glam Makeup - HMUA",
+    "1pc Light Makeup - HMUA",
+    "4pcs Solo or Collage Printed Photo",
+    "1pc Photoshoot Personal Assistant",
+    "1 Professional Photographer",
+    "Complimentary coffee & water",
+    "Birthday Shoot - Free One (1) Printed Photo",
+    "Anniversary Shoot - Free One (1) Printed Photo",
+];
+
+const groupVvipFeatures = [
+    "Unlimited Concepts / Layout",
+    "6 hours Professional photoshoot",
+    "1pc Glam Makeup - HMUA",
+    "4pc Light Makeup - HMUA",
+    "15pcs Solo, couple or Collage Printed Photo",
+    "5pcs BTS - Edited behind the scene video reels",
+    "5pcs Contact lenses",
+    "2pcs Photoshoot Personal Assistant",
+    "1 Professional Photographer & 1 Videographer",
+    "Unlimited Hair & Makeup retouch",
+    "Unlimited use of wardrobe",
+    "Free additional 30mins extension",
+    "Free creative concepts materials",
+    "10% Off on the next visit",
+    "2pcs Le Luxe Facial Gift Certificate - worth P3,000",
+    "3pcs Le Footspa Diode Gift Certificate - worth P3,000",
+    "3pcs G-Limit 1hour Photoshoot Gift Certificate",
+    "1pc Complimentary Red Wine",
+    "Complimentary coffee & water",
+    "Birthday Shoot - Free Two (2) Printed Photos",
+    "Anniversary Shoot - Free Two (2) Printed Photos",
+    "Note: Can bring food and drinks",
+];
+
+// ============================================
+// STUDIO PACKAGES (single price every day)
 // ============================================
 
 export const studioPackageList: Package[] = [
+    // ───────────── SOLO ─────────────
     {
         id: "premium_studio",
         title: "Premium Package",
         duration: "1 hour",
         price: "1,988.00",
         category: "studio",
+        studioGroup: "solo",
+        groupSize: "Solo",
         features: [
             "1 to 2 Concepts / Layouts",
             "1 Hour (60mins) Professional photoshoot",
@@ -50,13 +155,14 @@ export const studioPackageList: Package[] = [
             "Birthday Shoot - Free One (1) Printed Photo",
         ],
     },
-
     {
         id: "vip_studio",
         title: "VIP Package",
         duration: "1 Hour and 30 Minutes",
         price: "2,888.00",
         category: "studio",
+        studioGroup: "solo",
+        groupSize: "Solo",
         popular: true,
         features: [
             "2 to 3 Concepts / Layouts",
@@ -67,13 +173,14 @@ export const studioPackageList: Package[] = [
             "Birthday Shoot - Free One (1) Printed Photo",
         ],
     },
-
     {
         id: "vvip_studio",
         title: "VVIP Package",
         duration: "2 hours",
         price: "3,888.00",
         category: "studio",
+        studioGroup: "solo",
+        groupSize: "Solo",
         features: [
             "Unlimited Concepts / Layouts",
             "2 Hours (120mins) Professional photoshoot",
@@ -90,235 +197,140 @@ export const studioPackageList: Package[] = [
             "One (1) pc Le Luxe Facial Gift Certificate - worth P1,500",
             "Complimentary coffee & water",
             "Birthday Shoot - Free Two (2) Printed Photos",
-            "Free 30mins Set card / VTR shot",
+            "Free 30mins Set card / VTR shoot",
         ],
     },
-];
 
-// ============================================
-// REMOVED (old pricelist) — kept as comments for reference
-// Replaced by studioPackageList above.
-// Starter Package no longer exists; weekday/weekend pricing no longer applies.
-// ============================================
-
-/*
-export const studioWeekdays: Package[] = [
+    // ───────────── COUPLE ─────────────
     {
-        id: "starter_weekday",
-        title: "Starter Package",
+        id: "couple_premium_studio",
+        title: "Couple Premium Package",
         duration: "1 hour",
-        price: "1,388.00",
-        promo: "weekday",
+        price: "3,888.00",
         category: "studio",
+        studioGroup: "couple",
+        groupSize: "Couple",
         features: [
-            "FREE One (1) VOUCHER - 30mins Self-Portrait - 11 Concepts",
-            "Two (2) pcs SOLO printed edited photos",
-            "One (1) pc COLLAGE printed photo",
-            "1 Hour professional-grade Photoshoot",
-            "FREE Fifteen (15) pcs edited professional-grade photos",
-            "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE One (1) Makeup service (Light Makeup)",
+            "1 to 2 Concepts / Layouts",
+            "1 Hour (60mins) Professional photoshoot",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free One (1) Printed Photo",
+            "Anniversary Shoot - Free One (1) Printed Photo",
         ],
     },
-
     {
-        id: "premium_weekday",
-        title: "Premium Package",
+        id: "couple_vip_studio",
+        title: "Couple VIP Package",
         duration: "1 Hour and 30 Minutes",
-        price: "1,588.00",
-        promo: "weekday",
+        price: "4,888.00",
         category: "studio",
+        studioGroup: "couple",
+        groupSize: "Couple",
         popular: true,
         features: [
-            "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-            "FOUR (4) pcs SOLO printed edited photos",
-            "Two (2) pcs COLLAGE printed photo",
-            "FREE 1h & 30mins professional-grade photoshoot",
-            "FREE Twenty (20) pcs edited professional-grade photos",
-            "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-            "One (1) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
+            "2 to 3 Concepts / Layouts",
+            "1 & 1/2 Hour (90mins) Professional photoshoot",
+            "1pc HMUA - Hair & Makeup Artist",
+            "2pcs Solo or Collage Printed Photo",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free One (1) Printed Photo",
+            "Anniversary Shoot - Free One (1) Printed Photo",
         ],
-        addons: [
-            "FREE One (1) Hair & Makeup service (Light Makeup)",
+    },
+    {
+        id: "couple_vvip_studio",
+        title: "Couple VVIP Package",
+        duration: "2 hours",
+        price: "5,888.00",
+        category: "studio",
+        studioGroup: "couple",
+        groupSize: "Couple",
+        features: [
+            "Unlimited Concepts / Layout",
+            "2 Hours (120mins) Professional photoshoot",
+            "HMUA - Hair & Makeup Artist",
+            "4pcs Solo, couple or Collage Printed Photo",
+            "2pcs BTS - Edited behind the scene video reels",
+            "2pcs Contact lenses",
+            "Photoshoot Personal Assistant",
+            "Unlimited Hair & Makeup retouch",
+            "Unlimited use of wardrobe",
+            "Free additional 30mins photoshoot extension",
+            "Free creative concepts materials",
+            "10% Off on the next visit",
+            "2pcs Le Luxe Facial Gift Certificate - worth P3,000",
+            "Anniversary Shoot - Free Two (2) Printed Photos",
+            "Free 30mins Set card / VTR shoot",
+            "Complimentary coffee & water",
+            "Birthday Shoot - Free Two (2) Printed Photos",
         ],
     },
 
+    // ───────────── BARKADA ─────────────
     {
-        id: "vip_weekday",
-        title: "VIP Package",
+        id: "barkada_premium_studio",
+        title: "Barkada Premium Package",
         duration: "1 Hour and 30 Minutes",
-        price: "1,888.00",
-        promo: "weekday",
+        price: "3,888.00",
         category: "studio",
-        features: [
-            "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-            "FREE SIX (6) pcs SOLO printed edited photos",
-            "FREE Four (4) pcs COLLAGE printed photo",
-            "FREE Unlimited professional-grade photoshoot",
-            "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-            "FREE Thirty (30) pcs edited professional-grade photos",
-            "One (1) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE One (1) pc Contact Lens",
-            "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-            "FREE Unlimited makeup retouch",
-            "FREE Unlimited use of Attire/Costumes",
-        ],
+        studioGroup: "barkada",
+        groupSize: "Group of 3",
+        features: groupPremiumFeatures,
     },
-
     {
-        id: "vvip_weekday",
-        title: "VVIP Package",
-        duration: "Unlimited",
-        price: "2,488.00",
-        promo: "weekday",
+        id: "barkada_vip_studio",
+        title: "Barkada VIP Package",
+        duration: "2 hours",
+        price: "6,888.00",
         category: "studio",
-        features: [
-            "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-            "TEN (10) pcs SOLO printed edited photos",
-            "Four (4) pcs COLLAGE printed photo",
-            "FREE Unlimited professional-grade photoshoot (with concept setup)",
-            "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-            "FREE Unlimited edited professional-grade photos",
-            "FREE BTR & Set Card photoshoot",
-            "Two (2) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE Two (2) pcs Contact Lens",
-            "FREE Personal Assistant (PA) - One (1) person",
-            "One (1) pc FREE VOUCHER - EMSCULPT - Tummy",
-            'FREE Edited "Behind the Scene" BTS Video (Makeup to Photoshoot)',
-            "FREE Unlimited Makeup retouch",
-            "FREE Unlimited use of Attire/Costumes",
-        ],
-    },
-];
-
-export const studioWeekends: Package[] = [
-    {
-        id: "starter_weekend",
-        title: "Starter Package",
-        duration: "1 hour",
-        price: "1,588.00",
-        promo: "weekend",
-        category: "studio",
-        features: [
-            "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-            "Two (2) pcs SOLO printed edited photos",
-            "One (1) pc COLLAGE printed photo",
-            "1 Hour professional-grade photoshoot by G-limit Photographer",
-            "FREE Fifteen (15) pcs edited professional-grade photos",
-            "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE One (1) Makeup service (Light Makeup)",
-        ],
-    },
-
-    {
-        id: "premium_weekend",
-        title: "Premium Package",
-        duration: "1 Hour and 30 Minutes",
-        price: "1,788.00",
-        promo: "weekend",
-        category: "studio",
+        studioGroup: "barkada",
+        groupSize: "Group of 4",
         popular: true,
-        features: [
-            "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-            "FOUR (4) pcs SOLO printed edited photos",
-            "Two (2) pcs COLLAGE printed photo",
-            "FREE 1h & 30mins professional-grade photoshoot",
-            "FREE Twenty (20) pcs edited professional-grade photos",
-            "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-            "One (1) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE One (1) Hair & Makeup service (Light Makeup)",
-        ],
+        features: groupVipFeatures,
+    },
+    {
+        id: "barkada_vvip_studio",
+        title: "Barkada VVIP Party Package",
+        duration: "6 hours",
+        price: "9,888.00",
+        category: "studio",
+        studioGroup: "barkada",
+        groupSize: "Group of 5",
+        features: groupVvipFeatures,
     },
 
+    // ───────────── FAMILY ─────────────
     {
-        id: "vip_weekend",
-        title: "VIP Package",
+        id: "family_premium_studio",
+        title: "Family Premium Package",
         duration: "1 Hour and 30 Minutes",
-        price: "2,088.00",
-        promo: "weekend",
+        price: "3,888.00",
         category: "studio",
-        features: [
-            "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-            "FREE SIX (6) pcs SOLO printed edited photos",
-            "FREE Four (4) pcs COLLAGE printed photo",
-            "FREE Unlimited professional-grade photoshoot",
-            "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-            "FREE Thirty (30) pcs edited professional-grade photos",
-            "One (1) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE One (1) pc Contact Lens",
-            "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-            "FREE Unlimited Makeup retouch",
-            "FREE Unlimited use of Attire/Costumes",
-        ],
+        studioGroup: "family",
+        groupSize: "Group of 3",
+        features: groupPremiumFeatures,
     },
-
     {
-        id: "vvip_weekend",
-        title: "VVIP Package",
-        duration: "Unlimited",
-        price: "2,688.00",
-        promo: "weekend",
+        id: "family_vip_studio",
+        title: "Family VIP Package",
+        duration: "2 hours",
+        price: "6,888.00",
         category: "studio",
-        features: [
-            "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-            "TEN (10) pcs SOLO printed edited photos",
-            "Four (4) pcs COLLAGE printed photo",
-            "FREE Unlimited professional-grade photoshoot (with concept setup)",
-            "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-            "FREE Unlimited edited professional-grade photos",
-            "FREE BTR & Set Card photoshoot",
-            "Two (2) Spin the wheel game",
-            "Within 24 hours output (edited photos) release",
-        ],
-        addons: [
-            "FREE Two (2) pcs Contact Lens",
-            "FREE Personal Assistant (PA) - One (1) person",
-            "One (1) pc FREE VOUCHER - EMSCULPT (Tummy)",
-            "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-            'FREE Edited "Behind the Scene" BTS Video (Makeup to Photoshoot)',
-            "FREE Unlimited Makeup retouch",
-            "FREE Unlimited use of Attire/Costumes",
-        ],
+        studioGroup: "family",
+        groupSize: "Group of 4",
+        popular: true,
+        features: groupVipFeatures,
     },
-];
-*/
-
-// ============================================
-// STUDIO FEES & ADD-ONS (apply to studio packages)
-// ============================================
-
-export const lateFees: FeeItem[] = [
-    { label: "30mins", price: "300" },
-    { label: "60mins", price: "500" },
-];
-
-export const timeExtensions: FeeItem[] = [
-    { label: "30mins", price: "500" },
-    { label: "60mins", price: "1,000" },
-];
-
-export const studioAddonsInfo: string[] = [
-    "Creative Materials -- upon request",
-    "Full production setup -- upon request",
+    {
+        id: "family_vvip_studio",
+        title: "Family VVIP Party Package",
+        duration: "6 hours",
+        price: "9,888.00",
+        category: "studio",
+        studioGroup: "family",
+        groupSize: "Group of 5",
+        features: groupVvipFeatures,
+    },
 ];
 
 // ============================================
@@ -644,8 +656,6 @@ export const studioRentalWeekends: Package[] = [
 // ============================================
 
 export const packages: Package[] = [
-    // REMOVED: ...studioWeekdays,
-    // REMOVED: ...studioWeekends,
     ...studioPackageList,
     ...outdoorPackages,
     ...studioRentalWeekdays,
@@ -656,45 +666,28 @@ export const packages: Package[] = [
 // HELPERS
 // ============================================
 
-export function getPackageById(
-    id: string
-): Package | undefined {
-    return packages.find(
-        (pkg) => pkg.id === id
-    );
+export function getPackageById(id: string): Package | undefined {
+    return packages.find((pkg) => pkg.id === id);
 }
 
-export function getPackagesByCategory(
-    category: PackageCategory
-): Package[] {
-    return packages.filter(
-        (pkg) => pkg.category === category
-    );
+export function getPackagesByCategory(category: PackageCategory): Package[] {
+    return packages.filter((pkg) => pkg.category === category);
 }
 
-export function getPackagesByPromo(
-    promo: PackagePromo
-): Package[] {
-    return packages.filter(
-        (pkg) => pkg.promo === promo
-    );
+export function getPackagesByPromo(promo: PackagePromo): Package[] {
+    return packages.filter((pkg) => pkg.promo === promo);
 }
 
 export function getPopularPackages(): Package[] {
-    return packages.filter(
-        (pkg) => pkg.popular
-    );
+    return packages.filter((pkg) => pkg.popular);
 }
 
 // ============================================
 // SPECIFIC COLLECTIONS
 // ============================================
 
-export const studioPackages =
-    getPackagesByCategory("studio");
+export const studioPackages = getPackagesByCategory("studio");
 
-export const outdoorSessionPackages =
-    getPackagesByCategory("outdoor");
+export const outdoorSessionPackages = getPackagesByCategory("outdoor");
 
-export const studioRentalPackages =
-    getPackagesByCategory("studio-rental");
+export const studioRentalPackages = getPackagesByCategory("studio-rental");

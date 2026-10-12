@@ -32,8 +32,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-// NEW: studio packages now come from the shared packages data file (new pricelist)
-import { studioPackageList } from "@/lib/packages-data"
+// Studio packages come from the shared packages data file (new pricelist: Solo / Couple / Barkada / Family)
+import { studioPackageList, studioGroups, type StudioGroup } from "@/lib/packages-data"
 
 const FloatingParticles = dynamic(() => import("@/components/animated-golden-particles"), { ssr: false })
 
@@ -65,6 +65,8 @@ export default function BookingForm() {
   const [showPackages, setShowPackages] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [submittedData, setSubmittedData] = useState<typeof formData | null>(null)
+  // NEW: which studio group tab (Solo / Couple / Barkada / Family) is showing
+  const [studioGroup, setStudioGroup] = useState<StudioGroup>("solo")
   const packagesRef = useRef<HTMLDivElement>(null)
   const selectedService = useBookingStore((state) => state.selectedService)
 
@@ -76,199 +78,6 @@ export default function BookingForm() {
       shootType: selectedService,
     }))
   }, [selectedService])
-
-  /* ──────────────────────────────────────────────────────────────────
-   * REMOVED (old studio pricelist) — replaced by studioPackageList
-   * imported from packages.ts. Starter Package no longer exists and
-   * studio prices no longer differ between weekdays and weekends.
-   * ──────────────────────────────────────────────────────────────────
-
-  const studio_weekdays = [
-    {
-      id: "starter_weekday",
-      title: "Starter Package",
-      duration: "1 hour",
-      price: "1,388.00",
-      promo: "weekday",
-      features: [
-        "FREE One (1) VOUCHER - 30mins Self-Portrait - 11 Concepts",
-        "Two (2) pcs SOLO printed edited photos",
-        "One (1) pc COLLAGE printed photo",
-        "1 Hour professional-grade Photoshoot",
-        "FREE Fifteen (15) pcs edited professional-grade photos",
-        "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) Makeup service (Light Makeup)",
-      ],
-    },
-    {
-      id: "premium_weekday",
-      title: "Premium Package",
-      duration: "1 Hour and 30 Minutes",
-      price: "1,588.00",
-      promo: "weekday",
-      popular: true,
-      features: [
-        "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-        "FOUR (4) pcs SOLO printed edited photos",
-        "Two (2) pcs COLLAGE printed photo",
-        "FREE 1h & 30mins professional-grade photoshoot",
-        "FREE Twenty (20) pcs edited professional-grade photos",
-        "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-        "One (1) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) Hair & Makeup service (Light Makeup)",
-      ],
-    },
-    {
-      id: "vip_weekday",
-      title: "VIP Package",
-      duration: "1 Hour and 30 Minutes",
-      price: "1,888.00",
-      promo: "weekday",
-      features: [
-        "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-        "FREE SIX (6) pcs SOLO printed edited photos",
-        "FREE Four (4) pcs COLLAGE printed photo",
-        "FREE Unlimited professional-grade photoshoot",
-        "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-        "FREE Thirty (30) pcs edited professional-grade photos",
-        "One (1) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) pc Contact Lens",
-        "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-        "FREE Unlimited makeup retouch",
-        "FREE Unlimited use of Attire/Costumes",
-      ],
-    },
-    {
-      id: "vvip_weekday",
-      title: "VVIP Package",
-      duration: "Unlimited",
-      price: "2,488.00",
-      promo: "weekday",
-      features: [
-        "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-        "TEN (10) pcs SOLO printed edited photos",
-        "Four (4) pcs COLLAGE printed photo",
-        "FREE Unlimited professional-grade photoshoot (with concept setup)",
-        "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-        "FREE Unlimited edited professional-grade photos",
-        "FREE BTR & Set Card photoshoot",
-        "Two (2) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE Two (2) pcs Contact Lens",
-        "FREE Personal Assistant (PA) - One (1) person",
-        "One (1) pc FREE VOUCHER - EMSCULPT - Tummy",
-        'FREE Edited "Behind the Scene" BTS Video (Makeup to Photoshoot)',
-        "FREE Unlimited Makeup retouch",
-        "FREE Unlimited use of Attire/Costumes",
-      ],
-    },
-  ]
-
-  const studio_weekends = [
-    {
-      id: "starter_weekend",
-      title: "Starter Package",
-      duration: "1 hour",
-      price: "1,588.00",
-      promo: "weekend",
-      features: [
-        "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-        "Two (2) pcs SOLO printed edited photos",
-        "One (1) pc COLLAGE printed photo",
-        "1 Hour professional-grade photoshoot by G-limit Photographer",
-        "FREE Fifteen (15) pcs edited professional-grade photos",
-        "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) Makeup service (Light Makeup)",
-      ],
-    },
-    {
-      id: "premium_weekend",
-      title: "Premium Package",
-      duration: "1 Hour and 30 Minutes",
-      price: "1,788.00",
-      promo: "weekend",
-      popular: true,
-      features: [
-        "FREE One (1) pc VOUCHER - 30mins Self-portrait - 11 Concepts",
-        "FOUR (4) pcs SOLO printed edited photos",
-        "Two (2) pcs COLLAGE printed photo",
-        "FREE 1h & 30mins professional-grade photoshoot",
-        "FREE Twenty (20) pcs edited professional-grade photos",
-        "FREE 30mins Self-portrait - 11 Concepts (unli self-shoot)",
-        "One (1) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) Hair & Makeup service (Light Makeup)",
-      ],
-    },
-    {
-      id: "vip_weekend",
-      title: "VIP Package",
-      duration: "1 Hour and 30 Minutes",
-      price: "2,088.00",
-      promo: "weekend",
-      features: [
-        "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-        "FREE SIX (6) pcs SOLO printed edited photos",
-        "FREE Four (4) pcs COLLAGE printed photo",
-        "FREE Unlimited professional-grade photoshoot",
-        "FREE 1h & 30mins - 11 Concepts with low light setup & Photographer",
-        "FREE Thirty (30) pcs edited professional-grade photos",
-        "One (1) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE One (1) pc Contact Lens",
-        "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-        "FREE Unlimited Makeup retouch",
-        "FREE Unlimited use of Attire/Costumes",
-      ],
-    },
-    {
-      id: "vvip_weekend",
-      title: "VVIP Package",
-      duration: "Unlimited",
-      price: "2,688.00",
-      promo: "weekend",
-      features: [
-        "FREE One (1) pc VOUCHER - 1 hour Self-portrait - 11 Concepts",
-        "TEN (10) pcs SOLO printed edited photos",
-        "Four (4) pcs COLLAGE printed photo",
-        "FREE Unlimited professional-grade photoshoot (with concept setup)",
-        "FREE Unlimited - 11 Concepts with low light setup & Photographer",
-        "FREE Unlimited edited professional-grade photos",
-        "FREE BTR & Set Card photoshoot",
-        "Two (2) Spin the wheel game",
-        "Within 24 hours output (edited photos) release",
-      ],
-      addons: [
-        "FREE Two (2) pcs Contact Lens",
-        "FREE Personal Assistant (PA) - One (1) person",
-        "One (1) pc FREE VOUCHER - EMSCULPT (Tummy)",
-        "FREE One (1) Hair & Makeup service (LUXURY GLAM)",
-        'FREE Edited "Behind the Scene" BTS Video (Makeup to Photoshoot)',
-        "FREE Unlimited Makeup retouch",
-        "FREE Unlimited use of Attire/Costumes",
-      ],
-    },
-  ]
-
-  * ── end of removed studio arrays ─────────────────────────────────── */
 
   const outdoor_packages = [
     {
@@ -550,12 +359,10 @@ export default function BookingForm() {
     return day === 0 || day === 6 // Sunday = 0, Saturday = 6
   }
 
-  // Studio packages: new pricelist, same price every day
-  // OLD: const studioPackages = formData.date && isWeekend(formData.date) ? studio_weekends : studio_weekdays
+  // Studio packages: same price every day, grouped by Solo / Couple / Barkada / Family
   const studioPackages = studioPackageList
 
   // All packages combined for price lookup
-  // OLD: const allPackages = [...studio_weekdays, ...studio_weekends, ...outdoor_packages, ...studio_rental_weekdays, ...studio_rental_weekends]
   const allPackages = [...studioPackageList, ...outdoor_packages, ...studio_rental_weekdays, ...studio_rental_weekends]
 
   const getStudioRentalPackages = () => {
@@ -615,8 +422,7 @@ export default function BookingForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => {
-      // Reset package when date changes (only studio rental prices differ for weekdays/weekends now)
-      // OLD: if (name === "date" && prev.location !== "outdoor" && prev.location !== "clients-venue") {
+      // Reset package when date changes (only studio rental prices differ for weekdays/weekends)
       if (name === "date" && prev.location === "studio-rental") {
         const wasWeekend = isWeekend(prev.date)
         const isNowWeekend = isWeekend(value)
@@ -659,10 +465,12 @@ export default function BookingForm() {
     }
   }
 
-  // Filter packages based on selected location and date
+  const isStudioLocation = formData.location === "studio" || formData.location === "clients-venue"
+
+  // Filter packages based on selected location, studio group and date
   const getFilteredPackages = () => {
-    if (formData.location === "studio" || formData.location === "clients-venue") {
-      return studioPackages
+    if (isStudioLocation) {
+      return studioPackages.filter((p) => p.studioGroup === studioGroup)
     } else if (formData.location === "studio-rental") {
       return getStudioRentalPackages()
     } else if (formData.location === "outdoor") {
@@ -688,6 +496,10 @@ export default function BookingForm() {
 
   const handlePackageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPackageId = e.target.value
+
+    // Keep the group tab in sync when a studio package is picked from the dropdown
+    const picked = studioPackageList.find((p) => p.id === selectedPackageId)
+    if (picked?.studioGroup) setStudioGroup(picked.studioGroup)
 
     setFormData((prev) => ({
       ...prev,
@@ -1474,10 +1286,34 @@ export default function BookingForm() {
                     <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${goldDim})` }} />
                   </div>
 
+                  {/* NEW: Studio group tabs (Solo / Couple / Barkada / Family) */}
+                  {isStudioLocation && (
+                    <div className="flex flex-wrap justify-center gap-2 mb-8">
+                      {studioGroups.map((g) => {
+                        const active = studioGroup === g.key
+                        return (
+                          <button
+                            key={g.key}
+                            type="button"
+                            onClick={() => setStudioGroup(g.key)}
+                            className="px-4 py-2 text-xs font-bold tracking-[0.15em] uppercase border transition-all"
+                            style={{
+                              background: active ? `linear-gradient(to right, ${goldBright}, ${goldMid})` : cardBgLt,
+                              color: active ? "#0e0c08" : textSub,
+                              borderColor: active ? goldMid : `${goldDim}50`,
+                            }}
+                          >
+                            {g.label}
+                            <span className="ml-2 font-normal normal-case tracking-normal opacity-70">{g.sub}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {getFilteredPackages().map((pkg, index) => {
                       const isSelected = formData.package === pkg.id
-                      // OLD: const isPopular = pkg.id === "premium_weekday" || pkg.id === "premium_weekend" || pkg.id === "rental_platinum_weekdays" || pkg.id === "rental_platinum_weekends"
                       const isPopular = !!(pkg as any).popular
                       return (
                       <motion.div
@@ -1543,6 +1379,11 @@ export default function BookingForm() {
                           <h3 className="font-semibold text-base mb-2 leading-snug" style={{ color: textPrimary }}>
                             {pkg.title}
                           </h3>
+                          {(pkg as any).groupSize && (
+                            <p className="text-xs font-bold tracking-[0.1em] uppercase mb-1" style={{ color: goldMid }}>
+                              {(pkg as any).groupSize}
+                            </p>
+                          )}
                           <p className="text-3xl font-serif font-light mb-1" style={{ color: goldBright }}>
                             ₱{pkg.price}
                           </p>
@@ -1653,16 +1494,19 @@ export default function BookingForm() {
                       {formData.location ? "Choose your package" : "Select location first"}
                     </option>
 
-                    {(formData.location === "studio" || formData.location === "clients-venue") && (
-                      // OLD: <optgroup label={formData.date && isWeekend(formData.date) ? "Studio Packages (Weekend)" : "Studio Packages (Weekday)"}>
-                      <optgroup label="Studio Packages">
-                        {studioPackages.map((p) => (
-                          <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
-                            {p.title} - ₱{p.price}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                    {/* Studio: one optgroup per group (Solo / Couple / Barkada / Family) */}
+                    {isStudioLocation &&
+                      studioGroups.map((g) => (
+                        <optgroup key={g.key} label={`Studio — ${g.label}`}>
+                          {studioPackages
+                            .filter((p) => p.studioGroup === g.key)
+                            .map((p) => (
+                              <option key={p.id} value={p.id} style={{ background: "#1c1812", color: textPrimary }}>
+                                {p.title} - ₱{p.price}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
 
                     {formData.location === "studio-rental" && (
                       <optgroup label={formData.date && isWeekend(formData.date) ? "Studio Rental Packages (Weekend)" : "Studio Rental Packages (Weekday)"}>
@@ -2047,7 +1891,6 @@ export default function BookingForm() {
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.1em] text-[#8a6e30] mb-1">Package</p>
                       <p className="text-base text-[#f0e8d5] capitalize font-medium">
-                        {/* OLD: {submittedData.package?.replace(/_/g, ' ')} */}
                         {allPackages.find((p) => p.id === submittedData.package)?.title || submittedData.package?.replace(/_/g, ' ')}
                       </p>
                     </div>
