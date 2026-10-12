@@ -5,11 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useMemo, useState } from "react"
 import {
   Camera,
-  Users,
   PartyPopper,
   Package,
-  Building2,
-  User,
   Clock,
   Sparkles,
   Check,
@@ -17,16 +14,9 @@ import {
   Film,
   Zap,
   MapPin,
-  Video,
-  Videotape,
-  FileEdit,
-  Calendar,
-  PictureInPicture,
   Cake,
-  BellRing,
   GraduationCap,
   Gem,
-  Image as ImageIcon,
 } from "lucide-react"
 import { useBookingStore } from "@/store/useBookingStore"
 import { useRouter } from "next/navigation"
@@ -36,8 +26,8 @@ import {
   timeExtensions,
   studioAddonsInfo,
   type Package as PricePackage,
-  type PackageCategory,
 } from "@/lib/packages-data"
+import { PackageCard } from "@/components/PackageCard"
 
 const apertureBlades = 8
 const ACCENT = "#f5d98a"
@@ -128,64 +118,31 @@ const amenities = [
 ]
 
 // ============================================
-// PRICE LIST CATEGORY CONFIG (inlined)
+// PRICE LIST CATEGORY CONFIG
 // ============================================
 
 type ViewCategory = "studio" | "studio-rental" | "outdoor"
 
 const categoryTabs: { key: ViewCategory; label: string; sub: string }[] = [
-  {
-    key: "studio",
-    label: "Studio Sessions",
-    sub: "Portrait shoots, self-portrait & more",
-  },
-  {
-    key: "studio-rental",
-    label: "Studio Rentals",
-    sub: "Group, party & event bookings",
-  },
+  { key: "studio", label: "Studio Sessions", sub: "Portrait shoots, self-portrait & more" },
+  { key: "studio-rental", label: "Studio Rentals", sub: "Group, party & event bookings" },
   { key: "outdoor", label: "Outdoor Sessions", sub: "On-location shoots" },
 ]
 
-// Studio + outdoor: no weekday/weekend split (new pricelist = one price every day)
-// Studio rental: still filtered by weekday/weekend
-function getDayFilteredPackages(
-  all: PricePackage[],
-  category: ViewCategory,
-  isWeekend: boolean,
-): PricePackage[] {
-  if (category === "outdoor") {
-    return all.filter((p) => p.category === "outdoor")
-  }
+// Studio + outdoor: one price every day.
+// Studio rental: still filtered by weekday/weekend.
+function getDayFilteredPackages(all: PricePackage[], category: ViewCategory, isWeekend: boolean): PricePackage[] {
+  if (category === "outdoor") return all.filter((p) => p.category === "outdoor")
+  if (category === "studio") return all.filter((p) => p.category === "studio")
 
-  // NEW: studio packages have no promo field anymore, so don't filter by day
-  if (category === "studio") {
-    return all.filter((p) => p.category === "studio")
-  }
-
-  // studio-rental still has weekday / weekend prices
   const promoTarget = isWeekend ? "weekends" : "weekdays"
   return all.filter((p) => p.category === category && p.promo === promoTarget)
-
-  /* OLD (broke the studio tab because new studio packages have no promo):
-  const promoTarget =
-    category === "studio"
-      ? isWeekend
-        ? "weekend"
-        : "weekday"
-      : isWeekend
-        ? "weekends"
-        : "weekdays"
-
-  return all.filter((p) => p.category === category && p.promo === promoTarget)
-  */
 }
 
 export default function ServicesPage() {
   const setSelectedService = useBookingStore((state) => state.setSelectedService)
   const router = useRouter()
 
-  // price list state
   const [activeCategory, setActiveCategory] = useState<ViewCategory>("studio")
   const [isWeekend, setIsWeekend] = useState(false)
 
@@ -194,7 +151,6 @@ export default function ServicesPage() {
     [activeCategory, isWeekend],
   )
 
-  // OLD: const showDayToggle = activeCategory !== "outdoor"
   // Only studio rentals still have weekday/weekend rates
   const showDayToggle = activeCategory === "studio-rental"
 
@@ -314,11 +270,7 @@ export default function ServicesPage() {
             <button
               onClick={scrollToPricing}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-sans font-bold text-xs tracking-widest uppercase transition-all duration-300"
-              style={{
-                background: ACCENT_DIM,
-                border: `1px solid ${ACCENT}30`,
-                color: ACCENT,
-              }}
+              style={{ background: ACCENT_DIM, border: `1px solid ${ACCENT}30`, color: ACCENT }}
               onMouseEnter={(e) => {
                 const b = e.currentTarget as HTMLButtonElement
                 b.style.background = `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`
@@ -371,7 +323,7 @@ export default function ServicesPage() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 items-stretch gap-6 pt-3 sm:grid-cols-2 lg:grid-cols-3">
             {photographyServices.map((service, index) => (
               <motion.div
                 key={service.title}
@@ -398,10 +350,8 @@ export default function ServicesPage() {
                     ;(e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.5)"
                   }}
                 >
-                  {/* Top shimmer line */}
                   <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${ACCENT}50, transparent)` }} />
 
-                  {/* Inner grid texture */}
                   <div
                     className="absolute inset-0 opacity-[0.04] pointer-events-none"
                     style={{
@@ -476,7 +426,6 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
-                  {/* Corner brackets */}
                   <div
                     className="absolute top-3 left-3 w-4 h-4 border-l border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     style={{ borderColor: `${ACCENT}60` }}
@@ -633,7 +582,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* ── PRICE LIST (inlined, scroll target) ── */}
+      {/* ── PRICE LIST (scroll target) ── */}
       <div id="pricing" className="bg-gradient-to-br from-black via-neutral-900 to-amber-950 pt-6 relative z-10">
         <section className="py-6 px-7">
           <div className="max-w-5xl mx-auto">
@@ -666,8 +615,7 @@ export default function ServicesPage() {
               className="text-base font-sans leading-relaxed max-w-xl"
               style={{ color: "rgba(245,217,138,0.5)" }}
             >
-              Transparent rates for every package — from a quick solo session to a
-              full-day studio takeover.
+              Transparent rates for every package — from a quick solo session to a full-day studio takeover.
             </motion.p>
           </div>
         </section>
@@ -684,29 +632,15 @@ export default function ServicesPage() {
                     onClick={() => setActiveCategory(tab.key)}
                     className="text-left px-5 py-3 rounded-xl font-sans transition-all duration-300 w-full sm:flex-1 sm:min-w-[200px]"
                     style={{
-                      background: active
-                        ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`
-                        : "linear-gradient(135deg, #1c1810, #141008)",
+                      background: active ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})` : "linear-gradient(135deg, #1c1810, #141008)",
                       border: `1px solid ${active ? "transparent" : "rgba(245,217,138,0.12)"}`,
-                      boxShadow: active
-                        ? `0 8px 32px rgba(245,217,138,0.18)`
-                        : "none",
+                      boxShadow: active ? `0 8px 32px rgba(245,217,138,0.18)` : "none",
                     }}
                   >
-                    <p
-                      className="text-sm font-bold tracking-wide"
-                      style={{ color: active ? "#000" : "white" }}
-                    >
+                    <p className="text-sm font-bold tracking-wide" style={{ color: active ? "#000" : "white" }}>
                       {tab.label}
                     </p>
-                    <p
-                      className="text-[11px] mt-0.5"
-                      style={{
-                        color: active
-                          ? "rgba(0,0,0,0.6)"
-                          : "rgba(245,217,138,0.4)",
-                      }}
-                    >
+                    <p className="text-[11px] mt-0.5" style={{ color: active ? "rgba(0,0,0,0.6)" : "rgba(245,217,138,0.4)" }}>
                       {tab.sub}
                     </p>
                   </button>
@@ -722,10 +656,7 @@ export default function ServicesPage() {
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-3">
               <div
                 className="inline-flex p-1 rounded-full w-full sm:w-auto"
-                style={{
-                  background: "rgba(245,217,138,0.06)",
-                  border: `1px solid ${ACCENT}20`,
-                }}
+                style={{ background: "rgba(245,217,138,0.06)", border: `1px solid ${ACCENT}20` }}
               >
                 {[
                   { key: false, label: "Weekdays" },
@@ -738,9 +669,7 @@ export default function ServicesPage() {
                       onClick={() => setIsWeekend(opt.key)}
                       className="flex-1 sm:flex-none px-5 py-2 rounded-full font-sans text-xs font-bold tracking-widest uppercase transition-all duration-300"
                       style={{
-                        background: active
-                          ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`
-                          : "transparent",
+                        background: active ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})` : "transparent",
                         color: active ? "#000" : "rgba(245,217,138,0.55)",
                       }}
                     >
@@ -749,10 +678,7 @@ export default function ServicesPage() {
                   )
                 })}
               </div>
-              <span
-                className="font-sans text-xs"
-                style={{ color: "rgba(245,217,138,0.35)" }}
-              >
+              <span className="font-sans text-xs" style={{ color: "rgba(245,217,138,0.35)" }}>
                 Rates vary by day of the week
               </span>
             </div>
@@ -764,227 +690,26 @@ export default function ServicesPage() {
           <div className="max-w-7xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
-                // OLD: key={`${activeCategory}-${isWeekend}`}
                 key={`${activeCategory}-${showDayToggle ? isWeekend : "all"}`}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.35 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                className="grid grid-cols-1 items-start gap-6 pt-3 sm:grid-cols-2 lg:grid-cols-3"
               >
-                {visiblePackages.map((pkg, index) => {
-                  const hasAddons = !!pkg.addons?.length
-
-                  return (
-                    <motion.div
-                      key={pkg.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.06, duration: 0.4 }}
-                      whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                      className="group relative"
-                    >
-                      <div
-                        className="h-full rounded-xl overflow-hidden transition-all duration-300 flex flex-col relative"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #1c1810 0%, #141008 60%, #1a1510 100%)",
-                          border: pkg.popular
-                            ? `1px solid ${ACCENT}45`
-                            : "1px solid rgba(245,217,138,0.1)",
-                          boxShadow: pkg.popular
-                            ? `0 8px 40px rgba(245,217,138,0.12)`
-                            : "0 4px 24px rgba(0,0,0,0.5)",
-                        }}
-                      >
-                        <div
-                          className="h-px"
-                          style={{
-                            background: `linear-gradient(to right, transparent, ${ACCENT}50, transparent)`,
-                          }}
-                        />
-
-                        <div
-                          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-                          style={{
-                            backgroundImage: `linear-gradient(${ACCENT}88 1px, transparent 1px), linear-gradient(90deg, ${ACCENT}88 1px, transparent 1px)`,
-                            backgroundSize: "20px 20px",
-                          }}
-                        />
-
-                        <div className="p-6 flex flex-col gap-4 flex-1 relative">
-                          <div className="flex items-start justify-between">
-                            <div
-                              className="flex items-center gap-2 font-sans text-xs"
-                              style={{ color: "rgba(245,217,138,0.5)" }}
-                            >
-                              <Clock
-                                className="w-3.5 h-3.5"
-                                style={{ color: ACCENT }}
-                              />
-                              {pkg.duration}
-                            </div>
-                            {pkg.popular && (
-                              <span
-                                className="text-[10px] font-sans font-black tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1"
-                                style={{
-                                  background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`,
-                                  color: "#000",
-                                }}
-                              >
-                                <Sparkles className="w-2.5 h-2.5" /> Popular
-                              </span>
-                            )}
-                          </div>
-
-                          <div>
-                            <h3
-                              className="text-xl font-serif font-semibold text-white mb-1"
-                              style={{ letterSpacing: "-0.01em" }}
-                            >
-                              {pkg.title}
-                            </h3>
-                            {pkg.description && (
-                              <p
-                                className="text-xs font-sans"
-                                style={{ color: "rgba(245,217,138,0.4)" }}
-                              >
-                                {pkg.description}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex items-baseline gap-1">
-                            <span
-                              className="text-2xl font-sans font-black"
-                              style={{ color: ACCENT }}
-                            >
-                              ₱{pkg.price}
-                            </span>
-                          </div>
-
-                          {pkg.photos && (
-                            <div
-                              className="flex items-center gap-2 font-sans text-xs"
-                              style={{ color: "rgba(245,217,138,0.55)" }}
-                            >
-                              <ImageIcon
-                                className="w-3.5 h-3.5"
-                                style={{ color: ACCENT }}
-                              />
-                              {pkg.photos}
-                            </div>
-                          )}
-
-                          <div
-                            className="h-px"
-                            style={{ background: `${ACCENT}15` }}
-                          />
-
-                          <ul className="space-y-2">
-                            {pkg.features.map((f, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2.5 font-sans text-xs"
-                                style={{ color: "rgba(245,217,138,0.65)" }}
-                              >
-                                <div
-                                  className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                                  style={{
-                                    background: ACCENT_DIM,
-                                    border: `1px solid ${ACCENT}30`,
-                                  }}
-                                >
-                                  <Check
-                                    className="w-2.5 h-2.5"
-                                    style={{ color: ACCENT }}
-                                  />
-                                </div>
-                                <span>{f}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          {hasAddons && (
-                            <div>
-                              <p
-                                className="font-sans text-[11px] font-bold tracking-widest uppercase py-1"
-                                style={{ color: ACCENT }}
-                              >
-                                Add-ons
-                              </p>
-                              <ul className="space-y-2">
-                                {pkg.addons!.map((a, i) => (
-                                  <li
-                                    key={i}
-                                    className="flex items-start gap-2.5 font-sans text-xs pt-1"
-                                    style={{ color: "rgba(245,217,138,0.5)" }}
-                                  >
-                                    <div
-                                      className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-                                      style={{ background: ACCENT, opacity: 0.6 }}
-                                    />
-                                    <span>{a}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="mt-auto pt-2">
-                            <button
-                              onClick={() => handlePackageBooking(pkg)}
-                              className="w-full py-3 rounded-xl font-sans font-bold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-all duration-300"
-                              style={{
-                                background: ACCENT_DIM,
-                                border: `1px solid ${ACCENT}30`,
-                                color: ACCENT,
-                              }}
-                              onMouseEnter={(e) => {
-                                const b = e.currentTarget as HTMLButtonElement
-                                b.style.background = `linear-gradient(135deg, ${ACCENT}, ${ACCENT_GLOW})`
-                                b.style.color = "#000"
-                                b.style.borderColor = "transparent"
-                                b.style.boxShadow = `0 0 24px ${ACCENT}40`
-                              }}
-                              onMouseLeave={(e) => {
-                                const b = e.currentTarget as HTMLButtonElement
-                                b.style.background = ACCENT_DIM
-                                b.style.color = ACCENT
-                                b.style.borderColor = `${ACCENT}30`
-                                b.style.boxShadow = "none"
-                              }}
-                            >
-                              <Zap className="w-3.5 h-3.5" /> Book This Package
-                            </button>
-                          </div>
-                        </div>
-
-                        <div
-                          className="absolute top-3 left-3 w-4 h-4 border-l border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ borderColor: `${ACCENT}60` }}
-                        />
-                        <div
-                          className="absolute bottom-3 right-3 w-4 h-4 border-r border-b opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ borderColor: `${ACCENT}60` }}
-                        />
-                      </div>
-                    </motion.div>
-                  )
-                })}
+                {visiblePackages.map((pkg, index) => (
+                  <PackageCard key={pkg.id} pkg={pkg} index={index} onBook={handlePackageBooking} />
+                ))}
               </motion.div>
             </AnimatePresence>
 
             {visiblePackages.length === 0 && (
-              <div
-                className="text-center py-20 font-sans"
-                style={{ color: "rgba(245,217,138,0.4)" }}
-              >
+              <div className="text-center py-20 font-sans" style={{ color: "rgba(245,217,138,0.4)" }}>
                 No packages found for this selection.
               </div>
             )}
 
-            {/* ── NEW: Late fee / Time extension / Add-ons (studio sessions only) ── */}
+            {/* Late fee / Time extension / Add-ons (studio sessions only) */}
             {activeCategory === "studio" && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -993,18 +718,9 @@ export default function ServicesPage() {
                 className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5"
               >
                 {[
-                  {
-                    title: "Late Fee",
-                    rows: lateFees.map((f) => ({ label: f.label, value: `₱${f.price}` })),
-                  },
-                  {
-                    title: "Time Extension",
-                    rows: timeExtensions.map((f) => ({ label: f.label, value: `₱${f.price}` })),
-                  },
-                  {
-                    title: "Add-ons",
-                    rows: studioAddonsInfo.map((a) => ({ label: a, value: "" })),
-                  },
+                  { title: "Late Fee", rows: lateFees.map((f) => ({ label: f.label, value: `₱${f.price}` })) },
+                  { title: "Time Extension", rows: timeExtensions.map((f) => ({ label: f.label, value: `₱${f.price}` })) },
+                  { title: "Add-ons", rows: studioAddonsInfo.map((a) => ({ label: a, value: "" })) },
                 ].map((block) => (
                   <div
                     key={block.title}
