@@ -42,12 +42,12 @@ export function PricingSection() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px w-8" style={{ background: `linear-gradient(to right, transparent, ${ACCENT})` }} />
             <span className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: ACCENT }}>
-              Studio Packages
+              Pricing
             </span>
             <div className="h-px w-8" style={{ background: `linear-gradient(to left, transparent, ${ACCENT})` }} />
           </div>
           <h2 className="text-4xl md:text-5xl font-serif font-light text-white" style={{ letterSpacing: "-0.02em" }}>
-            Simple{" "}
+            Studio{" "}
             <span
               className="italic"
               style={{
@@ -56,11 +56,11 @@ export function PricingSection() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              Pricing
+              Packages
             </span>
           </h2>
           <p className="mt-4 text-sm max-w-md mx-auto" style={{ color: "rgba(245,217,138,0.5)" }}>
-            Choose the package that fits your shoot. Same rates every day of the week.
+            Portraits, creatives, birthday shoots and more. Choose the package that fits your shoot.
           </p>
         </motion.div>
 
@@ -207,7 +207,7 @@ export function PricingSection() {
         <div className="text-center mt-10">
           {/* Adjust this href if your services page uses a different route */}
           <Link
-            href="/services#pricing"
+            href="/services"
             className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-80"
             style={{ color: ACCENT }}
           >
